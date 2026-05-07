@@ -1,0 +1,27 @@
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.openjfx)
+    application
+}
+
+kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
+}
+
+javafx {
+    version = libs.versions.javafx.get()
+    modules = listOf("javafx.controls", "javafx.graphics")
+}
+
+dependencies {
+    implementation(project(":framework-components"))
+    implementation(project(":framework-dsl"))
+    implementation(project(":framework-mvvm"))
+    implementation(project(":framework-navigation"))
+    implementation(project(":framework-theme"))
+    implementation(libs.kotlinx.coroutines.javafx)
+}
+
+application {
+    mainClass = "dev.korafx.sample.MainKt"
+}
