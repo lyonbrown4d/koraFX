@@ -54,6 +54,7 @@ Runnable examples:
 ```powershell
 .\gradlew.bat :examples:dsl-basic-app:run
 .\gradlew.bat :examples:mvvm-counter-app:run
+.\gradlew.bat :examples:navigation-theme-app:run
 ```
 
 ## Examples
