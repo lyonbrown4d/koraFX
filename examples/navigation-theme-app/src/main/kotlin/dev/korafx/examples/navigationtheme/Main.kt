@@ -3,6 +3,10 @@ package dev.korafx.examples.navigationtheme
 import dev.korafx.components.actionBar
 import dev.korafx.components.appShell
 import dev.korafx.components.emptyState
+import dev.korafx.components.modalHost
+import dev.korafx.components.ModalAction
+import dev.korafx.components.ModalActionRole
+import dev.korafx.components.ModalHost
 import dev.korafx.components.navigationRail
 import dev.korafx.components.routeHost
 import dev.korafx.components.section
@@ -23,6 +27,7 @@ import dev.korafx.theme.SceneThemeController
 import dev.korafx.theme.ThemeManager
 import javafx.application.Application
 import javafx.geometry.Insets
+import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.Scene
 import javafx.stage.Stage
@@ -52,6 +57,7 @@ class NavigationThemeApp : Application() {
     private val themeManager = ThemeManager()
     private val themeController = SceneThemeController(themeManager)
     private val notifications = ToastHost()
+    private val modals = ModalHost()
     private val navigator = Navigator(
         initialRoute = DemoRoute.Dashboard,
         routes = DemoRoute.all,
@@ -89,6 +95,9 @@ class NavigationThemeApp : Application() {
             }
             overlay {
                 toastHost(uiScope, notifications)
+            }
+            overlay(alignment = Pos.CENTER, margin = Insets.EMPTY) {
+                modalHost(uiScope, modals)
             }
         }
 
@@ -163,12 +172,37 @@ class NavigationThemeApp : Application() {
     private fun dev.korafx.dsl.VBoxBuilder.settingsContent() {
         emptyState(
             title = "Settings",
-            message = "Use the toolbar action to toggle the active KoraFX theme.",
-            actionText = "Toggle Theme",
+            message = "Open an in-scene modal rendered by modalHost.",
+            actionText = "Open Settings",
             onAction = {
-                toggleTheme()
+                openSettingsModal()
             },
         )
+    }
+
+    private fun openSettingsModal() {
+        modals.show(
+            title = "Workspace settings",
+            message = "This modal is rendered inside appShell.overlay without taking over application lifecycle.",
+            actions = listOf(
+                ModalAction("Cancel"),
+                ModalAction(
+                    text = "Apply",
+                    role = ModalActionRole.PRIMARY,
+                    onAction = {
+                        notifications.show(
+                            message = "Settings saved.",
+                            tone = ToastTone.SUCCESS,
+                        )
+                    },
+                ),
+            ),
+        ) {
+            label("Current theme")
+            label(themeManager.currentTheme().displayName) {
+                styleClasses("muted")
+            }
+        }
     }
 
     private fun toggleTheme() {

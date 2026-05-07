@@ -118,6 +118,39 @@ val root = appShell {
 }
 ```
 
+## ModalHost
+
+```kotlin
+val modals = ModalHost()
+
+val root = appShell {
+    content {
+        button("Open Settings") {
+            onAction {
+                modals.show(
+                    title = "Workspace settings",
+                    message = "Use an in-scene modal for local editing flows.",
+                    actions = listOf(
+                        ModalAction("Cancel"),
+                        ModalAction(
+                            text = "Apply",
+                            role = ModalActionRole.PRIMARY,
+                            onAction = { println("Apply settings") },
+                        ),
+                    ),
+                ) {
+                    label("Settings content")
+                }
+            }
+        }
+    }
+
+    overlay(alignment = Pos.CENTER, margin = Insets.EMPTY) {
+        modalHost(scope, modals)
+    }
+}
+```
+
 ## Route State Host
 
 ```kotlin

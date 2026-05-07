@@ -173,9 +173,49 @@ object ThemeStylesheetFactory {
                 -fx-background-color: transparent;
             }
 
+            .modal-host {
+                -fx-background-color: transparent;
+            }
+
+            .modal-backdrop {
+                -fx-background-color: rgba(17, 24, 39, 0.42);
+                -fx-padding: 24 24 24 24;
+            }
+
+            .modal-card {
+                -fx-background-color: ${colors.surfaceMuted};
+                -fx-border-color: ${colors.border};
+                -fx-background-radius: ${theme.tokens.radius}px;
+                -fx-border-radius: ${theme.tokens.radius}px;
+                -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.16, 0, 8);
+            }
+
+            .modal-title {
+                -fx-font-size: ${typography.baseSize + 4}px;
+                -fx-font-weight: 700;
+            }
+
+            .modal-message {
+                -fx-text-fill: ${colors.textSecondary};
+            }
+
+            .modal-content {
+                -fx-padding: 4 0 4 0;
+            }
+
+            .modal-actions {
+                -fx-padding: 6 0 0 0;
+            }
+
+            .modal-destructive-action {
+                -fx-background-color: #B91C1C;
+                -fx-text-fill: white;
+            }
+
             .toast-host {
                 -fx-padding: 16 16 16 16;
             }
+
 
             .snackbar {
                 -fx-background-color: ${colors.surfaceMuted};

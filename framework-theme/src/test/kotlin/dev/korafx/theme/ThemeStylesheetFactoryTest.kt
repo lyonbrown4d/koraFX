@@ -18,6 +18,8 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".section-title")
         assertContains(css, ".action-bar")
         assertContains(css, ".app-shell")
+        assertContains(css, ".modal-card")
+        assertContains(css, ".modal-backdrop")
         assertContains(css, ".snackbar")
         assertContains(css, ".toast-success")
         assertContains(css, ".feedback-state")
