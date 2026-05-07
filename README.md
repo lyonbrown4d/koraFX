@@ -19,7 +19,7 @@ framework-state        Small state and event primitives
 framework-mvvm         ViewModel, Action/Event model, test helpers, factories
 framework-navigation   Route, Navigator, page instance policy
 framework-theme        Theme tokens, theme manager, stylesheet generation
-framework-components   Navigation, route host, feedback, surface components
+framework-components   App shell, navigation, route host, toast, feedback, surface components
 examples/*             Small runnable examples
 sample-workbench-app   Runnable sample app
 ```

@@ -161,6 +161,52 @@ object ThemeStylesheetFactory {
                 -fx-padding: 12 16 12 16;
             }
 
+            .app-shell {
+                -fx-background-color: ${colors.surface};
+            }
+
+            .app-shell-layout {
+                -fx-background-color: ${colors.surface};
+            }
+
+            .app-shell-overlay {
+                -fx-background-color: transparent;
+            }
+
+            .toast-host {
+                -fx-padding: 16 16 16 16;
+            }
+
+            .snackbar {
+                -fx-background-color: ${colors.surfaceMuted};
+                -fx-border-color: ${colors.border};
+                -fx-background-radius: ${theme.tokens.radius}px;
+                -fx-border-radius: ${theme.tokens.radius}px;
+                -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 12, 0.12, 0, 4);
+                -fx-min-width: 320px;
+                -fx-max-width: 460px;
+            }
+
+            .snackbar-title {
+                -fx-font-weight: 700;
+            }
+
+            .snackbar-message {
+                -fx-text-fill: ${colors.textSecondary};
+            }
+
+            .snackbar-action,
+            .snackbar-dismiss {
+                -fx-padding: 8 12 8 12;
+            }
+
+            .toast-info,
+            .toast-success,
+            .toast-warning,
+            .toast-error {
+                -fx-border-color: ${colors.primary};
+            }
+
             .feedback-state {
                 -fx-background-color: ${colors.surfaceMuted};
                 -fx-border-color: ${colors.border};

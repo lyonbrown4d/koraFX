@@ -1,11 +1,14 @@
 package dev.korafx.examples.navigationtheme
 
 import dev.korafx.components.actionBar
+import dev.korafx.components.appShell
 import dev.korafx.components.emptyState
 import dev.korafx.components.navigationRail
 import dev.korafx.components.routeHost
 import dev.korafx.components.section
-import dev.korafx.dsl.borderPane
+import dev.korafx.components.toastHost
+import dev.korafx.components.ToastHost
+import dev.korafx.components.ToastTone
 import dev.korafx.dsl.ghostButton
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.onAction
@@ -48,6 +51,7 @@ class NavigationThemeApp : Application() {
     private val uiScope = MainScope()
     private val themeManager = ThemeManager()
     private val themeController = SceneThemeController(themeManager)
+    private val notifications = ToastHost()
     private val navigator = Navigator(
         initialRoute = DemoRoute.Dashboard,
         routes = DemoRoute.all,
@@ -55,8 +59,8 @@ class NavigationThemeApp : Application() {
     )
 
     override fun start(stage: Stage) {
-        val root = borderPane {
-            top {
+        val root = appShell {
+            topBar {
                 toolbar {
                     label("KoraFX Navigation + Theme") {
                         styleClasses("headline")
@@ -64,15 +68,15 @@ class NavigationThemeApp : Application() {
                     spacer()
                     ghostButton("Toggle Theme") {
                         onAction {
-                            themeManager.toggle()
+                            toggleTheme()
                         }
                     }
                 }
             }
-            left {
+            navigation {
                 navigationRail(uiScope, navigator)
             }
-            center {
+            content {
                 routeHost(
                     scope = uiScope,
                     navigator = navigator,
@@ -82,6 +86,9 @@ class NavigationThemeApp : Application() {
                 ) { route ->
                     routeContent(route)
                 }
+            }
+            overlay {
+                toastHost(uiScope, notifications)
             }
         }
 
@@ -124,6 +131,10 @@ class NavigationThemeApp : Application() {
             button("Open Tasks") {
                 onAction {
                     navigator.navigate(DemoRoute.Tasks)
+                    notifications.show(
+                        message = "Opened Tasks route.",
+                        tone = ToastTone.INFO,
+                    )
                 }
             }
         }
@@ -140,6 +151,10 @@ class NavigationThemeApp : Application() {
             button("Open Settings") {
                 onAction {
                     navigator.navigate(DemoRoute.Settings)
+                    notifications.show(
+                        message = "Opened Settings route.",
+                        tone = ToastTone.INFO,
+                    )
                 }
             }
         }
@@ -151,8 +166,16 @@ class NavigationThemeApp : Application() {
             message = "Use the toolbar action to toggle the active KoraFX theme.",
             actionText = "Toggle Theme",
             onAction = {
-                themeManager.toggle()
+                toggleTheme()
             },
+        )
+    }
+
+    private fun toggleTheme() {
+        themeManager.toggle()
+        notifications.show(
+            message = "Theme switched to ${themeManager.currentTheme().displayName}.",
+            tone = ToastTone.SUCCESS,
         )
     }
 

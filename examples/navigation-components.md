@@ -79,6 +79,45 @@ val root = workbenchLayout {
 }
 ```
 
+## AppShell With Toasts
+
+```kotlin
+val notifications = ToastHost()
+
+val root = appShell {
+    topBar {
+        toolbar {
+            label("KoraFX") {
+                styleClasses("headline")
+            }
+            spacer()
+            ghostButton("Toggle Theme") {
+                onAction {
+                    notifications.show(
+                        message = "Theme switched.",
+                        tone = ToastTone.SUCCESS,
+                    )
+                }
+            }
+        }
+    }
+
+    navigation {
+        navigationRail(scope, navigator)
+    }
+
+    content {
+        routeHost(scope, navigator) { route ->
+            label(route.title)
+        }
+    }
+
+    overlay {
+        toastHost(scope, notifications)
+    }
+}
+```
+
 ## Route State Host
 
 ```kotlin

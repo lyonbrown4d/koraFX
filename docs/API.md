@@ -127,11 +127,14 @@ Components are optional conveniences built on DSL, navigation, and state flows.
 
 Main API:
 
+- Shell: `appShell`
 - Navigation: `navigationRail`、`routeHost`、`routeStateHost`
-- Feedback: `feedbackState`、`emptyState`、`loadingState`、`errorState`
+- Feedback: `feedbackState`、`emptyState`、`loadingState`、`errorState`、`ToastHost`、`toastHost`、`snackbar`
 - Surfaces: `card`、`section`、`actionBar`
 
 `routeStateHost` 按路由执行渲染取消：路由切换后只会渲染当前路由的 `stateFor` 流，不会被旧路由更新覆盖。
+`appShell` provides stable top/navigation/content/footer/overlay slots for common desktop layouts.
+`ToastHost` owns transient feedback messages; `toastHost` renders them as JavaFX nodes.
 
 Guidelines:
 
