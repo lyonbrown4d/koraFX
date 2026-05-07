@@ -3,6 +3,7 @@
 KoraFX uses `com.vanniktech.maven.publish` and reads publishing metadata from environment variables.
 Current coordinates are under groupId `io.github.daiyuang`.
 Published artifactIds use the `korafx-*` prefix, for example `korafx-dsl`.
+The BOM artifactId is `korafx-bom`.
 
 ## Env file example
 
@@ -40,7 +41,16 @@ Per-module publish usually only needs different `POM_NAME` and `POM_DESCRIPTION`
 ```
 
 ```properties
+implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
 implementation("io.github.daiyuang:korafx-dsl:<version>")
+```
+
+With the BOM, omit repeated module versions:
+
+```properties
+implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
+implementation("io.github.daiyuang:korafx-dsl")
+implementation("io.github.daiyuang:korafx-mvvm")
 ```
 
 Local validation:

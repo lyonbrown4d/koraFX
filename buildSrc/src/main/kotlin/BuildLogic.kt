@@ -3,6 +3,7 @@ import org.gradle.api.provider.Provider
 
 private val publishableModules =
     setOf(
+        "korafx-bom",
         "framework-dsl",
         "framework-state",
         "framework-mvvm",
@@ -35,8 +36,11 @@ private val publishingPropertyKeys =
 
 fun Project.isPublishableLeafModule(): Boolean = name in publishableModules && childProjects.isEmpty()
 
+fun Project.isBomModule(): Boolean = name == "korafx-bom"
+
 fun Project.publishedArtifactId(): String =
     when (name) {
+        "korafx-bom" -> "korafx-bom"
         "framework-dsl" -> "korafx-dsl"
         "framework-state" -> "korafx-state"
         "framework-mvvm" -> "korafx-mvvm"
@@ -44,6 +48,12 @@ fun Project.publishedArtifactId(): String =
         "framework-theme" -> "korafx-theme"
         "framework-components" -> "korafx-components"
         else -> name
+    }
+
+fun Project.publishedDescription(): String =
+    when (name) {
+        "korafx-bom" -> "Bill of materials for aligning KoraFX module versions."
+        else -> "KoraFX ${name.removePrefix("framework-")} module for Kotlin-friendly JavaFX development."
     }
 
 fun Project.applyPublishingPropsFromDotenv() {

@@ -1,4 +1,5 @@
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
+import org.gradle.api.plugins.JavaPlatformPlugin
 
 plugins {
     alias(libs.plugins.dotenv) apply false
@@ -18,6 +19,9 @@ subprojects {
 
     if (isPublishableLeafModule()) {
         apply<com.vanniktech.maven.publish.MavenPublishPlugin>()
+        if (isBomModule()) {
+            apply<JavaPlatformPlugin>()
+        }
         applyPublishingPropsFromDotenv()
 
         extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
@@ -28,7 +32,7 @@ subprojects {
                 name.set(stringPropertyOrDefault("POM_NAME") { publishedArtifactId() })
                 description.set(
                     stringPropertyOrDefault("POM_DESCRIPTION") {
-                        "KoraFX ${project.name.removePrefix("framework-")} module for Kotlin-friendly JavaFX development."
+                        publishedDescription()
                     }
                 )
                 inceptionYear.set(stringPropertyOrDefault("POM_INCEPTION_YEAR") { "2026" })

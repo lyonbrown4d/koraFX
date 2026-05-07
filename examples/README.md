@@ -11,6 +11,14 @@
 - [Theme Examples](theme.md): theme wiring、custom tokens。
 - [Sample Apps](sample.md): minimal JavaFX app、runnable workbench sample。
 
+## Runnable Examples
+
+```powershell
+.\gradlew.bat :examples:dsl-basic-app:run
+.\gradlew.bat :examples:mvvm-counter-app:run
+.\gradlew.bat :sample-workbench-app:run
+```
+
 ## Recommended Reading Order
 
 1. Start with [DSL Examples](dsl.md).

@@ -14,6 +14,7 @@ $gradlew = Join-Path $PSScriptRoot "..\gradlew.bat"
 if ($Mode -eq "local") {
     Write-Host "Publishing to local Maven cache (snapshot allowed)."
     $tasks = @(
+        ":korafx-bom:publishToMavenLocal",
         ":framework-dsl:publishToMavenLocal",
         ":framework-state:publishToMavenLocal",
         ":framework-mvvm:publishToMavenLocal",

@@ -13,17 +13,25 @@ KoraFX is not a full application framework. It does not bind to a DI container, 
 ## Modules
 
 ```text
+korafx-bom             Maven BOM for aligning KoraFX module versions
 framework-dsl          JavaFX DSL, bindings, render state, forms, dialogs
 framework-state        Small state and event primitives
 framework-mvvm         ViewModel, Action/Event model, test helpers, factories
 framework-navigation   Route, Navigator, page instance policy
 framework-theme        Theme tokens, theme manager, stylesheet generation
 framework-components   Navigation, route host, feedback, surface components
+examples/*             Small runnable examples
 sample-workbench-app   Runnable sample app
 ```
 
 Published Maven artifacts use the same capability split with a project prefix:
-`korafx-dsl`, `korafx-state`, `korafx-mvvm`, `korafx-navigation`, `korafx-theme`, and `korafx-components`.
+`korafx-bom`, `korafx-dsl`, `korafx-state`, `korafx-mvvm`, `korafx-navigation`, `korafx-theme`, and `korafx-components`.
+
+```kotlin
+implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
+implementation("io.github.daiyuang:korafx-dsl")
+implementation("io.github.daiyuang:korafx-mvvm")
+```
 
 ## Build
 
@@ -39,6 +47,13 @@ $env:GRADLE_USER_HOME="D:\Projects\KoraFX\.gradle-user-home"
 ```powershell
 $env:GRADLE_USER_HOME="D:\Projects\KoraFX\.gradle-user-home"
 .\gradlew.bat :sample-workbench-app:run
+```
+
+Runnable examples:
+
+```powershell
+.\gradlew.bat :examples:dsl-basic-app:run
+.\gradlew.bat :examples:mvvm-counter-app:run
 ```
 
 ## Examples
