@@ -25,4 +25,15 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".feedback-state")
         assertContains(css, ".loading-state-indicator")
     }
+
+    @Test
+    fun `all built in themes render stylesheet from tokens`() {
+        BuiltInThemes.all.forEach { theme ->
+            val css = ThemeStylesheetFactory.render(theme)
+
+            assertContains(css, "-fx-background-color: ${theme.tokens.colors.surface};")
+            assertContains(css, "-fx-font-size: ${theme.tokens.typography.baseSize}px;")
+            assertContains(css, "-fx-background-radius: ${theme.tokens.radius}px;")
+        }
+    }
 }

@@ -12,6 +12,31 @@ sceneThemeController.bind(scene)
 themeManager.toggle()
 ```
 
+## Built-In Presets
+
+```kotlin
+BuiltInThemes.all.forEach { theme ->
+    println("${theme.id}: ${theme.displayName}")
+}
+
+themeManager.setTheme("nord")
+themeManager.nextTheme()
+themeManager.previousTheme()
+```
+
+Use `ThemeManager(availableThemes = listOf(...))` when an application should expose only part of the built-in theme catalog:
+
+```kotlin
+val themeManager = ThemeManager(
+    initialTheme = BuiltInThemes.Light,
+    availableThemes = listOf(
+        BuiltInThemes.Light,
+        BuiltInThemes.Dark,
+        BuiltInThemes.Nord,
+    ),
+)
+```
+
 ## Custom Tokens
 
 ```kotlin

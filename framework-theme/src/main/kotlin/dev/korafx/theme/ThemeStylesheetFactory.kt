@@ -216,7 +216,6 @@ object ThemeStylesheetFactory {
                 -fx-padding: 16 16 16 16;
             }
 
-
             .snackbar {
                 -fx-background-color: ${colors.surfaceMuted};
                 -fx-border-color: ${colors.border};

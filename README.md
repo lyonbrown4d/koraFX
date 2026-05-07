@@ -18,7 +18,7 @@ framework-dsl          JavaFX DSL, bindings, render state, forms, dialogs
 framework-state        Small state and event primitives
 framework-mvvm         ViewModel, Action/Event model, test helpers, factories
 framework-navigation   Route, Navigator, page instance policy
-framework-theme        Theme tokens, theme manager, stylesheet generation
+framework-theme        Theme tokens, built-in presets, theme manager, stylesheet generation
 framework-components   App shell, modal, navigation, route host, toast, feedback, surface components
 examples/*             Small runnable examples
 sample-workbench-app   Runnable sample app

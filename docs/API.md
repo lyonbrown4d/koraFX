@@ -116,6 +116,9 @@ Main API:
 - `SceneThemeController`
 - `ThemeStylesheetFactory`
 
+`BuiltInThemes.all` exposes selectable JavaFX stylesheet presets. Use `BuiltInThemes.findById` or `ThemeManager.setTheme(id)` when theme choice is stored in user settings.
+`ThemeManager.nextTheme()` and `previousTheme()` cycle through the configured `availableThemes`; `toggle()` remains a Light/Dark convenience.
+
 Guidelines:
 
 - Theme tokens should remain small and CSS-oriented.

@@ -15,6 +15,7 @@ import dev.korafx.components.ToastHost
 import dev.korafx.components.ToastTone
 import dev.korafx.dsl.ghostButton
 import dev.korafx.dsl.hbox
+import dev.korafx.dsl.menuButton
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.paddingAll
 import dev.korafx.dsl.styleClasses
@@ -23,6 +24,8 @@ import dev.korafx.dsl.vbox
 import dev.korafx.navigation.Navigator
 import dev.korafx.navigation.PageInstancePolicy
 import dev.korafx.navigation.Route
+import dev.korafx.theme.BuiltInThemes
+import dev.korafx.theme.KoraTheme
 import dev.korafx.theme.SceneThemeController
 import dev.korafx.theme.ThemeManager
 import javafx.application.Application
@@ -72,11 +75,21 @@ class NavigationThemeApp : Application() {
                         styleClasses("headline")
                     }
                     spacer()
-                    ghostButton("Toggle Theme") {
+                    ghostButton("Next Theme") {
                         onAction {
-                            toggleTheme()
+                            nextTheme()
                         }
                     }
+                    menuButton(
+                        text = "Themes",
+                        content = {
+                            BuiltInThemes.all.forEach { theme ->
+                                actionItem(theme.displayName) {
+                                    setTheme(theme)
+                                }
+                            }
+                        },
+                    )
                 }
             }
             navigation {
@@ -202,11 +215,26 @@ class NavigationThemeApp : Application() {
             label(themeManager.currentTheme().displayName) {
                 styleClasses("muted")
             }
+            label("Available built-in themes")
+            BuiltInThemes.all.forEach { theme ->
+                label("- ${theme.displayName}") {
+                    styleClasses("muted")
+                }
+            }
         }
     }
 
-    private fun toggleTheme() {
-        themeManager.toggle()
+    private fun nextTheme() {
+        themeManager.nextTheme()
+        notifyThemeChanged()
+    }
+
+    private fun setTheme(theme: KoraTheme) {
+        themeManager.setTheme(theme)
+        notifyThemeChanged()
+    }
+
+    private fun notifyThemeChanged() {
         notifications.show(
             message = "Theme switched to ${themeManager.currentTheme().displayName}.",
             tone = ToastTone.SUCCESS,
