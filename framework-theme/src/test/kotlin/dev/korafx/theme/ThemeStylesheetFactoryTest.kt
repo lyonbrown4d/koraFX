@@ -29,6 +29,24 @@ class ThemeStylesheetFactoryTest {
     }
 
     @Test
+    fun `stylesheet covers common JavaFX control skins`() {
+        val css = ThemeStylesheetFactory.render(BuiltInThemes.Light)
+
+        assertContains(css, ".combo-box-base")
+        assertContains(css, ".choice-box")
+        assertContains(css, ".date-picker")
+        assertContains(css, ".spinner")
+        assertContains(css, ".list-cell:selected")
+        assertContains(css, ".table-view .column-header")
+        assertContains(css, ".tree-view .tree-cell .tree-disclosure-node .arrow")
+        assertContains(css, ".tab-pane .tab:selected")
+        assertContains(css, ".titled-pane > .title")
+        assertContains(css, ".slider .thumb")
+        assertContains(css, ".pagination .pagination-control .page-number:selected")
+        assertContains(css, ".scroll-bar .thumb")
+    }
+
+    @Test
     fun `all built in themes render stylesheet from tokens`() {
         BuiltInThemes.all.forEach { theme ->
             val css = ThemeStylesheetFactory.render(theme)
