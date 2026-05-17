@@ -43,6 +43,42 @@ class CellFactoryDslTest {
         }
     }
 
+    @Test
+    fun `combo and choice boxes render item text and expose selection handler`() {
+        data class Option(
+            val id: String,
+            val label: String,
+        )
+
+        val alpha = Option("a", "Alpha")
+        val beta = Option("b", "Beta")
+
+        FxTestSupport.runOnFxThread {
+            val comboSelections = mutableListOf<Option?>()
+            val choiceSelections = mutableListOf<Option?>()
+
+            val combo = comboBox(items = listOf(alpha, beta)) {
+                render { it.label }
+                onSelect(comboSelections::add)
+            }
+            val choice = choiceBox(items = listOf(alpha, beta)) {
+                render { it.label }
+                onSelect(choiceSelections::add)
+            }
+
+            assertEquals("Alpha", combo.converter.toString(alpha))
+            assertEquals(beta, combo.converter.fromString("Beta"))
+            assertEquals("Alpha", choice.converter.toString(alpha))
+            assertEquals(beta, choice.converter.fromString("Beta"))
+
+            combo.selectionModel.select(beta)
+            choice.selectionModel.select(alpha)
+
+            assertEquals(beta, comboSelections.single())
+            assertEquals(alpha, choiceSelections.single())
+        }
+    }
+
     private fun <T> ListCell<T>.updateForTest(item: T, empty: Boolean) {
         invokeUpdateItem(item, empty)
     }

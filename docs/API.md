@@ -27,6 +27,7 @@ KoraFX 的 API 目标是薄封装 JavaFX，而不是替换 JavaFX。命名规则
 - Bidirectional bindings: text input、toggle selected、selection controls、slider、spinner、date picker。
 - Render helpers: `fragment`、`renderIf`、`renderUnless`、`renderEach`、`bindContent`、`bindChildren`、`bindEach`、`bindList`、`bindRenderState`。
 - Form/dialog helpers: `form`、`submitBar`、`validationMessage`、`alert`、`confirmation`、`textInputDialog`、`customDialog`。
+- Selection control helpers: `listView`、`comboBox`、`choiceBox` support `render { ... }` and `onSelect { ... }` for object lists.
 
 Guidelines:
 

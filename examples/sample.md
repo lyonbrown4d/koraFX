@@ -43,4 +43,4 @@ class MinimalApp : Application() {
 .\gradlew.bat :sample-workbench-app:run
 ```
 
-The workbench sample uses property-level state selectors such as `stateText`, `stateVisible`, `stateDisable`, and `stateList` directly where nodes are declared, instead of a separate `bindUi` pass.
+The workbench sample uses property-level state selectors such as `stateText`, `stateVisible`, `stateDisable`, and `stateList` directly where nodes are declared, instead of a separate `bindUi` pass. It also exposes a Theme page and a top-bar theme selector for all built-in presets.

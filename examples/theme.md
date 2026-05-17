@@ -24,6 +24,24 @@ themeManager.nextTheme()
 themeManager.previousTheme()
 ```
 
+Expose presets in UI with the control DSL:
+
+```kotlin
+comboBox<KoraTheme>(
+    items = themeManager.availableThemes,
+    init = {
+        prefWidth = 180.0
+    },
+) {
+    render { it.displayName }
+    onSelect { theme ->
+        if (theme != null) {
+            themeManager.setTheme(theme)
+        }
+    }
+}.bindSelectedItem(scope, themeManager.theme)
+```
+
 Use `ThemeManager(availableThemes = listOf(...))` when an application should expose only part of the built-in theme catalog:
 
 ```kotlin

@@ -66,8 +66,29 @@ sealed class WorkbenchRoute(
             """.trimIndent(),
     )
 
+    data object Theme : WorkbenchRoute(
+        id = "theme",
+        title = "Theme",
+        summary = "KoraFX themes are selectable JavaFX stylesheet presets generated from typed tokens.",
+        document =
+            """
+            Theme Layer
+
+            ThemeManager owns the active KoraTheme as StateFlow.
+            SceneThemeController binds a Scene to generated JavaFX CSS.
+
+            Built-in themes are intentionally plain values:
+            - display name
+            - color tokens
+            - typography tokens
+            - radius
+
+            Applications can expose all presets, a subset, or custom tokens.
+            """.trimIndent(),
+    )
+
     companion object {
         val all: List<WorkbenchRoute>
-            get() = listOf(Overview, Dsl, Mvvm)
+            get() = listOf(Overview, Dsl, Mvvm, Theme)
     }
 }

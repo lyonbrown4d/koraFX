@@ -24,6 +24,9 @@ data class WorkbenchState(
 sealed interface WorkbenchAction : UiAction {
     data class Navigate(val routeId: String) : WorkbenchAction
     data object ToggleTheme : WorkbenchAction
+    data object NextTheme : WorkbenchAction
+    data object PreviousTheme : WorkbenchAction
+    data class SelectTheme(val themeId: String) : WorkbenchAction
     data object IncrementCounter : WorkbenchAction
     data object DecrementCounter : WorkbenchAction
     data object ResetCounter : WorkbenchAction
@@ -74,6 +77,9 @@ class WorkbenchViewModel(
         when (action) {
             is WorkbenchAction.Navigate -> navigate(action.routeId)
             WorkbenchAction.ToggleTheme -> toggleTheme()
+            WorkbenchAction.NextTheme -> nextTheme()
+            WorkbenchAction.PreviousTheme -> previousTheme()
+            is WorkbenchAction.SelectTheme -> selectTheme(action.themeId)
             WorkbenchAction.IncrementCounter -> changeCounter(1)
             WorkbenchAction.DecrementCounter -> changeCounter(-1)
             WorkbenchAction.ResetCounter -> resetCounter()
@@ -102,6 +108,25 @@ class WorkbenchViewModel(
             themeManager.toggle()
             announce("Theme switched to ${themeManager.currentTheme().displayName}.")
         }
+    }
+
+    private fun nextTheme() {
+        themeManager.nextTheme()
+        record("Theme switched to ${themeManager.currentTheme().displayName}.")
+    }
+
+    private fun previousTheme() {
+        themeManager.previousTheme()
+        record("Theme switched to ${themeManager.currentTheme().displayName}.")
+    }
+
+    private fun selectTheme(themeId: String) {
+        if (themeManager.currentTheme().id == themeId) {
+            return
+        }
+
+        themeManager.setTheme(themeId)
+        record("Theme switched to ${themeManager.currentTheme().displayName}.")
     }
 
     private fun changeCounter(delta: Int) {

@@ -6,6 +6,7 @@ import dev.korafx.components.emptyState
 import dev.korafx.components.navigationRail
 import dev.korafx.components.section
 import dev.korafx.dsl.bindInvalid
+import dev.korafx.dsl.bindSelectedItem
 import dev.korafx.dsl.bindSelectedItemBidirectional
 import dev.korafx.dsl.bindTextBidirectional
 import dev.korafx.dsl.bindValueBidirectional
@@ -33,6 +34,7 @@ import dev.korafx.dsl.toolbar
 import dev.korafx.dsl.vbox
 import dev.korafx.dsl.workbenchLayout
 import dev.korafx.navigation.Navigator
+import dev.korafx.theme.KoraTheme
 import dev.korafx.theme.SceneThemeController
 import dev.korafx.theme.ThemeManager
 import javafx.application.Application
@@ -59,6 +61,7 @@ class SampleWorkbenchApp : Application() {
         ModuleSummary("framework-dsl", "Kotlin-first JavaFX construction API"),
         ModuleSummary("framework-mvvm", "StateFlow ViewModel helpers without DI coupling"),
         ModuleSummary("framework-components", "Optional reusable JavaFX components"),
+        ModuleSummary("framework-theme", "Selectable JavaFX theme presets from typed tokens"),
     )
     private val dslProjectName = MutableStateFlow("KoraFX")
     private val dslProjectNameError = dslProjectName.map { value ->
@@ -99,9 +102,22 @@ class SampleWorkbenchApp : Application() {
                         styleClasses("headline")
                     }
                     spacer()
-                    ghostButton("Toggle Theme") {
+                    comboBox<KoraTheme>(
+                        items = themeManager.availableThemes,
+                        init = {
+                            prefWidth = 180.0
+                        },
+                    ) {
+                        render { it.displayName }
+                        onSelect { theme ->
+                            if (theme != null) {
+                                viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+                            }
+                        }
+                    }.bindSelectedItem(uiScope, themeManager.theme)
+                    ghostButton("Next Theme") {
                         onAction {
-                            viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                            viewModel.dispatch(WorkbenchAction.NextTheme)
                         }
                     }
                 }
@@ -151,6 +167,9 @@ class SampleWorkbenchApp : Application() {
                                         }
                                         actionItem("Open MVVM Route") {
                                             viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Mvvm.id))
+                                        }
+                                        actionItem("Open Theme Route") {
+                                            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Theme.id))
                                         }
                                     }
                                 }
@@ -437,6 +456,121 @@ class SampleWorkbenchApp : Application() {
                                 }
                             }.stateVisible(uiScope, viewModel.state) {
                                 it.currentRouteId == WorkbenchRoute.Mvvm.id
+                            }
+                            vbox(spacing = 16.0) {
+                                section(
+                                    title = "Theme Presets",
+                                    description = "Choose any built-in theme. The Scene stylesheet is regenerated from typed tokens.",
+                                ) {
+                                    gridPane(
+                                        hgap = 12.0,
+                                        vgap = 10.0,
+                                    ) {
+                                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                                        column(grow = Priority.ALWAYS, fillWidth = true)
+
+                                        label(0, 0, "Preset")
+                                        cell(1, 0, horizontalGrow = Priority.ALWAYS) {
+                                            comboBox<KoraTheme>(
+                                                items = themeManager.availableThemes,
+                                                init = {
+                                                    maxWidth = Double.MAX_VALUE
+                                                },
+                                            ) {
+                                                render { it.displayName }
+                                                onSelect { theme ->
+                                                    if (theme != null) {
+                                                        viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+                                                    }
+                                                }
+                                            }.also {
+                                                it.bindSelectedItem(uiScope, themeManager.theme)
+                                            }
+                                        }
+
+                                        label(0, 1, "Current")
+                                        label(1, 1) {
+                                            styleClasses("muted")
+                                        }.stateText(uiScope, themeManager.theme) { "${it.displayName} (${it.id})" }
+                                    }
+
+                                    actionBar(alignEnd = false) {
+                                        ghostButton("Previous") {
+                                            onAction {
+                                                viewModel.dispatch(WorkbenchAction.PreviousTheme)
+                                            }
+                                        }
+                                        button("Next") {
+                                            onAction {
+                                                viewModel.dispatch(WorkbenchAction.NextTheme)
+                                            }
+                                        }
+                                        ghostButton("Light / Dark") {
+                                            onAction {
+                                                viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                section(
+                                    title = "Current Theme Tokens",
+                                    description = "These values are the source for generated JavaFX CSS.",
+                                ) {
+                                    gridPane(
+                                        hgap = 12.0,
+                                        vgap = 10.0,
+                                    ) {
+                                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                                        column(grow = Priority.ALWAYS, fillWidth = true)
+
+                                        label(0, 0, "Primary")
+                                        label(1, 0).stateText(uiScope, themeManager.theme) { it.tokens.colors.primary }
+                                        label(0, 1, "Surface")
+                                        label(1, 1).stateText(uiScope, themeManager.theme) { it.tokens.colors.surface }
+                                        label(0, 2, "Muted Surface")
+                                        label(1, 2).stateText(uiScope, themeManager.theme) { it.tokens.colors.surfaceMuted }
+                                        label(0, 3, "Text")
+                                        label(1, 3).stateText(uiScope, themeManager.theme) {
+                                            "${it.tokens.colors.textPrimary} / ${it.tokens.colors.textSecondary}"
+                                        }
+                                        label(0, 4, "Semantic")
+                                        label(1, 4).stateText(uiScope, themeManager.theme) {
+                                            "success ${it.tokens.colors.success}, warning ${it.tokens.colors.warning}, danger ${it.tokens.colors.danger}, info ${it.tokens.colors.info}"
+                                        }
+                                        label(0, 5, "Typography")
+                                        label(1, 5).stateText(uiScope, themeManager.theme) {
+                                            "${it.tokens.typography.fontFamily}, ${it.tokens.typography.baseSize}px / ${it.tokens.typography.headlineSize}px"
+                                        }
+                                        label(0, 6, "Radius")
+                                        label(1, 6).stateText(uiScope, themeManager.theme) { "${it.tokens.radius}px" }
+                                    }
+                                }
+
+                                section(
+                                    title = "Built-In Theme Catalog",
+                                    description = "The catalog is plain data, so applications can expose all presets or only a curated subset.",
+                                ) {
+                                    tableView(
+                                        items = themeManager.availableThemes,
+                                        init = {
+                                            prefHeight = 240.0
+                                            maxWidth = Double.MAX_VALUE
+                                            growVertical(Priority.SOMETIMES)
+                                        },
+                                    ) {
+                                        constrainedResize()
+                                        textColumn("Theme") { it.displayName }
+                                        textColumn("ID") { it.id }
+                                        textColumn("Primary") { it.tokens.colors.primary }
+                                        textColumn("Radius") { "${it.tokens.radius}px" }
+                                        actionColumn(title = "Action", text = "Use") { theme ->
+                                            viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+                                        }
+                                    }
+                                }
+                            }.stateVisible(uiScope, viewModel.state) {
+                                it.currentRouteId == WorkbenchRoute.Theme.id
                             }
                         }
                     }

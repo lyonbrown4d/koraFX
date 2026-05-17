@@ -23,6 +23,7 @@ import javafx.scene.control.ToggleGroup
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
+import javafx.util.StringConverter
 import java.time.LocalDate
 
 fun <T> listView(
@@ -252,6 +253,16 @@ class ComboBoxBuilder<T> internal constructor(
     fun select(item: T) {
         comboBox.selectionModel.select(item)
     }
+
+    fun <R> render(textOf: (T) -> R) {
+        comboBox.converter = itemStringConverter(comboBox.items, textOf)
+    }
+
+    fun onSelect(handler: (T?) -> Unit) {
+        comboBox.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+            handler(newValue)
+        }
+    }
 }
 
 class ChoiceBoxBuilder<T> internal constructor(
@@ -268,7 +279,29 @@ class ChoiceBoxBuilder<T> internal constructor(
     fun select(item: T) {
         choiceBox.selectionModel.select(item)
     }
+
+    fun <R> render(textOf: (T) -> R) {
+        choiceBox.converter = itemStringConverter(choiceBox.items, textOf)
+    }
+
+    fun onSelect(handler: (T?) -> Unit) {
+        choiceBox.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
+            handler(newValue)
+        }
+    }
 }
+
+private fun <T, R> itemStringConverter(
+    items: Iterable<T>,
+    textOf: (T) -> R,
+): StringConverter<T> =
+    object : StringConverter<T>() {
+        override fun toString(item: T?): String =
+            item?.let { textOf(it).toString() }.orEmpty()
+
+        override fun fromString(value: String?): T? =
+            items.firstOrNull { item -> textOf(item).toString() == value }
+    }
 
 class ContextMenuBuilder internal constructor(
     private val contextMenu: ContextMenu,
