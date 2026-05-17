@@ -117,6 +117,10 @@ Main API:
 
 - `ColorTokens`
 - `TypographyTokens`
+- `SpacingTokens`
+- `RadiusTokens`
+- `StateColorTokens`
+- `ElevationTokens`
 - `ThemeTokens`
 - `KoraTheme`
 - `BuiltInThemes`
@@ -127,11 +131,13 @@ Main API:
 `BuiltInThemes.all` exposes selectable JavaFX stylesheet presets. Use `BuiltInThemes.findById` or `ThemeManager.setTheme(id)` when theme choice is stored in user settings.
 `ThemeManager.nextTheme()` and `previousTheme()` cycle through the configured `availableThemes`; `toggle()` remains a Light/Dark convenience.
 `ColorTokens` includes semantic colors (`success`, `warning`, `danger`, `info`) so feedback, validation, and destructive actions can differ per theme.
+`ThemeTokens` also carries spacing, radius, state color, and elevation tokens so generated CSS does not hard-code control density, hover/pressed/selected states, disabled opacity, or shadows.
 
 Guidelines:
 
 - Theme tokens should remain small and CSS-oriented.
 - Components should style by stable style classes, not direct colors.
+- Prefer changing tokens before adding one-off CSS values to `ThemeStylesheetFactory`.
 
 ## framework-components
 

@@ -18,6 +18,14 @@ class ThemeManagerTest {
             assertTrue(theme.tokens.colors.warning.isNotBlank())
             assertTrue(theme.tokens.colors.danger.isNotBlank())
             assertTrue(theme.tokens.colors.info.isNotBlank())
+            assertTrue(theme.tokens.spacing.sm > 0)
+            assertEquals(theme.tokens.radius, theme.tokens.radii.medium)
+            assertTrue(theme.tokens.radii.small <= theme.tokens.radii.medium)
+            assertTrue(theme.tokens.radii.medium <= theme.tokens.radii.large)
+            assertTrue(theme.tokens.states.focus.isNotBlank())
+            assertTrue(theme.tokens.states.invalid.isNotBlank())
+            assertTrue(theme.tokens.states.disabledOpacity in 0.0..1.0)
+            assertTrue(theme.tokens.elevation.card.isNotBlank())
         }
         assertSame(BuiltInThemes.Light, BuiltInThemes.requireById("light"))
         assertSame(BuiltInThemes.GraphiteDark, BuiltInThemes.findById("graphite-dark"))
@@ -77,5 +85,21 @@ class ThemeManagerTest {
 
         manager.toggle()
         assertEquals(BuiltInThemes.Light, manager.currentTheme())
+    }
+
+    @Test
+    fun `theme tokens reject invalid dimensions and opacity`() {
+        assertFailsWith<IllegalArgumentException> {
+            SpacingTokens(sm = -1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            RadiusTokens(small = 4, medium = -1, large = 12)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            StateColorTokens.from(BuiltInThemes.Light.tokens.colors).copy(disabledOpacity = 1.4)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            BuiltInThemes.Light.tokens.copy(radius = -1)
+        }
     }
 }

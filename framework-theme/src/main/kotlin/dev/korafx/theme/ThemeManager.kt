@@ -13,37 +13,6 @@ import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import java.nio.file.Files
 
-data class ColorTokens(
-    val primary: String,
-    val surface: String,
-    val surfaceMuted: String,
-    val textPrimary: String,
-    val textSecondary: String,
-    val border: String,
-    val success: String = "#16A34A",
-    val warning: String = "#D97706",
-    val danger: String = "#DC2626",
-    val info: String = "#2563EB",
-)
-
-data class TypographyTokens(
-    val fontFamily: String,
-    val baseSize: Int,
-    val headlineSize: Int,
-)
-
-data class ThemeTokens(
-    val colors: ColorTokens,
-    val typography: TypographyTokens,
-    val radius: Int,
-)
-
-data class KoraTheme(
-    val id: String,
-    val displayName: String,
-    val tokens: ThemeTokens,
-)
-
 object BuiltInThemes {
     private val desktopTypography = TypographyTokens(
         fontFamily = "\"Segoe UI\", \"Microsoft YaHei UI\", sans-serif",

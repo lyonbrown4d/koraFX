@@ -58,30 +58,37 @@ val themeManager = ThemeManager(
 ## Custom Tokens
 
 ```kotlin
+val brandColors = ColorTokens(
+    primary = "#0F766E",
+    surface = "#F3FAF8",
+    surfaceMuted = "#FFFFFF",
+    textPrimary = "#10201D",
+    textSecondary = "#58706A",
+    border = "#C9E2DC",
+    success = "#0F9F6E",
+    warning = "#B7791F",
+    danger = "#C2410C",
+    info = "#2563EB",
+)
+
 val brandTheme = KoraTheme(
     id = "brand",
     displayName = "Brand",
     tokens = ThemeTokens(
-        colors = ColorTokens(
-            primary = "#0F766E",
-            surface = "#F3FAF8",
-            surfaceMuted = "#FFFFFF",
-            textPrimary = "#10201D",
-            textSecondary = "#58706A",
-            border = "#C9E2DC",
-            success = "#0F9F6E",
-            warning = "#B7791F",
-            danger = "#C2410C",
-            info = "#2563EB",
-        ),
+        colors = brandColors,
         typography = TypographyTokens(
             fontFamily = "\"Segoe UI\", \"Microsoft YaHei UI\", sans-serif",
             baseSize = 14,
             headlineSize = 28,
         ),
         radius = 12,
+        spacing = SpacingTokens.compact(),
+        radii = RadiusTokens.fromBase(12),
+        states = StateColorTokens.from(brandColors),
     ),
 )
 
 themeManager.setTheme(brandTheme)
 ```
+
+You can omit `spacing`, `radii`, `states`, and `elevation`; defaults are derived from `radius` and `colors`. Override them when an application needs compact density, custom hover/pressed colors, or different shadow depth.

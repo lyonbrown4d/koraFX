@@ -558,6 +558,18 @@ class SampleWorkbenchApp : Application() {
                                         }
                                         label(0, 6, "Radius")
                                         label(1, 6).stateText(uiScope, themeManager.theme) { "${it.tokens.radius}px" }
+                                        label(0, 7, "Radii")
+                                        label(1, 7).stateText(uiScope, themeManager.theme) {
+                                            "small ${it.tokens.radii.small}px, medium ${it.tokens.radii.medium}px, large ${it.tokens.radii.large}px"
+                                        }
+                                        label(0, 8, "Spacing")
+                                        label(1, 8).stateText(uiScope, themeManager.theme) {
+                                            "sm ${it.tokens.spacing.sm}px, md ${it.tokens.spacing.md}px, xl ${it.tokens.spacing.xl}px"
+                                        }
+                                        label(0, 9, "States")
+                                        label(1, 9).stateText(uiScope, themeManager.theme) {
+                                            "hover ${it.tokens.states.surfaceHover}, selected ${it.tokens.states.selected}, disabled ${it.tokens.states.disabledOpacity}"
+                                        }
                                     }
                                 }
 

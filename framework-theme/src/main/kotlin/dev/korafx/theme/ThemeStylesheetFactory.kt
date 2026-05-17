@@ -19,8 +19,12 @@ private data class ThemeCssContext(
 ) {
     val colors: ColorTokens = theme.tokens.colors
     val typography: TypographyTokens = theme.tokens.typography
-    val radius: Int = theme.tokens.radius
-    val smallRadius: Int = (radius - 4).coerceAtLeast(4)
+    val spacing: SpacingTokens = theme.tokens.spacing
+    val radii: RadiusTokens = theme.tokens.radii
+    val states: StateColorTokens = theme.tokens.states
+    val elevation: ElevationTokens = theme.tokens.elevation
+    val radius: Int = radii.medium
+    val smallRadius: Int = radii.small
 }
 
 @DslMarker
@@ -77,6 +81,26 @@ private class RuleBuilder {
         fx("background-insets", "0")
     }
 
+    fun padding(value: Int) {
+        fx("padding", "$value $value $value $value")
+    }
+
+    fun padding(
+        vertical: Int,
+        horizontal: Int,
+    ) {
+        fx("padding", "$vertical $horizontal $vertical $horizontal")
+    }
+
+    fun padding(
+        top: Int,
+        right: Int,
+        bottom: Int,
+        left: Int,
+    ) {
+        fx("padding", "$top $right $bottom $left")
+    }
+
     fun surface(
         background: String,
         border: String,
@@ -93,11 +117,13 @@ private class RuleBuilder {
 private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     val colors = context.colors
     val typography = context.typography
+    val spacing = context.spacing
+    val states = context.states
 
     rule(".root.korafx-root") {
         fx("base", colors.surfaceMuted)
         fx("accent", colors.primary)
-        fx("focus-color", colors.primary)
+        fx("focus-color", states.focus)
         fx("faint-focus-color", "transparent")
         fx("control-inner-background", colors.surfaceMuted)
         fx("background-color", colors.surface)
@@ -128,12 +154,12 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     }
 
     rule(".tool-bar") {
-        fx("padding", "12 16 12 16")
+        padding(spacing.lg, spacing.xl)
     }
 
     rule(".context-menu") {
         radius(context.smallRadius)
-        fx("padding", "6 6 6 6")
+        padding(spacing.xs)
     }
 
     rule(".menu", ".menu-item", ".check-menu-item", ".radio-menu-item") {
@@ -146,23 +172,23 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     }
 
     rule(".menu:hover", ".menu:showing", ".menu-item:focused", ".check-menu-item:focused", ".radio-menu-item:focused") {
-        fx("background-color", "derive(${colors.primary}, 82%)")
+        fx("background-color", states.rowHover)
     }
 }
 
 private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
-    val colors = context.colors
+    val states = context.states
 
     rule(".button", ".toggle-button", ".menu-button", ".split-menu-button") {
         primaryControl(context)
     }
 
     rule(".button:hover", ".toggle-button:hover", ".menu-button:hover", ".split-menu-button:hover") {
-        fx("background-color", "derive(${colors.primary}, -8%)")
+        fx("background-color", states.controlHover)
     }
 
     rule(".button:armed", ".toggle-button:selected", ".menu-button:showing", ".split-menu-button:showing") {
-        fx("background-color", "derive(${colors.primary}, -14%)")
+        fx("background-color", states.controlPressed)
     }
 
     rule(
@@ -182,7 +208,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         ".table-view:focused",
         ".tree-view:focused",
     ) {
-        fx("border-color", colors.primary)
+        fx("border-color", states.focus)
     }
 
     rule(
@@ -197,7 +223,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         ".color-picker:disabled",
         ".spinner:disabled",
     ) {
-        fx("opacity", "0.56")
+        fx("opacity", states.disabledOpacity.toString())
     }
 
     rule(".button.ghost-button", ".button.nav-button", ".toggle-button") {
@@ -205,7 +231,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
     }
 
     rule(".button.ghost-button:hover", ".button.nav-button:hover", ".toggle-button:hover") {
-        fx("background-color", "derive(${colors.surfaceMuted}, -4%)")
+        fx("background-color", states.surfaceHover)
     }
 
     rule(".button.nav-button") {
@@ -214,18 +240,20 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
     }
 
     rule(".button.nav-button-active", ".button.nav-button-active:hover", ".toggle-button:selected") {
-        fx("background-color", colors.primary)
-        fx("text-fill", "white")
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
         fx("border-color", "transparent")
     }
 
     rule(".menu-button .label", ".split-menu-button .label", ".button.nav-button-active .label") {
-        fx("text-fill", "white")
+        fx("text-fill", states.selectedText)
     }
 }
 
 private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
     val colors = context.colors
+    val spacing = context.spacing
+    val states = context.states
 
     rule(".check-box", ".radio-button") {
         fx("text-fill", colors.textPrimary)
@@ -236,12 +264,12 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
     }
 
     rule(".check-box:selected .box", ".radio-button:selected .radio") {
-        fx("background-color", colors.primary)
-        fx("border-color", colors.primary)
+        fx("background-color", states.selected)
+        fx("border-color", states.selected)
     }
 
     rule(".check-box:selected .mark", ".radio-button:selected .dot") {
-        fx("background-color", "white")
+        fx("background-color", states.selectedText)
     }
 
     rule(
@@ -262,14 +290,14 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
     }
 
     rule(".text-field", ".password-field", ".combo-box-base", ".choice-box", ".date-picker", ".color-picker", ".spinner") {
-        fx("padding", "8 10 8 10")
+        padding(spacing.sm, spacing.md)
     }
 
     rule(".text-area") {
         fx("control-inner-background", colors.surfaceMuted)
-        fx("highlight-fill", colors.primary)
-        fx("highlight-text-fill", "white")
-        fx("padding", "8px")
+        fx("highlight-fill", states.selected)
+        fx("highlight-text-fill", states.selectedText)
+        fx("padding", "${spacing.sm}px")
     }
 
     rule(".text-area .content", ".scroll-pane", ".scroll-pane .viewport") {
@@ -308,12 +336,13 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
         ".date-picker.invalid",
         ".spinner.invalid",
     ) {
-        fx("border-color", colors.danger)
+        fx("border-color", states.invalid)
     }
 }
 
 private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
     val colors = context.colors
+    val states = context.states
 
     rule(".list-view", ".table-view", ".tree-view") {
         fx("padding", "0")
@@ -326,20 +355,20 @@ private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
     }
 
     rule(".list-cell:odd", ".tree-cell:odd", ".table-row-cell:odd") {
-        fx("background-color", "derive(${colors.surfaceMuted}, -2%)")
+        fx("background-color", states.rowAlternate)
     }
 
     rule(".list-cell:hover", ".tree-cell:hover", ".table-row-cell:hover") {
-        fx("background-color", "derive(${colors.primary}, 88%)")
+        fx("background-color", states.rowHover)
     }
 
     rule(".list-cell:selected", ".tree-cell:selected", ".table-row-cell:selected") {
-        fx("background-color", colors.primary)
-        fx("text-fill", "white")
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
     }
 
     rule(".table-view .column-header-background", ".table-view .column-header", ".table-view .filler") {
-        fx("background-color", "derive(${colors.surfaceMuted}, -4%)")
+        fx("background-color", states.surfaceHover)
         fx("border-color", colors.border)
     }
 
@@ -355,6 +384,8 @@ private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
 
 private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) {
     val colors = context.colors
+    val spacing = context.spacing
+    val states = context.states
 
     rule(".tab-pane") {
         fx("background-color", colors.surface)
@@ -370,15 +401,15 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("border-color", "transparent")
         fx("background-radius", "${context.radius}px ${context.radius}px 0 0")
         fx("border-radius", "${context.radius}px ${context.radius}px 0 0")
-        fx("padding", "8 14 8 14")
+        padding(spacing.sm, spacing.xl)
     }
 
     rule(".tab-pane .tab:selected") {
-        fx("background-color", colors.primary)
+        fx("background-color", states.selected)
     }
 
     rule(".tab-pane .tab:selected .tab-label") {
-        fx("text-fill", "white")
+        fx("text-fill", states.selectedText)
     }
 
     rule(".split-pane") {
@@ -413,7 +444,7 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     }
 
     rule(".slider .thumb") {
-        fx("background-color", colors.primary)
+        fx("background-color", states.selected)
         fx("background-radius", "${context.radius}px")
     }
 
@@ -423,7 +454,7 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     }
 
     rule(".progress-bar .bar", ".progress-indicator .percentage") {
-        fx("background-color", colors.primary)
+        fx("background-color", states.selected)
     }
 
     rule(".pagination .pagination-control .button") {
@@ -436,8 +467,8 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     }
 
     rule(".pagination .pagination-control .page-number:selected") {
-        fx("background-color", colors.primary)
-        fx("text-fill", "white")
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
     }
 
     rule(".separator .line") {
@@ -449,7 +480,7 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     }
 
     rule(".scroll-bar .thumb") {
-        fx("background-color", "derive(${colors.border}, -8%)")
+        fx("background-color", states.scrollbarThumb)
         fx("background-radius", "${context.radius}px")
     }
 
@@ -467,13 +498,16 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
 private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     val colors = context.colors
     val typography = context.typography
+    val spacing = context.spacing
+    val states = context.states
+    val elevation = context.elevation
 
     rule(".panel", ".card", ".feedback-state", ".modal-card", ".snackbar", ".text-flow") {
-        surface(colors.surfaceMuted, colors.border, context.radius)
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
     }
 
     rule(".panel", ".card") {
-        fx("effect", "dropshadow(gaussian, rgba(0, 0, 0, 0.06), 10, 0.10, 0, 2)")
+        fx("effect", elevation.card)
     }
 
     rule(".section") {
@@ -490,19 +524,19 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     }
 
     rule(".action-bar") {
-        fx("padding", "8 0 0 0")
+        padding(spacing.sm, 0, 0, 0)
     }
 
     rule(".nav-rail") {
         fx("background-color", colors.surfaceMuted)
         fx("border-color", "transparent ${colors.border} transparent transparent")
-        fx("padding", "18 14 18 14")
+        padding(spacing.xxl, spacing.xl)
     }
 
     rule(".status-strip") {
         fx("background-color", colors.surfaceMuted)
         fx("border-color", "${colors.border} transparent transparent transparent")
-        fx("padding", "12 16 12 16")
+        padding(spacing.lg, spacing.xl)
     }
 
     rule(".app-shell", ".app-shell-layout") {
@@ -515,11 +549,11 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
 
     rule(".modal-backdrop") {
         fx("background-color", "rgba(17, 24, 39, 0.42)")
-        fx("padding", "24 24 24 24")
+        padding(spacing.xxxl)
     }
 
     rule(".modal-card") {
-        fx("effect", "dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.16, 0, 8)")
+        fx("effect", elevation.modal)
     }
 
     rule(".modal-title") {
@@ -528,11 +562,11 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     }
 
     rule(".modal-content") {
-        fx("padding", "4 0 4 0")
+        padding(spacing.xxs, 0)
     }
 
     rule(".modal-actions") {
-        fx("padding", "6 0 0 0")
+        padding(spacing.xs, 0, 0, 0)
     }
 
     rule(".modal-secondary-action") {
@@ -541,15 +575,15 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
 
     rule(".modal-destructive-action") {
         fx("background-color", colors.danger)
-        fx("text-fill", "white")
+        fx("text-fill", states.selectedText)
     }
 
     rule(".toast-host") {
-        fx("padding", "16 16 16 16")
+        padding(spacing.xl)
     }
 
     rule(".snackbar") {
-        fx("effect", "dropshadow(gaussian, rgba(0, 0, 0, 0.18), 12, 0.12, 0, 4)")
+        fx("effect", elevation.snackbar)
         fx("min-width", "320px")
         fx("max-width", "460px")
     }
@@ -559,7 +593,7 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     }
 
     rule(".snackbar-action", ".snackbar-dismiss") {
-        fx("padding", "8 12 8 12")
+        padding(spacing.sm, spacing.lg)
     }
 
     rule(".toast-info") {
@@ -584,21 +618,22 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     }
 
     rule(".loading-state-indicator") {
-        fx("progress-color", colors.primary)
+        fx("progress-color", states.selected)
     }
 
     rule(".validation-message") {
-        fx("text-fill", colors.danger)
+        fx("text-fill", states.invalid)
     }
 }
 
 private fun RuleBuilder.primaryControl(context: ThemeCssContext) {
-    val colors = context.colors
-    fx("background-color", colors.primary)
-    fx("text-fill", "white")
+    val spacing = context.spacing
+    val states = context.states
+    fx("background-color", states.selected)
+    fx("text-fill", states.selectedText)
     fx("border-color", "transparent")
     radius(context.radius)
-    fx("padding", "10 16 10 16")
+    padding(spacing.md, spacing.xl)
     fx("cursor", "hand")
 }
 
