@@ -5,30 +5,43 @@ import dev.korafx.components.card
 import dev.korafx.components.emptyState
 import dev.korafx.components.navigationRail
 import dev.korafx.components.section
+import dev.korafx.dsl.accordion
 import dev.korafx.dsl.bindInvalid
 import dev.korafx.dsl.bindSelectedItem
 import dev.korafx.dsl.bindSelectedItemBidirectional
 import dev.korafx.dsl.bindTextBidirectional
 import dev.korafx.dsl.bindValueBidirectional
 import dev.korafx.dsl.choiceBox
+import dev.korafx.dsl.colorPicker
 import dev.korafx.dsl.comboBox
 import dev.korafx.dsl.datePicker
 import dev.korafx.dsl.form
 import dev.korafx.dsl.ghostButton
 import dev.korafx.dsl.gridPane
 import dev.korafx.dsl.growVertical
+import dev.korafx.dsl.hyperlink
 import dev.korafx.dsl.intSpinner
+import dev.korafx.dsl.listView
+import dev.korafx.dsl.menuButton
 import dev.korafx.dsl.menuBar
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.panel
+import dev.korafx.dsl.pagination
+import dev.korafx.dsl.passwordField
+import dev.korafx.dsl.progressBar
+import dev.korafx.dsl.radioButton
 import dev.korafx.dsl.scrollPane
+import dev.korafx.dsl.slider
 import dev.korafx.dsl.stateDisable
 import dev.korafx.dsl.stateList
 import dev.korafx.dsl.stateText
 import dev.korafx.dsl.stateVisible
 import dev.korafx.dsl.statusBar
 import dev.korafx.dsl.styleClasses
+import dev.korafx.dsl.splitMenuButton
 import dev.korafx.dsl.tableView
+import dev.korafx.dsl.tabPane
+import dev.korafx.dsl.toggleButton
 import dev.korafx.dsl.treeView
 import dev.korafx.dsl.toolbar
 import dev.korafx.dsl.vbox
@@ -44,6 +57,7 @@ import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -544,6 +558,177 @@ class SampleWorkbenchApp : Application() {
                                         }
                                         label(0, 6, "Radius")
                                         label(1, 6).stateText(uiScope, themeManager.theme) { "${it.tokens.radius}px" }
+                                    }
+                                }
+
+                                section(
+                                    title = "Theme Control Gallery",
+                                    description = "Switch presets above and check whether common JavaFX controls keep a consistent surface, radius and interaction style.",
+                                ) {
+                                    vbox(spacing = 16.0) {
+                                        flowPane(
+                                            hgap = 10.0,
+                                            vgap = 10.0,
+                                        ) {
+                                            button("Primary")
+                                            ghostButton("Ghost")
+                                            toggleButton("Toggle") {
+                                                isSelected = true
+                                            }
+                                            menuButton("Menu") {
+                                                actionItem("Refresh") {
+                                                    feedbackLabel.text = "State: Menu action."
+                                                }
+                                                actionItem("Export") {
+                                                    feedbackLabel.text = "State: Export action."
+                                                }
+                                            }
+                                            splitMenuButton("Split Action") {
+                                                actionItem("Run now") {
+                                                    feedbackLabel.text = "State: Split action."
+                                                }
+                                                actionItem("Schedule") {
+                                                    feedbackLabel.text = "State: Schedule action."
+                                                }
+                                            }
+                                            hyperlink("Documentation") {
+                                                onAction {
+                                                    feedbackLabel.text = "State: Hyperlink action."
+                                                }
+                                            }
+                                        }
+
+                                        gridPane(
+                                            hgap = 12.0,
+                                            vgap = 10.0,
+                                        ) {
+                                            val toneGroup = javafx.scene.control.ToggleGroup()
+
+                                            column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                                            column(grow = Priority.ALWAYS, fillWidth = true)
+                                            column(grow = Priority.ALWAYS, fillWidth = true)
+
+                                            label(0, 0, "Text")
+                                            textField(1, 0, "Editable value") {
+                                                maxWidth = Double.MAX_VALUE
+                                            }
+                                            cell(2, 0, horizontalGrow = Priority.ALWAYS) {
+                                                passwordField("secret") {
+                                                    maxWidth = Double.MAX_VALUE
+                                                }
+                                            }
+
+                                            label(0, 1, "Selection")
+                                            cell(1, 1, horizontalGrow = Priority.ALWAYS) {
+                                                comboBox(
+                                                    items = listOf("Kotlin", "JavaFX", "StateFlow"),
+                                                    init = {
+                                                        maxWidth = Double.MAX_VALUE
+                                                    },
+                                                ) {
+                                                    select("Kotlin")
+                                                }
+                                            }
+                                            cell(2, 1, horizontalGrow = Priority.ALWAYS) {
+                                                choiceBox(
+                                                    items = listOf("Light", "Dark", "Brand"),
+                                                    init = {
+                                                        maxWidth = Double.MAX_VALUE
+                                                    },
+                                                ) {
+                                                    select("Brand")
+                                                }
+                                            }
+
+                                            label(0, 2, "Pickers")
+                                            cell(1, 2, horizontalGrow = Priority.ALWAYS) {
+                                                datePicker(LocalDate.now()) {
+                                                    maxWidth = Double.MAX_VALUE
+                                                }
+                                            }
+                                            cell(2, 2, horizontalGrow = Priority.ALWAYS) {
+                                                colorPicker(Color.web("#246BFD")) {
+                                                    maxWidth = Double.MAX_VALUE
+                                                }
+                                            }
+
+                                            label(0, 3, "Inputs")
+                                            cell(1, 3, horizontalGrow = Priority.ALWAYS) {
+                                                intSpinner(
+                                                    min = 1,
+                                                    max = 12,
+                                                    initialValue = 4,
+                                                ) {
+                                                    isEditable = true
+                                                    maxWidth = Double.MAX_VALUE
+                                                }
+                                            }
+                                            cell(2, 3, horizontalGrow = Priority.ALWAYS) {
+                                                hbox(spacing = 12.0) {
+                                                    checkBox("Enabled") {
+                                                        isSelected = true
+                                                    }
+                                                    radioButton("A", toneGroup) {
+                                                        isSelected = true
+                                                    }
+                                                    radioButton("B", toneGroup)
+                                                }
+                                            }
+                                        }
+
+                                        tabPane {
+                                            tab("Controls") {
+                                                vbox(
+                                                    spacing = 10.0,
+                                                    init = {
+                                                        prefHeight = 160.0
+                                                    },
+                                                ) {
+                                                    label("Progress")
+                                                    progressBar(0.68) {
+                                                        maxWidth = Double.MAX_VALUE
+                                                    }
+                                                    label("Slider")
+                                                    slider(
+                                                        min = 0.0,
+                                                        max = 100.0,
+                                                        value = 68.0,
+                                                    ) {
+                                                        maxWidth = Double.MAX_VALUE
+                                                    }
+                                                }
+                                            }
+                                            tab("Navigation") {
+                                                accordion {
+                                                    pane("Accordion Pane", expanded = true) {
+                                                        vbox(spacing = 8.0) {
+                                                            label("Accordion, titled panes and tabs share the same theme tokens.")
+                                                            pagination(
+                                                                pageCount = 3,
+                                                                init = {
+                                                                    maxPageIndicatorCount = 3
+                                                                },
+                                                            ) { pageIndex ->
+                                                                Label("Preview page ${pageIndex + 1}").apply {
+                                                                    styleClasses("muted")
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            tab("Lists") {
+                                                listView(
+                                                    items = listOf("List item", "Selected row style", "Hover row style"),
+                                                    init = {
+                                                        prefHeight = 160.0
+                                                        selectionModel.select("Selected row style")
+                                                    },
+                                                ) {
+                                                    render { it }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 
