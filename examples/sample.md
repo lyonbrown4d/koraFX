@@ -42,3 +42,5 @@ class MinimalApp : Application() {
 ```powershell
 .\gradlew.bat :sample-workbench-app:run
 ```
+
+The workbench sample uses property-level state selectors such as `stateText`, `stateVisible`, `stateDisable`, and `stateList` directly where nodes are declared, instead of a separate `bindUi` pass.

@@ -5,15 +5,10 @@ import dev.korafx.components.card
 import dev.korafx.components.emptyState
 import dev.korafx.components.navigationRail
 import dev.korafx.components.section
-import dev.korafx.dsl.bindDisable
-import dev.korafx.dsl.bindEach
 import dev.korafx.dsl.bindInvalid
-import dev.korafx.dsl.bindList
 import dev.korafx.dsl.bindSelectedItemBidirectional
-import dev.korafx.dsl.bindText
 import dev.korafx.dsl.bindTextBidirectional
 import dev.korafx.dsl.bindValueBidirectional
-import dev.korafx.dsl.bindVisible
 import dev.korafx.dsl.choiceBox
 import dev.korafx.dsl.comboBox
 import dev.korafx.dsl.datePicker
@@ -26,6 +21,10 @@ import dev.korafx.dsl.menuBar
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.panel
 import dev.korafx.dsl.scrollPane
+import dev.korafx.dsl.stateDisable
+import dev.korafx.dsl.stateList
+import dev.korafx.dsl.stateText
+import dev.korafx.dsl.stateVisible
 import dev.korafx.dsl.statusBar
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.tableView
@@ -40,13 +39,9 @@ import javafx.application.Application
 import javafx.geometry.HPos
 import javafx.geometry.Pos
 import javafx.scene.Scene
-import javafx.scene.control.Button
 import javafx.scene.control.Label
-import javafx.scene.control.TextArea
 import javafx.scene.control.TextField
-import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
-import javafx.scene.layout.VBox
 import javafx.stage.Stage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -96,19 +91,7 @@ class SampleWorkbenchApp : Application() {
 
     private fun buildRoot() =
         workbenchLayout {
-            lateinit var titleLabel: Label
-            lateinit var summaryLabel: Label
-            lateinit var documentArea: TextArea
-            lateinit var themeLabel: Label
             lateinit var feedbackLabel: Label
-            lateinit var eventLabel: Label
-            lateinit var dslDemo: VBox
-            lateinit var mvvmDemo: VBox
-            lateinit var counterLabel: Label
-            lateinit var draftField: TextField
-            lateinit var submitButton: Button
-            lateinit var notesBox: VBox
-            lateinit var statusBox: HBox
 
             topBar {
                 toolbar {
@@ -136,27 +119,31 @@ class SampleWorkbenchApp : Application() {
                 ) {
                     content {
                         panel {
-                            titleLabel = label {
+                            label {
                                 styleClasses("headline")
-                            }
-                            summaryLabel = label {
+                            }.stateText(uiScope, viewModel.state) { it.title }
+                            label {
                                 isWrapText = true
                                 styleClasses("muted")
-                            }
-                            documentArea = textArea {
+                            }.stateText(uiScope, viewModel.state) { it.summary }
+                            textArea {
                                 isEditable = false
                                 prefRowCount = 16
-                            }
-                            themeLabel = label {
+                            }.stateText(uiScope, viewModel.state) { it.document }
+                            label {
                                 styleClasses("muted")
-                            }
+                            }.stateText(uiScope, viewModel.state) { "Theme: ${it.currentThemeName}" }
                             feedbackLabel = label {
                                 styleClasses("muted")
-                            }
-                            eventLabel = label {
+                            }.stateText(uiScope, viewModel.state) { "State: ${it.feedbackMessage}" }
+                            label {
                                 styleClasses("muted")
+                            }.stateText(uiScope, viewModel.events) { event ->
+                                when (event) {
+                                    is WorkbenchEvent.Feedback -> "Last event: ${event.message}"
+                                }
                             }
-                            dslDemo = vbox(spacing = 16.0) {
+                            vbox(spacing = 16.0) {
                                 menuBar {
                                     menu("DSL Actions") {
                                         actionItem("Toggle Theme") {
@@ -346,15 +333,17 @@ class SampleWorkbenchApp : Application() {
                                 ) {
                                     prefHeight = 180.0
                                 }
+                            }.stateVisible(uiScope, viewModel.state) {
+                                it.currentRouteId == WorkbenchRoute.Dsl.id
                             }
-                            mvvmDemo = vbox(spacing = 16.0) {
+                            vbox(spacing = 16.0) {
                                 section(
                                     title = "StateFlow-backed ViewModel",
                                     description = "Buttons dispatch actions. The ViewModel updates state and emits feedback events.",
                                 ) {
-                                    counterLabel = label {
+                                    label {
                                         styleClasses("headline")
-                                    }
+                                    }.stateText(uiScope, viewModel.state) { "Count: ${it.mvvmCount}" }
 
                                     actionBar(alignEnd = false) {
                                         alignment(Pos.CENTER_LEFT)
@@ -389,16 +378,16 @@ class SampleWorkbenchApp : Application() {
                                         column(grow = Priority.ALWAYS, fillWidth = true)
 
                                         label(0, 0, "Draft")
-                                        draftField = textField(1, 0, "") {
+                                        textField(1, 0, "") {
                                             promptText = "Type a note for the ViewModel"
                                             maxWidth = Double.MAX_VALUE
-                                            textProperty().addListener { _, _, newValue ->
-                                                val nextValue = newValue.orEmpty()
-                                                if (viewModel.state.value.mvvmDraft != nextValue) {
-                                                    viewModel.dispatch(WorkbenchAction.UpdateDraft(nextValue))
-                                                }
+                                        }.stateText(
+                                            scope = uiScope,
+                                            state = viewModel.state,
+                                            onTextChange = { nextValue ->
+                                                viewModel.dispatch(WorkbenchAction.UpdateDraft(nextValue))
                                             }
-                                        }
+                                        ) { it.mvvmDraft }
 
                                         label(0, 1, "Notes")
                                         cell(1, 1, horizontalGrow = Priority.ALWAYS) {
@@ -408,8 +397,25 @@ class SampleWorkbenchApp : Application() {
                                                     minHeight = 150.0
                                                 },
                                             ) {
-                                            }.also {
-                                                notesBox = it
+                                            }.stateList(
+                                                scope = uiScope,
+                                                state = viewModel.state,
+                                                items = { it.mvvmNotes },
+                                                empty = {
+                                                    emptyState(
+                                                        title = "No notes yet",
+                                                        message = "Submit the draft to prove state-driven rendering.",
+                                                    ) {
+                                                        prefHeight = 130.0
+                                                    }
+                                                },
+                                            ) { note ->
+                                                ghostButton(note) {
+                                                    maxWidth = Double.MAX_VALUE
+                                                    onAction {
+                                                        viewModel.dispatch(WorkbenchAction.RecallNote(note))
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -420,13 +426,17 @@ class SampleWorkbenchApp : Application() {
                                                 viewModel.dispatch(WorkbenchAction.ClearNotes)
                                             }
                                         }
-                                        submitButton = button("Submit Draft") {
+                                        button("Submit Draft") {
                                             onAction {
                                                 viewModel.dispatch(WorkbenchAction.SubmitDraft)
                                             }
+                                        }.stateDisable(uiScope, viewModel.state) {
+                                            it.mvvmDraft.isBlank()
                                         }
                                     }
                                 }
+                            }.stateVisible(uiScope, viewModel.state) {
+                                it.currentRouteId == WorkbenchRoute.Mvvm.id
                             }
                         }
                     }
@@ -434,89 +444,18 @@ class SampleWorkbenchApp : Application() {
             }
 
             footer {
-                statusBar {}.also {
-                    statusBox = it
-                }
-            }
-
-            bindUi(
-                titleLabel = titleLabel,
-                summaryLabel = summaryLabel,
-                documentArea = documentArea,
-                themeLabel = themeLabel,
-                feedbackLabel = feedbackLabel,
-                eventLabel = eventLabel,
-                dslDemo = dslDemo,
-                mvvmDemo = mvvmDemo,
-                counterLabel = counterLabel,
-                draftField = draftField,
-                submitButton = submitButton,
-                notesBox = notesBox,
-                statusBox = statusBox,
-            )
-        }
-
-    private fun bindUi(
-        titleLabel: Label,
-        summaryLabel: Label,
-        documentArea: TextArea,
-        themeLabel: Label,
-        feedbackLabel: Label,
-        eventLabel: Label,
-        dslDemo: VBox,
-        mvvmDemo: VBox,
-        counterLabel: Label,
-        draftField: TextField,
-        submitButton: Button,
-        notesBox: VBox,
-        statusBox: HBox,
-    ) {
-        val state = viewModel.state
-
-        titleLabel.bindText(uiScope, state.map { it.title })
-        summaryLabel.bindText(uiScope, state.map { it.summary })
-        documentArea.bindText(uiScope, state.map { it.document })
-        themeLabel.bindText(uiScope, state.map { "Theme: ${it.currentThemeName}" })
-        feedbackLabel.bindText(uiScope, state.map { "State: ${it.feedbackMessage}" })
-        eventLabel.bindText(
-            uiScope,
-            viewModel.events.map { event ->
-                when (event) {
-                    is WorkbenchEvent.Feedback -> "Last event: ${event.message}"
-                }
-            },
-        )
-        dslDemo.bindVisible(uiScope, state.map { it.currentRouteId == WorkbenchRoute.Dsl.id })
-        mvvmDemo.bindVisible(uiScope, state.map { it.currentRouteId == WorkbenchRoute.Mvvm.id })
-        counterLabel.bindText(uiScope, state.map { "Count: ${it.mvvmCount}" })
-        draftField.bindText(uiScope, state.map { it.mvvmDraft })
-        submitButton.bindDisable(uiScope, state.map { it.mvvmDraft.isBlank() })
-        notesBox.bindList(
-            scope = uiScope,
-            flow = state.map { it.mvvmNotes },
-            empty = {
-                emptyState(
-                    title = "No notes yet",
-                    message = "Submit the draft to prove state-driven rendering.",
-                ) {
-                    prefHeight = 130.0
-                }
-            },
-        ) { note ->
-            ghostButton(note) {
-                maxWidth = Double.MAX_VALUE
-                onAction {
-                    viewModel.dispatch(WorkbenchAction.RecallNote(note))
+                statusBar {
+                }.stateList(
+                    scope = uiScope,
+                    state = viewModel.state,
+                    items = { it.statusItems },
+                ) { item ->
+                    label(item) {
+                        styleClasses("muted")
+                    }
                 }
             }
         }
-
-        statusBox.bindEach(uiScope, state.map { it.statusItems }) { item ->
-            label(item) {
-                styleClasses("muted")
-            }
-        }
-    }
 
     override fun stop() {
         uiScope.cancel()

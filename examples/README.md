@@ -5,7 +5,7 @@
 ## Index
 
 - [DSL Examples](dsl.md): layout、form、inputs、menu/tree、table、dialogs。
-- [Binding Examples](bindings.md): `StateFlow` binding、`RenderState` rendering。
+- [Binding Examples](bindings.md): property-level state selectors、`StateFlow` binding、`RenderState` rendering。
 - [MVVM Examples](mvvm.md): constructor injection、factory、deterministic tests、JavaFX view binding。
 - [Navigation And Components](navigation-components.md): navigator、route host、route state host、feedback、surfaces。
 - [Theme Examples](theme.md): theme wiring、custom tokens。

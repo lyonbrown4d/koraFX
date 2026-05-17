@@ -18,6 +18,87 @@ val view = panel {
 }
 ```
 
+## State Selectors In DSL
+
+For screen state, prefer binding at the property declaration site instead of collecting everything in a separate `bindUi` function:
+
+```kotlin
+data class EditorState(
+    val title: String,
+    val draft: String,
+    val notes: List<String>,
+)
+
+val scope = MainScope()
+val state = MutableStateFlow(
+    EditorState(
+        title = "Draft",
+        draft = "",
+        notes = emptyList(),
+    ),
+)
+
+val view = panel {
+    label {
+        styleClasses("headline")
+    }.stateText(scope, state) { it.title }
+
+    textField {
+        promptText = "Write a note"
+    }.stateText(
+        scope = scope,
+        state = state,
+        onTextChange = { value ->
+            state.value = state.value.copy(draft = value)
+        },
+    ) { it.draft }
+
+    button("Submit") {
+        onAction {
+            val next = state.value.draft.trim()
+            if (next.isNotEmpty()) {
+                state.value = state.value.copy(draft = "", notes = listOf(next) + state.value.notes)
+            }
+        }
+    }.stateDisable(scope, state) { it.draft.isBlank() }
+
+    vbox(spacing = 8.0) {
+    }.stateList(
+        scope = scope,
+        state = state,
+        items = { it.notes },
+        empty = {
+            label("No notes")
+        },
+    ) { note ->
+        label(note)
+    }
+}
+```
+
+Use `stateful` for a small state-aware subtree when repeating `scope` and `state` would be noisy. Plain controls are still allowed inside the block:
+
+```kotlin
+panel {
+    label("Static header")
+
+    stateful(scope, state) {
+        vbox(spacing = 8.0) {
+            label(text = { it.title })
+            textField(
+                text = { it.draft },
+                onTextChange = { value ->
+                    state.value = state.value.copy(draft = value)
+                },
+            )
+            label("Only visible when there are notes") {
+                stateVisible { it.notes.isNotEmpty() }
+            }
+        }
+    }
+}
+```
+
 ## List Bindings
 
 Use `bindItems` for native JavaFX item controls:
