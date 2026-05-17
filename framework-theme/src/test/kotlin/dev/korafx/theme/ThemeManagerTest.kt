@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class ThemeManagerTest {
     @Test
@@ -12,6 +13,12 @@ class ThemeManagerTest {
             BuiltInThemes.all.size,
             BuiltInThemes.all.map(KoraTheme::id).toSet().size,
         )
+        BuiltInThemes.all.forEach { theme ->
+            assertTrue(theme.tokens.colors.success.isNotBlank())
+            assertTrue(theme.tokens.colors.warning.isNotBlank())
+            assertTrue(theme.tokens.colors.danger.isNotBlank())
+            assertTrue(theme.tokens.colors.info.isNotBlank())
+        }
         assertSame(BuiltInThemes.Light, BuiltInThemes.requireById("light"))
         assertSame(BuiltInThemes.GraphiteDark, BuiltInThemes.findById("graphite-dark"))
         assertFailsWith<IllegalStateException> {

@@ -22,6 +22,8 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".modal-backdrop")
         assertContains(css, ".snackbar")
         assertContains(css, ".toast-success")
+        assertContains(css, "-fx-border-color: #16A34A;")
+        assertContains(css, "-fx-border-color: #DC2626;")
         assertContains(css, ".feedback-state")
         assertContains(css, ".loading-state-indicator")
     }
@@ -34,6 +36,10 @@ class ThemeStylesheetFactoryTest {
             assertContains(css, "-fx-background-color: ${theme.tokens.colors.surface};")
             assertContains(css, "-fx-font-size: ${theme.tokens.typography.baseSize}px;")
             assertContains(css, "-fx-background-radius: ${theme.tokens.radius}px;")
+            assertContains(css, "-fx-border-color: ${theme.tokens.colors.success};")
+            assertContains(css, "-fx-border-color: ${theme.tokens.colors.warning};")
+            assertContains(css, "-fx-border-color: ${theme.tokens.colors.danger};")
+            assertContains(css, "-fx-border-color: ${theme.tokens.colors.info};")
         }
     }
 }

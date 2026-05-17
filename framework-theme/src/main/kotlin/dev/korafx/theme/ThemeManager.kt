@@ -20,6 +20,10 @@ data class ColorTokens(
     val textPrimary: String,
     val textSecondary: String,
     val border: String,
+    val success: String = "#16A34A",
+    val warning: String = "#D97706",
+    val danger: String = "#DC2626",
+    val info: String = "#2563EB",
 )
 
 data class TypographyTokens(
@@ -53,6 +57,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#246BFD",
+                success = "#16A34A",
+                warning = "#D97706",
+                danger = "#DC2626",
+                info = "#2563EB",
                 surface = "#F6F7FB",
                 surfaceMuted = "#FFFFFF",
                 textPrimary = "#111827",
@@ -70,6 +78,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#7AA2FF",
+                success = "#8DD694",
+                warning = "#F7C970",
+                danger = "#FF8A8A",
+                info = "#8CB4FF",
                 surface = "#161B25",
                 surfaceMuted = "#202735",
                 textPrimary = "#F3F6FB",
@@ -87,6 +99,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#475569",
+                success = "#15803D",
+                warning = "#B45309",
+                danger = "#B91C1C",
+                info = "#2563EB",
                 surface = "#F1F5F9",
                 surfaceMuted = "#FFFFFF",
                 textPrimary = "#0F172A",
@@ -104,6 +120,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#5E81AC",
+                success = "#A3BE8C",
+                warning = "#EBCB8B",
+                danger = "#BF616A",
+                info = "#81A1C1",
                 surface = "#ECEFF4",
                 surfaceMuted = "#FFFFFF",
                 textPrimary = "#2E3440",
@@ -121,6 +141,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#268BD2",
+                success = "#859900",
+                warning = "#B58900",
+                danger = "#DC322F",
+                info = "#2AA198",
                 surface = "#FDF6E3",
                 surfaceMuted = "#EEE8D5",
                 textPrimary = "#073642",
@@ -138,6 +162,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#A78BFA",
+                success = "#86EFAC",
+                warning = "#FACC15",
+                danger = "#F87171",
+                info = "#93C5FD",
                 surface = "#111318",
                 surfaceMuted = "#1A1D24",
                 textPrimary = "#F8FAFC",
@@ -155,6 +183,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#15803D",
+                success = "#15803D",
+                warning = "#B7791F",
+                danger = "#B91C1C",
+                info = "#2563EB",
                 surface = "#F0F8F1",
                 surfaceMuted = "#FFFFFF",
                 textPrimary = "#102417",
@@ -172,6 +204,10 @@ object BuiltInThemes {
         tokens = ThemeTokens(
             colors = ColorTokens(
                 primary = "#E11D48",
+                success = "#16A34A",
+                warning = "#C2410C",
+                danger = "#BE123C",
+                info = "#2563EB",
                 surface = "#FFF1F2",
                 surfaceMuted = "#FFFFFF",
                 textPrimary = "#3F0B16",

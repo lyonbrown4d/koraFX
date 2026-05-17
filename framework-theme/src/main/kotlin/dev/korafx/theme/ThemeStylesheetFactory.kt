@@ -138,7 +138,7 @@ object ThemeStylesheetFactory {
             .choice-box.invalid,
             .date-picker.invalid,
             .spinner.invalid {
-                -fx-border-color: ${colors.primary};
+                -fx-border-color: ${colors.danger};
             }
 
             .hyperlink {
@@ -208,7 +208,7 @@ object ThemeStylesheetFactory {
             }
 
             .modal-destructive-action {
-                -fx-background-color: #B91C1C;
+                -fx-background-color: ${colors.danger};
                 -fx-text-fill: white;
             }
 
@@ -239,11 +239,20 @@ object ThemeStylesheetFactory {
                 -fx-padding: 8 12 8 12;
             }
 
-            .toast-info,
-            .toast-success,
-            .toast-warning,
+            .toast-info {
+                -fx-border-color: ${colors.info};
+            }
+
+            .toast-success {
+                -fx-border-color: ${colors.success};
+            }
+
+            .toast-warning {
+                -fx-border-color: ${colors.warning};
+            }
+
             .toast-error {
-                -fx-border-color: ${colors.primary};
+                -fx-border-color: ${colors.danger};
             }
 
             .feedback-state {
@@ -268,7 +277,7 @@ object ThemeStylesheetFactory {
             }
 
             .error-state {
-                -fx-border-color: ${colors.primary};
+                -fx-border-color: ${colors.danger};
             }
 
             .form-label {
@@ -280,7 +289,7 @@ object ThemeStylesheetFactory {
             }
 
             .validation-message {
-                -fx-text-fill: ${colors.primary};
+                -fx-text-fill: ${colors.danger};
             }
 
             .muted {

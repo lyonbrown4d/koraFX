@@ -51,6 +51,10 @@ val brandTheme = KoraTheme(
             textPrimary = "#10201D",
             textSecondary = "#58706A",
             border = "#C9E2DC",
+            success = "#0F9F6E",
+            warning = "#B7791F",
+            danger = "#C2410C",
+            info = "#2563EB",
         ),
         typography = TypographyTokens(
             fontFamily = "\"Segoe UI\", \"Microsoft YaHei UI\", sans-serif",

@@ -118,6 +118,7 @@ Main API:
 
 `BuiltInThemes.all` exposes selectable JavaFX stylesheet presets. Use `BuiltInThemes.findById` or `ThemeManager.setTheme(id)` when theme choice is stored in user settings.
 `ThemeManager.nextTheme()` and `previousTheme()` cycle through the configured `availableThemes`; `toggle()` remains a Light/Dark convenience.
+`ColorTokens` includes semantic colors (`success`, `warning`, `danger`, `info`) so feedback, validation, and destructive actions can differ per theme.
 
 Guidelines:
 
