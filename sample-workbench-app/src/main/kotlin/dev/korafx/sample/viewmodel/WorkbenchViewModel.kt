@@ -1,12 +1,12 @@
 package dev.korafx.sample.viewmodel
 
-import dev.korafx.mvvm.UiAction
-import dev.korafx.mvvm.UiEvent
-import dev.korafx.mvvm.ViewModel
-import dev.korafx.mvvm.ViewState
-import dev.korafx.navigation.Navigator
+import dev.korafx.framework.mvvm.UiAction
+import dev.korafx.framework.mvvm.UiEvent
+import dev.korafx.framework.mvvm.ViewModel
+import dev.korafx.framework.mvvm.ViewState
+import dev.korafx.framework.navigation.Navigator
 import dev.korafx.sample.navigation.WorkbenchRoute
-import dev.korafx.theme.ThemeManager
+import dev.korafx.framework.theme.ThemeManager
 import kotlinx.coroutines.flow.collectLatest
 
 data class WorkbenchState(

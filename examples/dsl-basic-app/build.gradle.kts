@@ -14,7 +14,7 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":framework-dsl"))
+    implementation(project(":korafx-dsl"))
 }
 
 application {

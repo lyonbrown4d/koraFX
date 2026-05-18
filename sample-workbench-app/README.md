@@ -2,6 +2,13 @@
 
 This module is the full demo application for KoraFX. It is intentionally structured like a real desktop tool instead of a single-file showcase.
 
+The sample depends on the direct framework path:
+
+```kotlin
+implementation(project(":korafx-framework"))
+implementation(project(":korafx-components"))
+```
+
 ## Package Layout
 
 - `dev.korafx.sample.SampleWorkbenchApp`: JavaFX lifecycle only. It creates the DI graph, binds the scene theme, and closes resources.
@@ -17,7 +24,7 @@ This module is the full demo application for KoraFX. It is intentionally structu
 The sample uses Koin in the application layer:
 
 - `ThemeManager`, `Navigator`, `WorkbenchViewModel`, `SceneThemeController`, demo catalog, and command palette are registered in a Koin module.
-- KoraFX core modules do not depend on Koin. Applications can use Koin, Dagger, Spring, manual factories, or any other composition strategy.
+- `korafx-framework` provides Koin as the default application composition path.
 - `WorkbenchAppGraph` acts as the boundary between JavaFX lifecycle and injected application services.
 
 ## What It Demonstrates

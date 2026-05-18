@@ -2,14 +2,15 @@ package dev.korafx.sample.di
 
 import dev.korafx.components.CommandPaletteCommand
 import dev.korafx.components.CommandPaletteHost
-import dev.korafx.navigation.Navigator
+import dev.korafx.framework.koraFrameworkModule
+import dev.korafx.framework.navigation.Navigator
 import dev.korafx.sample.data.InMemoryWorkbenchCatalog
 import dev.korafx.sample.data.WorkbenchCatalog
 import dev.korafx.sample.navigation.WorkbenchRoute
 import dev.korafx.sample.viewmodel.WorkbenchAction
 import dev.korafx.sample.viewmodel.WorkbenchViewModel
-import dev.korafx.theme.SceneThemeController
-import dev.korafx.theme.ThemeManager
+import dev.korafx.framework.theme.SceneThemeController
+import dev.korafx.framework.theme.ThemeManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -38,7 +39,13 @@ class WorkbenchAppGraph private constructor(
     companion object {
         fun create(): WorkbenchAppGraph {
             val koinApplication = startKoin {
-                modules(workbenchModule())
+                modules(
+                    koraFrameworkModule(
+                        initialRoute = WorkbenchRoute.Overview,
+                        routes = WorkbenchRoute.all,
+                    ),
+                    workbenchModule(),
+                )
             }
             val koin = koinApplication.koin
 
@@ -58,15 +65,7 @@ class WorkbenchAppGraph private constructor(
             module {
                 single<CoroutineScope> { MainScope() }
                 single<WorkbenchCatalog> { InMemoryWorkbenchCatalog() }
-                single { ThemeManager() }
-                single {
-                    Navigator(
-                        initialRoute = WorkbenchRoute.Overview,
-                        routes = WorkbenchRoute.all,
-                    )
-                }
                 single { WorkbenchViewModel(get(), get()) }
-                single { SceneThemeController(get()) }
                 single { CommandPaletteHost(commandPaletteCommands(get())) }
             }
 

@@ -4,12 +4,9 @@ import org.gradle.api.provider.Provider
 private val publishableModules =
     setOf(
         "korafx-bom",
-        "framework-dsl",
-        "framework-state",
-        "framework-mvvm",
-        "framework-navigation",
-        "framework-theme",
-        "framework-components",
+        "korafx-framework",
+        "korafx-dsl",
+        "korafx-components",
     )
 
 private val publishingPropertyKeys =
@@ -41,19 +38,19 @@ fun Project.isBomModule(): Boolean = name == "korafx-bom"
 fun Project.publishedArtifactId(): String =
     when (name) {
         "korafx-bom" -> "korafx-bom"
-        "framework-dsl" -> "korafx-dsl"
-        "framework-state" -> "korafx-state"
-        "framework-mvvm" -> "korafx-mvvm"
-        "framework-navigation" -> "korafx-navigation"
-        "framework-theme" -> "korafx-theme"
-        "framework-components" -> "korafx-components"
+        "korafx-framework" -> "korafx-framework"
+        "korafx-dsl" -> "korafx-dsl"
+        "korafx-components" -> "korafx-components"
         else -> name
     }
 
 fun Project.publishedDescription(): String =
     when (name) {
         "korafx-bom" -> "Bill of materials for aligning KoraFX module versions."
-        else -> "KoraFX ${name.removePrefix("framework-")} module for Kotlin-friendly JavaFX development."
+        "korafx-dsl" -> "Kotlin-first JavaFX DSL and Flow state binding primitives."
+        "korafx-framework" -> "Kotlin-first JavaFX application framework with Koin, MVVM, navigation and theme services."
+        "korafx-components" -> "Reusable JavaFX workbench components for KoraFX applications."
+        else -> "KoraFX module for Kotlin-friendly JavaFX development."
     }
 
 fun Project.applyPublishingPropsFromDotenv() {

@@ -6,10 +6,10 @@ import dev.korafx.dsl.cssStyle
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.vbox
-import dev.korafx.mvvm.UiAction
-import dev.korafx.mvvm.UiEvent
-import dev.korafx.mvvm.ViewModel
-import dev.korafx.mvvm.ViewState
+import dev.korafx.framework.mvvm.UiAction
+import dev.korafx.framework.mvvm.UiEvent
+import dev.korafx.framework.mvvm.ViewModel
+import dev.korafx.framework.mvvm.ViewState
 import javafx.application.Application
 import javafx.geometry.Insets
 import javafx.geometry.Pos

@@ -14,8 +14,7 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":framework-dsl"))
-    implementation(project(":framework-mvvm"))
+    implementation(project(":korafx-framework"))
     implementation(libs.kotlinx.coroutines.javafx)
 }
 

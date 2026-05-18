@@ -2,7 +2,7 @@
 
 KoraFX uses `com.vanniktech.maven.publish` and reads publishing metadata from environment variables.
 Current coordinates are under groupId `io.github.daiyuang`.
-Published artifactIds use the `korafx-*` prefix, for example `korafx-dsl`.
+Published artifactIds use the `korafx-*` prefix, for example `korafx-framework`.
 The BOM artifactId is `korafx-bom`.
 
 ## Env file example
@@ -17,8 +17,8 @@ signingInMemoryKey=<gpg-private-key-block>
 signingInMemoryKeyId=<gpg-key-id>
 signingInMemoryKeyPassword=<gpg-key-password>
 
-POM_NAME=korafx-dsl
-POM_DESCRIPTION=Kotlin-friendly JavaFX DSL module for KoraFX.
+POM_NAME=korafx-framework
+POM_DESCRIPTION=Kotlin-first JavaFX application framework with Koin, MVVM, navigation and theme services.
 POM_INCEPTION_YEAR=2026
 POM_URL=https://github.com/DaiYuANg/koraFX
 POM_LICENSE_NAME=The Apache License, Version 2.0
@@ -37,32 +37,32 @@ Per-module publish usually only needs different `POM_NAME` and `POM_DESCRIPTION`
 ## Typical commands
 
 ```powershell
-.\gradlew.bat :framework-dsl:publishToMavenCentral --no-configuration-cache
+.\gradlew.bat :korafx-framework:publishToMavenCentral --no-configuration-cache
 ```
 
 ```properties
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
-implementation("io.github.daiyuang:korafx-dsl:<version>")
+implementation("io.github.daiyuang:korafx-framework:<version>")
 ```
 
 With the BOM, omit repeated module versions:
 
 ```properties
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
-implementation("io.github.daiyuang:korafx-dsl")
-implementation("io.github.daiyuang:korafx-mvvm")
+implementation("io.github.daiyuang:korafx-framework")
+implementation("io.github.daiyuang:korafx-components")
 ```
 
 Local validation:
 
 ```powershell
-.\gradlew.bat :framework-dsl:publishToMavenLocal --no-configuration-cache
+.\gradlew.bat :korafx-framework:publishToMavenLocal --no-configuration-cache
 ```
 
 Close and release Central staging repository:
 
 ```powershell
-.\gradlew.bat :framework-dsl:closeAndReleaseRepository --no-configuration-cache
+.\gradlew.bat :korafx-framework:closeAndReleaseRepository --no-configuration-cache
 ```
 
 Publish all library modules (sample app is excluded):

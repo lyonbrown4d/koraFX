@@ -17,12 +17,9 @@ dependencyResolutionManagement {
 
 include(
     ":korafx-bom",
-    ":framework-dsl",
-    ":framework-state",
-    ":framework-mvvm",
-    ":framework-navigation",
-    ":framework-theme",
-    ":framework-components",
+    ":korafx-dsl",
+    ":korafx-framework",
+    ":korafx-components",
     ":examples:dsl-basic-app",
     ":examples:mvvm-counter-app",
     ":examples:navigation-theme-app",

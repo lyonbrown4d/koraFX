@@ -1,172 +1,83 @@
 # KoraFX Design
 
-KoraFX 的目标不是做一个完整 JavaFX App Framework，而是提供一套更适合 Kotlin 使用的 JavaFX 开发辅助库。
+KoraFX is now a Kotlin-first JavaFX framework, not only a thin utility collection.
 
-当前边界收敛为三层：
+The framework stays direct and small by exposing three runtime modules:
 
-1. DSL：封装 JavaFX API，让布局、控件、事件、样式和绑定写法更 Kotlin-friendly。
-2. MVVM：提供轻量 ViewModel、StateFlow 状态、Action/Event 模型和生命周期释放。
-3. Components：基于 DSL 和 MVVM 封装少量常用组件，例如路由、导航、主题、表单、对话框。
+```text
+korafx-dsl
+korafx-framework
+korafx-components
+```
 
-## Non-goals
-
-第一阶段不做这些内容：
-
-- 不绑定任何 DI 框架。
-- 不封装完整应用启动器。
-- 不做命令系统框架。
-- 不做窗口管理平台。
-- 不隐藏 JavaFX 原生 API。
-- 不替用户决定工程架构。
+`korafx-bom`, examples, and the workbench sample support publishing and adoption, but they are not part of the runtime split.
 
 ## Module Boundaries
 
+### korafx-dsl
+
+Lowest-level user-facing module.
+
+Responsibilities:
+
+- JavaFX layout and control builders.
+- Event, spacing, grow, alignment, style-class, and CSS helpers.
+- Flow-to-node binding helpers.
+- Lightweight state primitives under `dev.korafx.dsl.state`.
+- Stateful rendering helpers such as `stateful`, `bindList`, and `bindRenderState`.
+- Form and dialog thin wrappers.
+
+Constraint: keep JavaFX native nodes visible and usable. The DSL should reduce repetitive setup, not replace JavaFX concepts.
+
+### korafx-framework
+
+Default application framework module.
+
+Responsibilities:
+
+- MVVM primitives under `dev.korafx.framework.mvvm`.
+- Navigation primitives under `dev.korafx.framework.navigation`.
+- Theme services under `dev.korafx.framework.theme`.
+- Koin-backed application composition through `koraFrameworkModule`.
+- JavaFX coroutine integration.
+
+Koin is the default framework-level composition model. ViewModels should still use constructor injection so they remain easy to test and can be instantiated manually when needed.
+
+### korafx-components
+
+Optional component/workbench module.
+
+Responsibilities:
+
+- Reusable JavaFX components for desktop tools.
+- Workbench layouts, navigation surfaces, editors, data grids, inspector panels, timelines, command palette, feedback states, and semantic display controls.
+- Stable style classes that can be fully covered by framework themes.
+
+Components remain normal JavaFX nodes. They may accept explicit framework services such as `Navigator`, `ThemeManager`, `CoroutineScope`, callbacks, and state flows.
+
+## Package Boundaries
+
 ```text
-framework-dsl
-framework-state
-framework-mvvm
-framework-navigation
-framework-theme
-framework-components
-sample-workbench-app
+dev.korafx.dsl.*
+dev.korafx.framework.*
+dev.korafx.components.*
 ```
 
-### framework-dsl
-
-最高优先级模块。
-
-目标：
-
-- 覆盖常用 JavaFX layout。
-- 覆盖常用 JavaFX controls。
-- 提供事件、样式、padding、margin、grow、alignment 等小型扩展。
-- 提供 Flow 到 JavaFX 节点的绑定工具。
-- 提供 `RenderState`、`bindList`、`bindRenderState` 等轻量渲染工具。
-- 提供 form/dialog 的薄封装。
-- 保持薄封装，允许随时回到原生 JavaFX API。
-
-### framework-state
-
-为 MVVM 和组件提供最小状态原语。
-
-目标：
-
-- `MutableStateStore`
-- `UiEventStream`
-- Flow collection helpers
-
-### framework-mvvm
-
-不依赖 DI。
-
-ViewModel 的创建方式由应用层决定，可以手写构造，也可以用 Koin、Dagger、Spring 或自定义 factory。
-
-目标：
-
-- `ViewState`
-- `UiAction`
-- `UiEvent`
-- `ViewModel<S, A, E>`
-- `ViewModelFactory`
-- `awaitState`
-- `awaitEvent`
-- ViewModel lifecycle cleanup
-
-生命周期规则：
-
-- `close()` 必须由拥有者调用，例如 `Application.stop` 或页面销毁逻辑。
-- `close()` 是幂等的。
-- `isClosed` 可用于调试或断言生命周期。
-- 关闭后，`dispatch`、状态更新和事件发送 helper 都是 no-op。
-
-### framework-navigation
-
-作为常用组件存在，不作为核心框架。
-
-目标：
-
-- `Route`
-- `Navigator`
-- 当前路由状态
-- 简单页面切换模型
-
-### framework-theme
-
-作为常用组件存在。
-
-目标：
-
-- theme tokens
-- runtime theme switching
-- JavaFX stylesheet generation
-
-### framework-components
-
-基于 `framework-dsl`、`framework-navigation` 和后续 MVVM 能力提供可选 UI 组件。
-
-目标：
-
-- 保持组件轻量。
-- 不引入应用框架生命周期。
-- 不绑定 DI。
-- 组件接受显式依赖，例如 `CoroutineScope`、`Navigator`、`ThemeManager`。
-
-当前组件：
-
-- `navigationRail`
-- `routeHost`
-- `routeStateHost`
-- `emptyState`
-- `loadingState`
-- `errorState`
-- `card`
-- `section`
-- `actionBar`
-
-## Iteration Order
-
-1. 完整完善 DSL。
-2. 稳定 MVVM 设计。
-3. 基于 DSL + MVVM 抽常用组件。
-4. 最后再考虑测试、文档、发布。
+Avoid adding new top-level runtime packages unless a feature clearly cannot fit one of these three areas.
 
 ## API Naming Guidelines
 
-当前 API 命名约定见 [docs/API.md](docs/API.md)。
+- `bindX` means continuous Flow binding from state to JavaFX nodes.
+- `bindXBidirectional` means the control writes back to `MutableStateFlow`.
+- `stateX` means a DSL node derives one property from screen state.
+- `XHost` means a component hosts or switches child content.
+- `XState` means a small state model for rendering.
+- Keep low-level DSL names close to JavaFX class names.
+- Keep framework-owned names in `dev.korafx.framework.*`.
 
-简要规则：
+## Iteration Order
 
-- `bindX` 表示从 `Flow` 到 JavaFX 节点的持续绑定。
-- `bindXBidirectional` 表示控件会写回 `MutableStateFlow`。
-- `renderX` 表示基于当前值的一次性渲染。
-- `XHost` 表示负责切换子节点内容的容器组件。
-- `XState` 表示小型状态类型。
-- 避免 `Application`、`Module`、`Container`、`Command` 等容易把库推向完整框架的命名。
-
-## MVVM And DI
-
-MVVM 不应该直接耦合任何依赖注入库。
-
-原因：
-
-- DI 是应用组装方式，不是 MVVM 模型本身。
-- 一旦耦合 Koin，用户就必须接受 Koin 的生命周期和模块模型。
-- 轻量库更适合保持 constructor injection，由应用层选择是否接入 DI。
-
-推荐方式：
-
-```kotlin
-val themeManager = ThemeManager()
-val navigator = Navigator(initialRoute, routes)
-val viewModel = WorkbenchViewModel(themeManager, navigator)
-```
-
-如果用户想用 DI，可以在应用层这样做：
-
-```kotlin
-single { ThemeManager() }
-single { Navigator(initialRoute = Home, routes = AppRoute.all) }
-single { HomeViewModel(get(), get()) }
-```
-
-KoraFX 只需要保证 ViewModel 易于构造、易于释放、易于测试。
+1. Stabilize the DSL and state binding surface.
+2. Stabilize the framework composition model around Koin, MVVM, navigation, and theme.
+3. Expand components for realistic Git/database/workbench applications.
+4. Keep sample-workbench-app as the complete reference application.

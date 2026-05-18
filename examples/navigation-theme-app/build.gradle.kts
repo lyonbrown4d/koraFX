@@ -14,11 +14,8 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":framework-components"))
-    implementation(project(":framework-dsl"))
-    implementation(project(":framework-navigation"))
-    implementation(project(":framework-theme"))
-    implementation(libs.kotlinx.coroutines.javafx)
+    implementation(project(":korafx-framework"))
+    implementation(project(":korafx-components"))
 }
 
 application {

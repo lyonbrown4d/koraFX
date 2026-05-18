@@ -234,8 +234,8 @@ data class ModuleRow(
 )
 
 val rows = listOf(
-    ModuleRow("framework-dsl", "Kotlin-first JavaFX API"),
-    ModuleRow("framework-mvvm", "StateFlow ViewModel helpers"),
+    ModuleRow("korafx-dsl", "Kotlin-first JavaFX API"),
+    ModuleRow("korafx-framework", "StateFlow ViewModel helpers"),
 )
 
 val table = tableView(items = rows) {

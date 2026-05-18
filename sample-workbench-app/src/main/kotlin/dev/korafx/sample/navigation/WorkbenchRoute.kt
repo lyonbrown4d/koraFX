@@ -1,6 +1,6 @@
 package dev.korafx.sample.navigation
 
-import dev.korafx.navigation.Route
+import dev.korafx.framework.navigation.Route
 
 sealed class WorkbenchRoute(
     override val id: String,
@@ -24,12 +24,9 @@ sealed class WorkbenchRoute(
             - ui renders JavaFX nodes through the KoraFX DSL and components
 
             Demonstrated modules:
-            - framework-dsl
-            - framework-state
-            - framework-mvvm
-            - framework-navigation
-            - framework-theme
-            - framework-components
+            - korafx-dsl
+            - korafx-framework
+            - korafx-components
             """.trimIndent(),
     )
 
@@ -77,19 +74,14 @@ sealed class WorkbenchRoute(
     data object Mvvm : WorkbenchRoute(
         id = "mvvm",
         title = "MVVM",
-        summary = "The MVVM layer is based on StateFlow and does not depend on Koin, Dagger, Spring, or any other DI library.",
+        summary = "The MVVM layer is based on StateFlow and is wired by the framework through Koin-friendly constructor injection.",
         document =
             """
             MVVM Layer
 
             ViewModel owns state and events.
-            The application decides how ViewModels are created:
-            - manual construction
-            - Koin
-            - Dagger
-            - custom factory
-
-            KoraFX should not couple MVVM to a DI container.
+            korafx-framework provides a Koin composition module for application services.
+            ViewModels stay constructor-injection friendly, so tests can still instantiate them directly.
             """.trimIndent(),
     )
 

@@ -23,10 +23,9 @@ interface WorkbenchCatalog {
 
 class InMemoryWorkbenchCatalog : WorkbenchCatalog {
     override val moduleSummaries = listOf(
-        ModuleSummary("framework-dsl", "Kotlin-first JavaFX construction API"),
-        ModuleSummary("framework-mvvm", "StateFlow ViewModel helpers without DI coupling"),
-        ModuleSummary("framework-components", "Optional reusable JavaFX components"),
-        ModuleSummary("framework-theme", "Selectable JavaFX theme presets from typed tokens"),
+        ModuleSummary("korafx-dsl", "Kotlin-first JavaFX construction API"),
+        ModuleSummary("korafx-framework", "Koin-backed MVVM, navigation and theme services"),
+        ModuleSummary("korafx-components", "Optional reusable JavaFX components"),
     )
 
     override val editableModules = listOf(

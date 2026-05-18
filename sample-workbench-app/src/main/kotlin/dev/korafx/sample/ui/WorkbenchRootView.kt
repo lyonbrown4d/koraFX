@@ -70,8 +70,8 @@ import dev.korafx.sample.domain.ExplorerResource
 import dev.korafx.sample.navigation.WorkbenchRoute
 import dev.korafx.sample.viewmodel.WorkbenchAction
 import dev.korafx.sample.viewmodel.WorkbenchEvent
-import dev.korafx.theme.KoraTheme
-import dev.korafx.theme.ThemeStyleClass
+import dev.korafx.framework.theme.KoraTheme
+import dev.korafx.framework.theme.ThemeStyleClass
 import javafx.geometry.HPos
 import javafx.geometry.Pos
 import javafx.scene.control.Label

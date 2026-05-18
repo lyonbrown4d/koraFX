@@ -1,12 +1,13 @@
 # KoraFX Roadmap
 
-This roadmap tracks component work that should stay reusable across real desktop applications, especially Git source tools and database GUI tools. The intent is to keep `framework-components` useful without turning KoraFX into a full application framework.
+This roadmap tracks framework and component work for real desktop applications, especially Git source tools and database GUI tools. KoraFX now uses `korafx-framework` as the direct application entry, with `korafx-components` as the optional workbench/component layer.
 
 ## Principles
 
 - Components return normal JavaFX nodes and keep native JavaFX APIs accessible.
-- Components provide stable style classes so `framework-theme` can cover them consistently.
-- Components accept explicit callbacks and state; they should not own persistence, DI, or application lifecycle.
+- Components provide stable style classes so `korafx-framework` theme services can cover them consistently.
+- `korafx-framework` provides the default Koin-backed application model.
+- Components accept explicit callbacks and state; framework services can be injected by the application layer.
 - DSL should remove repetitive JavaFX setup, not hide JavaFX concepts.
 - Each component should land with tests, theme selectors, documentation, and sample usage.
 

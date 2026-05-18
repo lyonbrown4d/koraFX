@@ -1,178 +1,93 @@
 # KoraFX API Overview
 
-KoraFX 的 API 目标是薄封装 JavaFX，而不是替换 JavaFX。命名规则尽量保持可预测：
+KoraFX is now oriented as a Kotlin-first JavaFX application framework. The default path should be direct:
 
-- `lowerCamelCase` top-level factory 创建 JavaFX 节点，例如 `vbox`、`button`、`tableView`。
-- `NodeContainerBuilder` 扩展用于在 DSL block 内追加节点，例如 `panel { button("Save") }`。
-- `bindX` 表示从 `Flow` 或 `MutableStateFlow` 绑定到 JavaFX 节点。
-- `stateX` 表示从某个 `Flow<S>` 选择字段并绑定到节点属性，例如 `label().stateText(scope, state) { it.title }`。
-- `renderX` 表示一次性根据当前值渲染节点。
-- `routeX` 表示基于 `Navigator` 的路由组件。
-- `XState` 表示轻量状态模型，例如 `RenderState`、`NavigationState`。
+```kotlin
+implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
+implementation("io.github.daiyuang:korafx-framework")
+implementation("io.github.daiyuang:korafx-components")
+```
 
-## framework-dsl
+Runtime code is intentionally split into three publishable modules: `korafx-dsl`, `korafx-framework`, and `korafx-components`.
 
-`framework-dsl` 是核心模块，保持 Kotlin-friendly，但不隐藏原生 JavaFX API。
+## korafx-framework
 
-主要能力：
+`korafx-framework` is the default application layer. It exports:
 
-- Layout factories: `borderPane`、`vbox`、`hbox`、`stackPane`、`gridPane`、`flowPane`、`tilePane`、`anchorPane`、`scrollPane`、`splitPane`、`tabPane`。
-- Control factories: `label`、`button`、`checkBox`、`textField`、`textArea`、`listView`、`comboBox`、`choiceBox`、`slider`、`datePicker`、`colorPicker`、`radioButton`、`toggleButton`。
-- Advanced controls: `treeView`、`tableView`、`accordion`、`titledPane`、`spinner`、`progressBar`、`pagination`。
-- Layout helpers: `insets`、`padding`、`margin`、`growHorizontal`、`growVertical`、`align`、`gridAlign`。
-- Styling helpers: `styleClass`、`styleClasses`、`toggleStyleClass`、`pseudoClass`、`invalidWhen`。
-- Style DSL: `cssStyle`、`cssStyleOf`、`cssAppend`、`styleRaw`，以及 `fx`/`backgroundColor`/`textFill`/`padding`/`radius` 等常用属性函数。`cssStyleOf` 返回可复用的 `CssStyle` 对象，`cssStyle(style)` 可直接应用到节点。
-- Binding helpers: `bindStyle`（Flow -> Node 样式）和 `stateStyle`（Stateful DSL 风格绑定）。
-- Event helpers: `onAction` for `ButtonBase` and `MenuItem`.
-- Binding helpers: `bindText`、`bindVisible`、`bindDisable`、`bindStyle`、`bindItems`、`bindSelectedItem`、`bindValue`、`bindProgress`、`bindInvalid`、`bindValidation`。
-- State selector helpers: `stateText`、`stateVisible`、`stateDisable`、`stateStyleClass`、`stateValidation`、`stateList`、`stateful`。
-- Bidirectional bindings: text input、toggle selected、selection controls、slider、spinner、date picker。
-- Render helpers: `fragment`、`renderIf`、`renderUnless`、`renderEach`、`bindContent`、`bindChildren`、`bindEach`、`bindList`、`bindRenderState`。
-- Form/dialog helpers: `form`、`submitBar`、`validationMessage`、`alert`、`confirmation`、`textInputDialog`、`customDialog`。
-- Selection control helpers: `listView`、`comboBox`、`choiceBox` support `render { ... }` and `onSelect { ... }` for object lists.
-
-Guidelines:
-
-- Prefer adding tiny JavaFX extension helpers over wrapping whole concepts.
-- Keep factory names close to JavaFX class names.
-- Expose `init: Node.() -> Unit` so callers can still use native JavaFX properties.
-- Use `Flow` bindings for dynamic state; do not introduce a DSL-owned state model.
-- Prefer `stateX(scope, state) { selector }` when a node belongs to normal DSL but one property depends on state.
-- Use `stateful(scope, state) { ... }` only for a local state-aware subtree; plain DSL remains the default for static UI.
-- Prefer `bindList` when list items need multiple nodes or an empty state; use `bindChildren` for one node per item.
-- Prefer dialog builder names that mirror JavaFX properties, such as `buttonTypes`; shorter aliases like `buttons` may exist for readability.
-
-Binding selection guide:
-
-| API | Use when | Effect |
-| --- | --- | --- |
-| `bindItems` | Target is `ListView`、`ComboBox`、`ChoiceBox`、`TableView`. | Replaces the control's `items` from `Flow<List<T>>`. |
-| `bindChildren` | Target is a `Pane` and each item maps to exactly one `Node`. | Replaces `children`; the node factory runs on the JavaFX Application Thread. |
-| `bindList` / `bindEach` | Target is a `Pane` and each item may render a fragment or the list needs an empty state. | Replaces `children` using `FragmentBuilder`. |
-| `bindRenderState` | UI must represent loading, empty, failed, and content states explicitly. | Replaces `children` from a `RenderState<T>`. |
-| `stateText` / `stateVisible` / `stateDisable` | Target is a normal DSL node but a property is derived from a screen state flow. | Collects `Flow<S>` and applies a selector at the property declaration site. |
-| `stateList` | Target is a normal `Pane` and list items are derived from a screen state flow. | Replaces `children` from `state.map(selector)` with optional empty content. |
-| `stateful` | A small subtree should share one screen state without repeating `scope` and `state`. | Provides state-aware overloads such as `label(text = { it.title })`. |
-
-## framework-state
-
-Small primitives shared by MVVM and components.
+- DSL builders from `korafx-dsl`
+- State primitives from `dev.korafx.dsl.state`
+- MVVM primitives from `dev.korafx.framework.mvvm`
+- Navigation from `dev.korafx.framework.navigation`
+- Theme services from `dev.korafx.framework.theme`
+- Koin core as the default DI runtime
+- Coroutines JavaFX integration
 
 Main API:
 
-- `MutableStateStore<S>`
-- `UiEventStream<E>`
-- `Flow<T>.collectLatestIn(scope, collector)`
-
-Guidelines:
-
-- Keep this module dependency-light.
-- Use it for primitives only; application state shape belongs to user code.
-
-## framework-mvvm
-
-MVVM stays independent from DI containers.
-
-Main API:
-
-- `ViewState`
-- `UiAction`
-- `UiEvent`
+- `KoraWindowConfig`
+- `KoraAppServices<R>`
+- `koraFrameworkModule(initialRoute, routes)`
 - `ViewModel<S, A, E>`
-- `ViewModelFactory<VM>`
-- `viewModelFactory { ... }`
-- `isClosed`
-- `closeAll()`
-- `awaitState { ... }`
-- `awaitEvent { ... }`
+- `ViewState`, `UiAction`, `UiEvent`
+- `Route`, `Navigator<R>`, `NavigationState<R>`
+- `ThemeManager`, `SceneThemeController`, `BuiltInThemes`
 
 Guidelines:
 
-- Prefer constructor injection.
-- Applications decide whether to instantiate manually, via custom factories, or via external DI.
-- Inject `coroutineContext` in tests for deterministic async actions.
-- Always call `close()` from the owning lifecycle.
-- `close()` is idempotent; after close, `dispatch` and the protected state/event helpers become no-ops.
+- Prefer constructor injection and register application services in Koin.
+- Keep JavaFX lifecycle in the `Application` class and put app services in Koin modules.
+- Use `Navigator` as the single source of route state.
+- Use `ThemeManager` as the single source of theme state.
+- Keep screen state in ViewModels and render it through `stateText`, `stateList`, `stateVisible`, and related DSL bindings.
 
-## framework-navigation
+## korafx-dsl
 
-Navigation is intentionally small and state-driven.
+`korafx-dsl` remains available for users who only want Kotlin builders around JavaFX and do not want the framework stack.
 
 Main API:
 
-- `Route`
-- `PageInstancePolicy`
-- `NavigationState<R>`
-- `Navigator<R>`
+- Layout factories: `borderPane`, `vbox`, `hbox`, `stackPane`, `gridPane`, `flowPane`, `tilePane`, `anchorPane`, `scrollPane`, `splitPane`, `tabPane`
+- Control factories: `label`, `button`, `checkBox`, `textField`, `textArea`, `listView`, `comboBox`, `choiceBox`, `slider`, `datePicker`, `colorPicker`, `radioButton`, `toggleButton`
+- Advanced controls: `treeView`, `tableView`, `accordion`, `titledPane`, `spinner`, `progressBar`, `pagination`
+- Binding helpers: `bindText`, `bindVisible`, `bindDisable`, `bindItems`, `bindSelectedItem`, `bindValue`, `bindProgress`, `bindInvalid`, `bindValidation`
+- State helpers: `stateText`, `stateVisible`, `stateDisable`, `stateStyleClass`, `stateValidation`, `stateList`, `stateful`
+- Render helpers: `fragment`, `renderIf`, `renderUnless`, `renderEach`, `bindContent`, `bindChildren`, `bindEach`, `bindList`, `bindRenderState`
+- Styling helpers: `styleClass`, `styleClasses`, `toggleStyleClass`, `pseudoClass`, `cssStyle`, `cssStyleOf`, `cssAppend`, `styleRaw`
+- Form/dialog helpers: `form`, `submitBar`, `validationMessage`, `alert`, `confirmation`, `textInputDialog`, `customDialog`
 
 Guidelines:
 
-- Routes are plain values with `id` and `title`.
-- `Navigator` owns current route state only.
-- Page construction belongs to DSL/components or application code.
+- Keep factory names close to JavaFX class names.
+- Expose `init: Node.() -> Unit` so callers can still use native JavaFX APIs.
+- Bind state at the component property layer; avoid reflection-driven UI binding.
+- Use `stateful(scope, state) { ... }` only for a local state-aware subtree.
 
-## framework-theme
+## korafx-components
 
-Theme support generates JavaFX stylesheets from typed tokens.
-
-Main API:
-
-- `ColorTokens`
-- `TypographyTokens`
-- `SpacingTokens`
-- `RadiusTokens`
-- `StateColorTokens`
-- `ElevationTokens`
-- `ThemeTokens`
-- `KoraTheme`
-- `BuiltInThemes`
-- `ThemeManager`
-- `SceneThemeController`
-- `ThemeStylesheetFactory`
-
-`BuiltInThemes.all` exposes selectable JavaFX stylesheet presets. Use `BuiltInThemes.findById` or `ThemeManager.setTheme(id)` when theme choice is stored in user settings.
-`ThemeManager.nextTheme()` and `previousTheme()` cycle through the configured `availableThemes`; `toggle()` remains a Light/Dark convenience.
-`ColorTokens` includes semantic colors (`success`, `warning`, `danger`, `info`) so feedback, validation, and destructive actions can differ per theme.
-`ThemeTokens` also carries spacing, radius, state color, and elevation tokens so generated CSS does not hard-code control density, hover/pressed/selected states, disabled opacity, or shadows.
-
-Guidelines:
-
-- Theme tokens should remain small and CSS-oriented.
-- Components should style by stable style classes, not direct colors.
-- Prefer changing tokens before adding one-off CSS values to `ThemeStylesheetFactory`.
-
-## framework-components
-
-Components are optional conveniences built on DSL, navigation, and state flows.
+`korafx-components` is the optional component layer for real desktop tools and workbench-style applications.
 
 Main API:
 
 - Shell: `appShell`
 - Overlays: `ModalHost`, `modalHost`, `ModalAction`
-- Layout: `borderLayout`, `BorderLayoutBuilder`, `workspaceLayout`, `WorkspaceLayout`
+- Layout: `borderLayout`, `workspaceLayout`, `WorkspaceLayout`
 - Resource browsing: `resourceExplorer`, `ResourceExplorer`, `ResourceExplorerBuilder`
 - Data grids: `dataGrid`, `DataGrid`, `DataGridBuilder`, `editableTable`, `EditableTableBuilder`
 - Details: `inspectorPanel`, `InspectorPanel`, `InspectorPanelBuilder`
-- Editor surfaces: `sourceEditor`, `queryEditor`, `SourceEditor`, `SourceDiagnostic`
+- Editor surfaces: `codeEditor`, `sourceEditor`, `queryEditor`, `SourceEditor`, `SourceDiagnostic`
 - Workspaces: `tabWorkspace`, `TabWorkspace`, `TabWorkspaceBuilder`
 - Activity: `activityTimeline`, `ActivityTimeline`, `ActivityTimelineBuilder`
 - Commands: `CommandPaletteHost`, `CommandPaletteCommand`, `commandPalette`, `CommandPalette`
-- Navigation: `navigationRail`、`routeHost`、`routeStateHost`
-- Feedback: `feedbackState`、`emptyState`、`loadingState`、`errorState`、`ToastHost`、`toastHost`、`snackbar`
-- Surfaces: `card`、`section`、`actionBar`
-- Semantic display: `badge`、`chip`、`metricCard`、`alertBanner`、`ComponentTone`
-- Editors: `codeEditor`、`CodeEditor`
-
-`routeStateHost` 按路由执行渲染取消：路由切换后只会渲染当前路由的 `stateFor` 流，不会被旧路由更新覆盖。
-`appShell` provides stable top/navigation/content/footer/overlay slots for common desktop layouts.
-`ModalHost` owns one in-scene modal request; `modalHost` renders it in an overlay slot.
-`ToastHost` owns transient feedback messages; `toastHost` renders them as JavaFX nodes.
+- Navigation: `navigationRail`, `routeHost`, `routeStateHost`
+- Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
+- Surfaces: `card`, `section`, `actionBar`
+- Semantic display: `badge`, `chip`, `metricCard`, `alertBanner`, `ComponentTone`
 
 Guidelines:
 
-- Components accept explicit dependencies such as `CoroutineScope` and `Navigator`.
-- Components should not own application lifecycle.
-- Components should remain composable JavaFX nodes.
+- Components are still JavaFX nodes and should remain composable.
+- Components may accept explicit framework services such as `CoroutineScope`, `Navigator`, `ThemeManager`, and command hosts.
+- Components should have stable style classes so `korafx-framework` theme services can fully cover them.
 
 ## Naming Checklist
 
@@ -180,7 +95,7 @@ When adding API:
 
 - Use `bindX` for continuous Flow binding.
 - Use `bindXBidirectional` only when control changes write back to `MutableStateFlow`.
-- Use `renderX` for immediate in-block rendering.
-- Use `XHost` for container components that switch child content.
+- Use `stateX` when a normal DSL node derives one property from screen state.
+- Use `XHost` for components that render hosted content.
 - Use `XState` for small sealed/data state types.
-- Avoid names that imply framework ownership, such as `Application`, `Module`, `Container`, or `Command`.
+- Prefer framework-owned names only in `korafx-framework`; keep low-level DSL names close to JavaFX.
