@@ -21,8 +21,10 @@ KoraFX 的 API 目标是薄封装 JavaFX，而不是替换 JavaFX。命名规则
 - Advanced controls: `treeView`、`tableView`、`accordion`、`titledPane`、`spinner`、`progressBar`、`pagination`。
 - Layout helpers: `insets`、`padding`、`margin`、`growHorizontal`、`growVertical`、`align`、`gridAlign`。
 - Styling helpers: `styleClass`、`styleClasses`、`toggleStyleClass`、`pseudoClass`、`invalidWhen`。
+- Style DSL: `cssStyle`、`cssStyleOf`、`cssAppend`、`styleRaw`，以及 `fx`/`backgroundColor`/`textFill`/`padding`/`radius` 等常用属性函数。`cssStyleOf` 返回可复用的 `CssStyle` 对象，`cssStyle(style)` 可直接应用到节点。
+- Binding helpers: `bindStyle`（Flow -> Node 样式）和 `stateStyle`（Stateful DSL 风格绑定）。
 - Event helpers: `onAction` for `ButtonBase` and `MenuItem`.
-- Binding helpers: `bindText`、`bindVisible`、`bindDisable`、`bindItems`、`bindSelectedItem`、`bindValue`、`bindProgress`、`bindInvalid`、`bindValidation`。
+- Binding helpers: `bindText`、`bindVisible`、`bindDisable`、`bindStyle`、`bindItems`、`bindSelectedItem`、`bindValue`、`bindProgress`、`bindInvalid`、`bindValidation`。
 - State selector helpers: `stateText`、`stateVisible`、`stateDisable`、`stateStyleClass`、`stateValidation`、`stateList`、`stateful`。
 - Bidirectional bindings: text input、toggle selected、selection controls、slider、spinner、date picker。
 - Render helpers: `fragment`、`renderIf`、`renderUnless`、`renderEach`、`bindContent`、`bindChildren`、`bindEach`、`bindList`、`bindRenderState`。

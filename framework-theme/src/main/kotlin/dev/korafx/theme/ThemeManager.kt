@@ -207,6 +207,12 @@ object BuiltInThemes {
         findById(id) ?: error("Unknown built-in KoraFX theme id: $id")
 }
 
+object ThemeStyleClass {
+    const val Root = "korafx-root"
+    const val Headline = "headline"
+    const val Muted = "muted"
+}
+
 class ThemeManager(
     initialTheme: KoraTheme = BuiltInThemes.Light,
     val availableThemes: List<KoraTheme> = BuiltInThemes.all,
@@ -273,13 +279,13 @@ class SceneThemeController(
     private val cache = linkedMapOf<String, String>()
 
     fun bind(scene: Scene) {
-        if (!scene.root.styleClass.contains("korafx-root")) {
-            scene.root.styleClass += "korafx-root"
+        if (!scene.root.styleClass.contains(ThemeStyleClass.Root)) {
+            scene.root.styleClass += ThemeStyleClass.Root
         }
 
         scope.launch {
             themeManager.theme.collectLatest { theme ->
-                val stylesheetUri = cache.getOrPut(theme.id) { writeStylesheet(theme) }
+                val stylesheetUri = cache.getOrPut(theme.cacheKey()) { writeStylesheet(theme) }
                 scene.stylesheets.setAll(stylesheetUri)
             }
         }
@@ -296,3 +302,6 @@ class SceneThemeController(
         scope.cancel()
     }
 }
+
+private fun KoraTheme.cacheKey(): String =
+    "${id}:${tokens.hashCode()}"

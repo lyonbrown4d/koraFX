@@ -176,6 +176,38 @@ class BindingDslTest {
     }
 
     @Test
+    fun `bindStyle updates node style from flow`() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val styleState = MutableStateFlow<CssStyle?>(null)
+        val node = fx { Region() }
+
+        try {
+            node.bindStyle(scope, styleState)
+
+            FxTestSupport.waitForFxCondition {
+                node.style.isEmpty()
+            }
+
+            styleState.value = cssStyleOf {
+                backgroundColor("#f6f7fb")
+                textFill("#111827")
+            }
+
+            FxTestSupport.waitForFxCondition {
+                node.style == "-fx-background-color: #f6f7fb; -fx-text-fill: #111827;"
+            }
+
+            styleState.value = null
+
+            FxTestSupport.waitForFxCondition {
+                node.style.isEmpty()
+            }
+        } finally {
+            scope.cancel()
+        }
+    }
+
+    @Test
     fun `validation and invalid bindings update form controls`() {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val message = MutableStateFlow<String?>(null)

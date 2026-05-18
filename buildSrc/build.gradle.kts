@@ -1,9 +1,7 @@
 plugins {
-    `kotlin-dsl`
-    `kotlin-dsl-precompiled-script-plugins`
+    kotlin("jvm") version "2.3.20"
 }
 
-repositories {
-    mavenCentral()
-    gradlePluginPortal()
+dependencies {
+    implementation(gradleApi())
 }

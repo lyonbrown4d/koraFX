@@ -37,6 +37,57 @@ val form = panel {
 }
 ```
 
+## CSS DSL
+
+```kotlin
+val title = label("KoraFX") {
+    cssStyle {
+        fontSize(22.0)
+        fontWeight("bold")
+    }
+}
+
+val status = label("Ready.") {
+    cssStyle {
+        textFill("#5f6b7a")
+    }
+}
+
+val card = panel {
+    cssStyle {
+        radius(10.0)
+        padding(12.0, 16.0)
+        backgroundColor("#F6F7FB")
+        borderColor("#D9E0EE")
+    }
+}
+
+val compactStateStyle = cssStyleOf {
+    fontSize(12.0)
+    textFill("#475569")
+}
+
+val row = label("Ready").apply {
+    cssStyle(compactStateStyle)
+}
+
+val canSave = MutableStateFlow(false)
+
+val saveButton = button("Save") {
+    stateStyle(scope, canSave) { enabled ->
+        if (enabled) {
+            cssStyleOf {
+                backgroundColor("#15803D")
+                textFill("white")
+                radius(10.0)
+            }
+        } else {
+            null
+        }
+    }
+}
+```
+
 ## Layout Helpers
 
 ```kotlin

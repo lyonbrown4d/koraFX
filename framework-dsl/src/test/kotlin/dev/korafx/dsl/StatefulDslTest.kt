@@ -264,6 +264,47 @@ class StatefulDslTest {
         }
     }
 
+    @Test
+    fun `stateful nodes can bind css style from state`() {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val state = MutableStateFlow(ScreenState())
+
+        try {
+            val root = fx {
+                stateful(scope, state) {
+                    vbox {
+                        label("Save state") {
+                            stateStyle { current ->
+                                if (current.canSave) {
+                                    cssStyleOf {
+                                        fontWeight("700")
+                                        textFill("#15803D")
+                                    }
+                                } else {
+                                    null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            val label = root.children.single() as Label
+
+            FxTestSupport.waitForFxCondition {
+                label.style.isEmpty()
+            }
+
+            state.value = ScreenState(canSave = true)
+
+            FxTestSupport.waitForFxCondition {
+                label.style == "-fx-font-weight: 700; -fx-text-fill: #15803D;"
+            }
+        } finally {
+            scope.cancel()
+        }
+    }
+
     private fun VBox.labels(): List<String> =
         children.map { node -> (node as Label).text }
 

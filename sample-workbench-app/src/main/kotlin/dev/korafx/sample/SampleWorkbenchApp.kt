@@ -49,6 +49,7 @@ import dev.korafx.dsl.workbenchLayout
 import dev.korafx.navigation.Navigator
 import dev.korafx.theme.KoraTheme
 import dev.korafx.theme.SceneThemeController
+import dev.korafx.theme.ThemeStyleClass
 import dev.korafx.theme.ThemeManager
 import javafx.application.Application
 import javafx.geometry.HPos
@@ -113,7 +114,7 @@ class SampleWorkbenchApp : Application() {
             topBar {
                 toolbar {
                     label("KoraFX") {
-                        styleClasses("headline")
+                        styleClasses(ThemeStyleClass.Headline)
                     }
                     spacer()
                     comboBox<KoraTheme>(
@@ -150,24 +151,24 @@ class SampleWorkbenchApp : Application() {
                     content {
                         panel {
                             label {
-                                styleClasses("headline")
+                                styleClasses(ThemeStyleClass.Headline)
                             }.stateText(uiScope, viewModel.state) { it.title }
                             label {
                                 isWrapText = true
-                                styleClasses("muted")
+                                styleClasses(ThemeStyleClass.Muted)
                             }.stateText(uiScope, viewModel.state) { it.summary }
                             textArea {
                                 isEditable = false
                                 prefRowCount = 16
                             }.stateText(uiScope, viewModel.state) { it.document }
                             label {
-                                styleClasses("muted")
+                                styleClasses(ThemeStyleClass.Muted)
                             }.stateText(uiScope, viewModel.state) { "Theme: ${it.currentThemeName}" }
                             feedbackLabel = label {
-                                styleClasses("muted")
+                                styleClasses(ThemeStyleClass.Muted)
                             }.stateText(uiScope, viewModel.state) { "State: ${it.feedbackMessage}" }
                             label {
-                                styleClasses("muted")
+                                styleClasses(ThemeStyleClass.Muted)
                             }.stateText(uiScope, viewModel.events) { event ->
                                 when (event) {
                                     is WorkbenchEvent.Feedback -> "Last event: ${event.message}"
@@ -334,7 +335,7 @@ class SampleWorkbenchApp : Application() {
 
                                 card {
                                     label("Composable TreeView") {
-                                        styleClasses("headline")
+                                        styleClasses(ThemeStyleClass.Headline)
                                     }
                                     treeView<String>(
                                         init = {
@@ -375,7 +376,7 @@ class SampleWorkbenchApp : Application() {
                                     description = "Buttons dispatch actions. The ViewModel updates state and emits feedback events.",
                                 ) {
                                     label {
-                                        styleClasses("headline")
+                                        styleClasses(ThemeStyleClass.Headline)
                                     }.stateText(uiScope, viewModel.state) { "Count: ${it.mvvmCount}" }
 
                                     actionBar(alignEnd = false) {
@@ -504,7 +505,7 @@ class SampleWorkbenchApp : Application() {
 
                                         label(0, 1, "Current")
                                         label(1, 1) {
-                                            styleClasses("muted")
+                                            styleClasses(ThemeStyleClass.Muted)
                                         }.stateText(uiScope, themeManager.theme) { "${it.displayName} (${it.id})" }
                                     }
 
@@ -722,7 +723,7 @@ class SampleWorkbenchApp : Application() {
                                                                 },
                                                             ) { pageIndex ->
                                                                 Label("Preview page ${pageIndex + 1}").apply {
-                                                                    styleClasses("muted")
+                                            styleClasses(ThemeStyleClass.Muted)
                                                                 }
                                                             }
                                                         }
@@ -782,7 +783,7 @@ class SampleWorkbenchApp : Application() {
                     items = { it.statusItems },
                 ) { item ->
                     label(item) {
-                        styleClasses("muted")
+                        styleClasses(ThemeStyleClass.Muted)
                     }
                 }
             }

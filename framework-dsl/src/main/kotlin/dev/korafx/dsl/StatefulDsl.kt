@@ -59,6 +59,15 @@ fun <S, N : Node> N.stateDisable(
         bindDisable(scope, state.map(disabled).distinctUntilChanged())
     }
 
+fun <S, N : Node> N.stateStyle(
+    scope: CoroutineScope,
+    state: Flow<S>,
+    style: (S) -> CssStyle?,
+): N =
+    also {
+        bindStyle(scope, state.map(style).distinctUntilChanged())
+    }
+
 fun <S, N : Node> N.stateStyleClass(
     scope: CoroutineScope,
     state: Flow<S>,
@@ -262,6 +271,11 @@ abstract class StatefulNodeContainerBuilder<S> internal constructor(
     fun Node.stateDisable(disabled: (S) -> Boolean): Job =
         bindStateDisabled(disabled)
 
+    fun Node.stateStyle(
+        style: (S) -> CssStyle?,
+    ): Job =
+        bindStateStyle(style)
+
     fun Node.stateStyleClass(
         className: String,
         enabled: (S) -> Boolean,
@@ -288,6 +302,11 @@ abstract class StatefulNodeContainerBuilder<S> internal constructor(
         enabled: (S) -> Boolean,
     ): Job =
         bindStyleClass(scope, className, state.map(enabled).distinctUntilChanged())
+
+    protected fun Node.bindStateStyle(
+        style: (S) -> CssStyle?,
+    ): Job =
+        bindStyle(scope, state.map(style).distinctUntilChanged())
 
     protected fun Labeled.bindStateText(text: (S) -> Any?): Job =
         bindText(scope, state.map { value -> text(value)?.toString().orEmpty() }.distinctUntilChanged())

@@ -1,6 +1,7 @@
 package dev.korafx.examples.dsl
 
 import dev.korafx.dsl.borderPane
+import dev.korafx.dsl.cssStyle
 import dev.korafx.dsl.form
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.onAction
@@ -25,14 +26,19 @@ class DslBasicApp : Application() {
         val root = borderPane(
             init = {
                 padding = Insets(24.0)
-                style = "-fx-font-size: 14px;"
+                cssStyle {
+                    fontSize(14.0)
+                }
             },
         ) {
             top {
                 hbox(spacing = 12.0) {
                     label("KoraFX DSL") {
                         styleClasses("headline")
-                        style = "-fx-font-size: 22px; -fx-font-weight: bold;"
+                        cssStyle {
+                            fontSize(22.0)
+                            fontWeight("bold")
+                        }
                     }
                     spacer()
                     button("Save") {
@@ -94,7 +100,9 @@ class DslBasicApp : Application() {
             bottom {
                 vbox(spacing = 8.0, init = { padding = Insets(16.0, 0.0, 0.0, 0.0) }) {
                     statusLabel = label("Ready.") {
-                        style = "-fx-text-fill: #5f6b7a;"
+                        cssStyle {
+                            textFill("#5f6b7a")
+                        }
                     }
                 }
             }

@@ -8,7 +8,7 @@ class ThemeStylesheetFactoryTest {
     fun `stylesheet contains token values`() {
         val css = ThemeStylesheetFactory.render(BuiltInThemes.Light)
 
-        assertContains(css, ".root.korafx-root")
+        assertContains(css, ".root.${ThemeStyleClass.Root}")
         assertContains(css, "-fx-background-color: #F6F7FB;")
         assertContains(css, "-fx-font-family: \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif;")
         assertContains(css, "-fx-font-size: 14px;")
@@ -23,6 +23,13 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".card")
         assertContains(css, ".section-title")
         assertContains(css, ".action-bar")
+        assertContains(css, ".form")
+        assertContains(css, ".form-item")
+        assertContains(css, ".form-label")
+        assertContains(css, ".form-helper")
+        assertContains(css, ".validation-message")
+        assertContains(css, ".submit-bar")
+        assertContains(css, ".route-state-host")
         assertContains(css, ".app-shell")
         assertContains(css, ".modal-card")
         assertContains(css, ".modal-backdrop")

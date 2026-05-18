@@ -92,3 +92,12 @@ themeManager.setTheme(brandTheme)
 ```
 
 You can omit `spacing`, `radii`, `states`, and `elevation`; defaults are derived from `radius` and `colors`. Override them when an application needs compact density, custom hover/pressed colors, or different shadow depth.
+
+### Components covered by built-in theme stylesheet
+
+The built-in theme currently styles the following DSL and component class groups:
+- core surfaces: `panel`, `card`, `form`, `status-strip`, `app-shell`, `modal-card`, etc.
+- controls and groups: `nav-rail`, `action-bar`, `toast`, `feedback`, `submit-bar`, `route-state-host`
+- component labels and helper texts: `headline`, `muted`, `section-title`, `form-label`, `validation-message`
+
+When adding custom controls, prefer these same style-class hooks to keep visual consistency across all themes.

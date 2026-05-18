@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onCompletion
 import java.time.LocalDate
 
@@ -110,6 +111,19 @@ fun Node.bindDisable(
 ): Job = flow.collectLatestIn(scope) { disabled ->
     runOnFxThread {
         isDisable = disabled
+    }
+}
+
+fun Node.bindStyle(
+    scope: CoroutineScope,
+    flow: Flow<CssStyle?>,
+): Job = flow.distinctUntilChanged().collectLatestIn(scope) { css ->
+    runOnFxThread {
+        if (css == null) {
+            style = ""
+        } else {
+            cssStyle(css)
+        }
     }
 }
 

@@ -2,6 +2,7 @@ package dev.korafx.examples.mvvm
 
 import dev.korafx.dsl.bindDisable
 import dev.korafx.dsl.bindText
+import dev.korafx.dsl.cssStyle
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.vbox
@@ -78,14 +79,22 @@ class MvvmCounterApp : Application() {
             init = {
                 padding = Insets(24.0)
                 alignment = Pos.CENTER_LEFT
-                style = "-fx-font-size: 14px;"
+                cssStyle {
+                    fontSize(14.0)
+                }
             },
         ) {
             label("KoraFX MVVM Counter") {
-                style = "-fx-font-size: 22px; -fx-font-weight: bold;"
+                cssStyle {
+                    fontSize(22.0)
+                    fontWeight("bold")
+                }
             }
             label {
-                style = "-fx-font-size: 44px; -fx-font-weight: bold;"
+                cssStyle {
+                    fontSize(44.0)
+                    fontWeight("bold")
+                }
                 bindText(uiScope, viewModel.state.map { it.count.toString() })
             }
             hbox(spacing = 10.0) {
@@ -120,7 +129,9 @@ class MvvmCounterApp : Application() {
                 }
             }
             label {
-                style = "-fx-text-fill: #5f6b7a;"
+                cssStyle {
+                    textFill("#5f6b7a")
+                }
                 bindText(uiScope, viewModel.state.map { it.lastEvent })
             }
         }

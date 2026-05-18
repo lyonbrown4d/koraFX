@@ -120,7 +120,7 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     val spacing = context.spacing
     val states = context.states
 
-    rule(".root.korafx-root") {
+    rule(".root.${ThemeStyleClass.Root}") {
         fx("base", colors.surfaceMuted)
         fx("accent", colors.primary)
         fx("focus-color", states.focus)
@@ -135,12 +135,12 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
         fx("text-fill", colors.textPrimary)
     }
 
-    rule(".label.headline") {
+    rule(".label.${ThemeStyleClass.Headline}") {
         fx("font-size", "${typography.headlineSize}px")
         fx("font-weight", "700")
     }
 
-    rule(".muted") {
+    rule(".${ThemeStyleClass.Muted}") {
         fx("text-fill", colors.textSecondary)
     }
 
@@ -527,10 +527,42 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.sm, 0, 0, 0)
     }
 
+    rule(".form") {
+        surface(colors.surfaceMuted, colors.border, context.radius)
+        padding(spacing.md)
+    }
+
+    rule(".form-item") {
+        padding(spacing.sm, 0, 0, 0)
+    }
+
+    rule(".form-label") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "600")
+        fx("font-size", "${typography.baseSize + 1}px")
+    }
+
+    rule(".form-helper", ".validation-message") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".validation-message") {
+        fx("text-fill", states.invalid)
+    }
+
+    rule(".submit-bar") {
+        fx("padding", "${spacing.md}px 0 0 0")
+    }
+
     rule(".nav-rail") {
         fx("background-color", colors.surfaceMuted)
         fx("border-color", "transparent ${colors.border} transparent transparent")
         padding(spacing.xxl, spacing.xl)
+    }
+
+    rule(".route-state-host") {
+        surface(colors.surfaceMuted, colors.border, context.radius)
+        fx("padding", "${spacing.sm}px")
     }
 
     rule(".status-strip") {
