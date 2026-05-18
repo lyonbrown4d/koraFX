@@ -101,6 +101,8 @@ Acceptance:
 
 ### 5. Query / Source Editor
 
+Status: implemented as the current component iteration.
+
 Target apps: SQL query editor, Git diff/source viewer, configuration editors.
 
 Goal: extend `codeEditor` into a task-oriented editor surface with toolbar actions, status, diagnostics, and result/output slot.
@@ -121,6 +123,8 @@ Acceptance:
 
 ### 6. Tab Workspace
 
+Status: implemented as the current component iteration.
+
 Target apps: multi-file Git tools, multi-query database clients, multi-document admin tools.
 
 Goal: provide a themed multi-tab workspace that manages close/dirty indicators and typed tab metadata while still returning JavaFX `TabPane`.
@@ -140,6 +144,8 @@ Acceptance:
 
 ### 7. Activity Timeline
 
+Status: implemented as the current component iteration.
+
 Target apps: Git log, database execution history, background task logs, audit trails.
 
 Goal: provide a vertical timeline/list for timestamped events with status tones and actions.
@@ -158,6 +164,8 @@ Acceptance:
 - Theme covers timeline marker, connector, row, and tone classes.
 
 ### 8. Command Palette
+
+Status: implemented as the current component iteration.
 
 Target apps: complex desktop tools with many actions, Git commands, database actions, navigation shortcuts.
 
@@ -180,5 +188,5 @@ Acceptance:
 
 The next two implementation iterations should be:
 
-1. `sourceEditor` / `queryEditor`, because it connects the editor work to query results and diagnostics.
-2. `tabWorkspace`, because explorer selections and editor/query surfaces need a multi-document container.
+1. Component integration polish, because the major workbench surfaces now need consistent cross-component examples.
+2. Release readiness, because the roadmap core components need API review, docs cleanup, and versioned publishing checks.

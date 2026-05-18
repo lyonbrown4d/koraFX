@@ -737,6 +737,42 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("background-color", colors.textSecondary)
     }
 
+    rule(".tab-workspace") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.large)
+    }
+
+    rule(".tab-workspace .tab-content-area") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".tab-workspace .tab-workspace-empty-tab") {
+        fx("opacity", "1")
+    }
+
+    rule(".tab-workspace .tab-workspace-empty-tab .tab-label") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".tab-workspace-empty-pane") {
+        fx("background-color", colors.surface)
+        padding(spacing.xl)
+    }
+
+    rule(".tab-workspace-empty") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".tab-workspace .tab-workspace-tab-dirty .tab-label") {
+        fx("font-weight", "800")
+    }
+
+    rule(".tab-workspace-dirty-marker") {
+        fx("text-fill", colors.warning)
+        fx("font-weight", "900")
+    }
+
     rule(".split-pane") {
         fx("background-color", colors.surface)
     }
@@ -1204,6 +1240,182 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.lg)
     }
 
+    rule(".activity-timeline") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.lg)
+    }
+
+    rule(".activity-timeline-content") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".activity-timeline-empty") {
+        fx("text-fill", colors.textSecondary)
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.lg)
+    }
+
+    rule(".activity-timeline-group") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-weight", "800")
+        padding(spacing.md, 0, spacing.sm, 0)
+    }
+
+    rule(".activity-timeline-row") {
+        fx("background-color", "transparent")
+        padding(spacing.sm, 0)
+    }
+
+    rule(".activity-timeline-marker-column") {
+        fx("min-width", "18px")
+        fx("pref-width", "18px")
+    }
+
+    rule(".activity-timeline-marker") {
+        fx("background-color", colors.textSecondary)
+        fx("min-width", "10px")
+        fx("min-height", "10px")
+        fx("pref-width", "10px")
+        fx("pref-height", "10px")
+        fx("background-radius", "999px")
+    }
+
+    rule(".activity-timeline-connector") {
+        fx("background-color", colors.border)
+        fx("min-width", "2px")
+        fx("pref-width", "2px")
+        fx("min-height", "42px")
+    }
+
+    rule(".activity-timeline-event") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.md)
+    }
+
+    rule(".activity-timeline-meta") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".activity-timeline-time", ".activity-timeline-message") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".activity-timeline-time") {
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "700")
+    }
+
+    rule(".activity-timeline-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "800")
+    }
+
+    rule(".activity-timeline-action") {
+        ghostControl(context)
+        padding(spacing.xs, spacing.md)
+    }
+
+    rule(".activity-timeline-row.tone-success .activity-timeline-marker") {
+        fx("background-color", colors.success)
+    }
+
+    rule(".activity-timeline-row.tone-warning .activity-timeline-marker") {
+        fx("background-color", colors.warning)
+    }
+
+    rule(".activity-timeline-row.tone-danger .activity-timeline-marker") {
+        fx("background-color", colors.danger)
+    }
+
+    rule(".activity-timeline-row.tone-info .activity-timeline-marker") {
+        fx("background-color", colors.info)
+    }
+
+    rule(".command-palette") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".command-palette-scrim") {
+        fx("background-color", "rgba(15, 23, 42, 0.38)")
+    }
+
+    rule(".command-palette-card") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.dropdown)
+        padding(spacing.lg)
+    }
+
+    rule(".command-palette-search") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        fx("text-fill", colors.textPrimary)
+        radius(context.radius)
+        padding(spacing.md, spacing.lg)
+    }
+
+    rule(".command-palette-search:focused") {
+        fx("border-color", states.focus)
+    }
+
+    rule(".command-palette-results", ".command-palette-row-content", ".command-palette-row-text") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".command-palette-group") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "800")
+        padding(spacing.md, spacing.xs, spacing.xs, spacing.xs)
+    }
+
+    rule(".command-palette-row") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("alignment", "center-left")
+        radius(context.radii.medium)
+        padding(spacing.md)
+    }
+
+    rule(".command-palette-row:hover") {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".command-palette-row-selected", ".command-palette-row-selected:hover") {
+        fx("background-color", states.selected)
+        fx("border-color", states.selected)
+    }
+
+    rule(".command-palette-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "800")
+    }
+
+    rule(".command-palette-description", ".command-palette-id", ".command-palette-empty") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".command-palette-row-selected .command-palette-title", ".command-palette-row-selected .command-palette-description", ".command-palette-row-selected .command-palette-id") {
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".command-palette-id") {
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("font-size", "${typography.baseSize - 1}px")
+    }
+
+    rule(".command-palette-empty") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.lg)
+    }
+
     rule(".badge", ".chip") {
         fx("font-size", "${typography.baseSize - 1}px")
         fx("font-weight", "700")
@@ -1319,6 +1531,67 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     rule(".code-editor-status-text") {
         fx("text-fill", colors.textSecondary)
         fx("font-size", "${typography.baseSize - 1}px")
+    }
+
+    rule(".source-editor") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.md)
+    }
+
+    rule(".source-editor-toolbar") {
+        fx("background-color", "transparent")
+        padding(0, 0, spacing.sm, 0)
+    }
+
+    rule(".source-editor-action") {
+        ghostControl(context)
+        padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".source-editor-code") {
+        fx("effect", "none")
+    }
+
+    rule(".source-editor-diagnostics", ".source-editor-result") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.md)
+    }
+
+    rule(".source-editor-diagnostics-title", ".source-editor-result-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "800")
+    }
+
+    rule(".source-editor-diagnostic") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", colors.border)
+        radius(context.smallRadius)
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".source-editor-diagnostic-location") {
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("text-fill", colors.textSecondary)
+        fx("font-weight", "700")
+    }
+
+    rule(".source-editor-diagnostic-message", ".source-editor-result-content", ".source-editor-result-node") {
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".source-editor-diagnostic.tone-warning") {
+        fx("border-color", colors.warning)
+    }
+
+    rule(".source-editor-diagnostic.tone-danger") {
+        fx("border-color", colors.danger)
+    }
+
+    rule(".source-editor-diagnostic.tone-info") {
+        fx("border-color", colors.info)
     }
 
     rule(".section") {

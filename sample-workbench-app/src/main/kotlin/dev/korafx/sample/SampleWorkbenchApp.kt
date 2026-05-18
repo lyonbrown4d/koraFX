@@ -1,6 +1,7 @@
 package dev.korafx.sample
 
 import dev.korafx.components.actionBar
+import dev.korafx.components.activityTimeline
 import dev.korafx.components.alertBanner
 import dev.korafx.components.ComponentTone
 import dev.korafx.components.badge
@@ -8,13 +9,21 @@ import dev.korafx.components.borderLayout
 import dev.korafx.components.card
 import dev.korafx.components.chip
 import dev.korafx.components.codeEditor
+import dev.korafx.components.CommandPaletteCommand
+import dev.korafx.components.CommandPaletteHost
+import dev.korafx.components.commandPalette
 import dev.korafx.components.dataGrid
 import dev.korafx.components.emptyState
 import dev.korafx.components.inspectorPanel
 import dev.korafx.components.metricCard
 import dev.korafx.components.navigationRail
+import dev.korafx.components.queryEditor
 import dev.korafx.components.resourceExplorer
 import dev.korafx.components.section
+import dev.korafx.components.sourceEditor
+import dev.korafx.components.SourceDiagnostic
+import dev.korafx.components.TabWorkspace
+import dev.korafx.components.tabWorkspace
 import dev.korafx.components.workspaceLayout
 import dev.korafx.dsl.accordion
 import dev.korafx.dsl.bindInvalid
@@ -48,6 +57,7 @@ import dev.korafx.dsl.stateList
 import dev.korafx.dsl.stateText
 import dev.korafx.dsl.stateVisible
 import dev.korafx.dsl.statusBar
+import dev.korafx.dsl.stackPane
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.splitMenuButton
 import dev.korafx.dsl.tableView
@@ -78,980 +88,1188 @@ import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 
 private data class ModuleSummary(
-    val name: String,
-    val responsibility: String,
+  val name: String,
+  val responsibility: String,
 )
 
 private data class EditableModule(
-    var name: String,
-    var owner: String,
-    val status: String,
+  var name: String,
+  var owner: String,
+  val status: String,
 )
 
 private data class ExplorerResource(
-    val name: String,
-    val children: List<ExplorerResource> = emptyList(),
+  val name: String,
+  val children: List<ExplorerResource> = emptyList(),
+)
+
+private data class ActivityEvent(
+  val title: String,
+  val message: String,
+  val time: String,
+  val group: String,
+  val tone: ComponentTone,
 )
 
 class SampleWorkbenchApp : Application() {
-    private val moduleSummaries = listOf(
-        ModuleSummary("framework-dsl", "Kotlin-first JavaFX construction API"),
-        ModuleSummary("framework-mvvm", "StateFlow ViewModel helpers without DI coupling"),
-        ModuleSummary("framework-components", "Optional reusable JavaFX components"),
-        ModuleSummary("framework-theme", "Selectable JavaFX theme presets from typed tokens"),
-    )
-    private val editableModules = listOf(
-        EditableModule("DSL", "Core", "Ready"),
-        EditableModule("Theme", "Design", "Review"),
-        EditableModule("Components", "Product", "Draft"),
-    )
-    private val explorerResources = listOf(
+  private val moduleSummaries = listOf(
+    ModuleSummary("framework-dsl", "Kotlin-first JavaFX construction API"),
+    ModuleSummary("framework-mvvm", "StateFlow ViewModel helpers without DI coupling"),
+    ModuleSummary("framework-components", "Optional reusable JavaFX components"),
+    ModuleSummary("framework-theme", "Selectable JavaFX theme presets from typed tokens"),
+  )
+  private val editableModules = listOf(
+    EditableModule("DSL", "Core", "Ready"),
+    EditableModule("Theme", "Design", "Review"),
+    EditableModule("Components", "Product", "Draft"),
+  )
+  private val explorerResources = listOf(
+    ExplorerResource(
+      "Repository",
+      listOf(
         ExplorerResource(
-            "Repository",
-            listOf(
-                ExplorerResource(
-                    "src",
-                    listOf(
-                        ExplorerResource("Main.kt"),
-                        ExplorerResource("Theme.kt"),
-                    ),
-                ),
-                ExplorerResource("README.md"),
-            ),
+          "src",
+          listOf(
+            ExplorerResource("Main.kt"),
+            ExplorerResource("Theme.kt"),
+          ),
         ),
+        ExplorerResource("README.md"),
+      ),
+    ),
+    ExplorerResource(
+      "Database",
+      listOf(
         ExplorerResource(
-            "Database",
-            listOf(
-                ExplorerResource(
-                    "public",
-                    listOf(
-                        ExplorerResource("users"),
-                        ExplorerResource("orders"),
-                    ),
-                ),
-                ExplorerResource("analytics"),
-            ),
+          "public",
+          listOf(
+            ExplorerResource("users"),
+            ExplorerResource("orders"),
+          ),
         ),
-    )
-    private val dslProjectName = MutableStateFlow("KoraFX")
-    private val dslProjectNameError = dslProjectName.map { value ->
-        if (value.isBlank()) "Project name is required." else null
-    }
-    private val dslModeOptions = listOf("DSL First", "MVVM Ready", "Component Polish")
-    private val dslRuntimeOptions = listOf("Manual JavaFX", "Custom Factory", "External DI")
-    private val dslMode = MutableStateFlow<String?>("DSL First")
-    private val dslRuntime = MutableStateFlow<String?>("Manual JavaFX")
-    private val dslParallelism = MutableStateFlow(2)
-    private val dslTargetDate = MutableStateFlow<LocalDate?>(LocalDate.now().plusWeeks(1))
+        ExplorerResource("analytics"),
+      ),
+    ),
+  )
+  private val activityEvents = listOf(
+    ActivityEvent(
+      title = "Commit 4a18c2",
+      message = "Refined JavaFX theme coverage for selection controls.",
+      time = "09:12",
+      group = "Git",
+      tone = ComponentTone.SUCCESS,
+    ),
+    ActivityEvent(
+      title = "Query finished",
+      message = "select name, owner, status from modules returned 3 rows.",
+      time = "09:20",
+      group = "Database",
+      tone = ComponentTone.INFO,
+    ),
+    ActivityEvent(
+      title = "Migration warning",
+      message = "Index modules_owner_idx is missing in the sample schema.",
+      time = "09:32",
+      group = "Database",
+      tone = ComponentTone.WARNING,
+    ),
+  )
+  private val dslProjectName = MutableStateFlow("KoraFX")
+  private val dslProjectNameError = dslProjectName.map { value ->
+    if (value.isBlank()) "Project name is required." else null
+  }
+  private val dslModeOptions = listOf("DSL First", "MVVM Ready", "Component Polish")
+  private val dslRuntimeOptions = listOf("Manual JavaFX", "Custom Factory", "External DI")
+  private val dslMode = MutableStateFlow<String?>("DSL First")
+  private val dslRuntime = MutableStateFlow<String?>("Manual JavaFX")
+  private val dslParallelism = MutableStateFlow(2)
+  private val dslTargetDate = MutableStateFlow<LocalDate?>(LocalDate.now().plusWeeks(1))
 
-    private val uiScope = MainScope()
-    private val themeManager = ThemeManager()
-    private val navigator = Navigator(
-        initialRoute = WorkbenchRoute.Overview,
-        routes = WorkbenchRoute.all,
-    )
-    private val viewModel = WorkbenchViewModel(themeManager, navigator)
-    private val themeController = SceneThemeController(themeManager)
+  private val uiScope = MainScope()
+  private val themeManager = ThemeManager()
+  private val navigator = Navigator(
+    initialRoute = WorkbenchRoute.Overview,
+    routes = WorkbenchRoute.all,
+  )
+  private val viewModel = WorkbenchViewModel(themeManager, navigator)
+  private val commandPaletteHost = CommandPaletteHost(
+    listOf(
+      CommandPaletteCommand(
+        id = "theme.next",
+        title = "Next Theme",
+        description = "Switch to the next built-in theme preset.",
+        group = "Theme",
+        action = {
+          viewModel.dispatch(WorkbenchAction.NextTheme)
+        },
+      ),
+      CommandPaletteCommand(
+        id = "route.mvvm",
+        title = "Open MVVM Route",
+        description = "Navigate to MVVM overview.",
+        group = "Navigation",
+        action = {
+          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Mvvm.id))
+        },
+      ),
+      CommandPaletteCommand(
+        id = "route.theme",
+        title = "Open Theme Route",
+        description = "Navigate to theme preview.",
+        group = "Navigation",
+        action = {
+          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Theme.id))
+        },
+      ),
+    ),
+  )
+  private val themeController = SceneThemeController(themeManager)
 
-    override fun start(stage: Stage) {
-        val scene = Scene(buildRoot(), 1120.0, 720.0)
-        themeController.bind(scene)
+  override fun start(stage: Stage) {
+    val scene = Scene(buildRoot(), 1120.0, 720.0)
+    themeController.bind(scene)
 
-        stage.title = "KoraFX Lean Workbench"
-        stage.scene = scene
-        stage.show()
-    }
+    stage.title = "KoraFX Lean Workbench"
+    stage.scene = scene
+    stage.show()
+  }
 
-    private fun buildRoot() =
+  private fun buildRoot() =
+    stackPane {
+      add(
         workbenchLayout {
-            lateinit var feedbackLabel: Label
+          lateinit var feedbackLabel: Label
+          lateinit var workspaceTabs: TabWorkspace
 
-            topBar {
-                toolbar {
-                    label("KoraFX") {
-                        styleClasses(ThemeStyleClass.Headline)
+          fun openResourceTab(resource: ExplorerResource) {
+            workspaceTabs.openTab(
+              id = "resource:${resource.name}",
+              title = resource.name,
+              dirty = resource.name == "Theme.kt",
+            ) {
+              sourceEditor(
+                title = resource.name,
+                text = "// ${resource.name}\n// Opened from ResourceExplorer into TabWorkspace.",
+                language = if (resource.name.endsWith(".kt")) "kotlin" else "text",
+                readOnly = true,
+                diagnostics = listOf(
+                  SourceDiagnostic(1, 1, "Opened as a read-only preview.", ComponentTone.INFO),
+                ),
+              )
+            }
+            feedbackLabel.text = "State: Opened ${resource.name} in tab workspace."
+          }
+
+          topBar {
+            toolbar {
+              label("KoraFX") {
+                styleClasses(ThemeStyleClass.Headline)
+              }
+              spacer()
+              comboBox<KoraTheme>(
+                items = themeManager.availableThemes,
+                init = {
+                  prefWidth = 180.0
+                },
+              ) {
+                render { it.displayName }
+                onSelect { theme ->
+                  if (theme != null) {
+                    viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+                  }
+                }
+              }.bindSelectedItem(uiScope, themeManager.theme)
+              ghostButton("Next Theme") {
+                onAction {
+                  viewModel.dispatch(WorkbenchAction.NextTheme)
+                }
+              }
+              ghostButton("Commands") {
+                onAction {
+                  commandPaletteHost.show()
+                }
+              }
+            }
+          }
+
+          navigation {
+            navigationRail(uiScope, navigator)
+          }
+
+          content {
+            scrollPane(
+              init = {
+                isFitToWidth = true
+              },
+            ) {
+              content {
+                panel {
+                  label {
+                    styleClasses(ThemeStyleClass.Headline)
+                  }.stateText(uiScope, viewModel.state) { it.title }
+                  label {
+                    isWrapText = true
+                    styleClasses(ThemeStyleClass.Muted)
+                  }.stateText(uiScope, viewModel.state) { it.summary }
+                  textArea {
+                    isEditable = false
+                    prefRowCount = 16
+                  }.stateText(uiScope, viewModel.state) { it.document }
+                  label {
+                    styleClasses(ThemeStyleClass.Muted)
+                  }.stateText(uiScope, viewModel.state) { "Theme: ${it.currentThemeName}" }
+                  feedbackLabel = label {
+                    styleClasses(ThemeStyleClass.Muted)
+                  }.stateText(uiScope, viewModel.state) { "State: ${it.feedbackMessage}" }
+                  label {
+                    styleClasses(ThemeStyleClass.Muted)
+                  }.stateText(uiScope, viewModel.events) { event ->
+                    when (event) {
+                      is WorkbenchEvent.Feedback -> "Last event: ${event.message}"
                     }
-                    spacer()
-                    comboBox<KoraTheme>(
+                  }
+                  vbox(spacing = 16.0) {
+                    menuBar {
+                      menu("DSL Actions") {
+                        actionItem("Toggle Theme") {
+                          viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                        }
+                        actionItem("Open MVVM Route") {
+                          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Mvvm.id))
+                        }
+                        actionItem("Open Theme Route") {
+                          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Theme.id))
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Surface Components",
+                      description = "section, card and actionBar are lightweight containers built on top of the DSL.",
+                    ) {
+                      gridPane(
+                        hgap = 12.0,
+                        vgap = 10.0,
+                      ) {
+                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                        column(grow = Priority.ALWAYS, fillWidth = true)
+
+                        label(0, 0, "Project")
+                        textField(1, 0, "KoraFX") {
+                          maxWidth = Double.MAX_VALUE
+                        }
+
+                        label(0, 1, "Mode")
+                        checkBox(1, 1, "Kotlin-first JavaFX DSL") {
+                          isSelected = true
+                        }
+                      }
+
+                      actionBar {
+                        ghostButton("Secondary") {
+                          onAction {
+                            feedbackLabel.text = "State: Secondary action from actionBar."
+                          }
+                        }
+                        button("Primary") {
+                          onAction {
+                            feedbackLabel.text = "State: Primary action from actionBar."
+                          }
+                        }
+                      }
+
+                      hbox(spacing = 8.0) {
+                        badge("Stable", ComponentTone.SUCCESS)
+                        badge("Theme", ComponentTone.INFO)
+                        chip("DSL", ComponentTone.PRIMARY, selected = true)
+                        chip("Samples", ComponentTone.NEUTRAL) {
+                          onAction {
+                            feedbackLabel.text = "State: Chip action."
+                          }
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Editor Components",
+                      description = "CodeEditor stays lightweight; SourceEditor and QueryEditor add actions, diagnostics and result slots.",
+                    ) {
+                      codeEditor(
+                        title = "Kotlin Scratch",
+                        text = "fun main() {\n    println(\"KoraFX\")\n}",
+                        language = "kotlin",
+                        placeholder = "Start typing...",
+                        onTextChange = { text ->
+                          feedbackLabel.text = "State: Editor changed, ${text.length} chars."
+                        },
+                      ) {
+                        prefHeight = 220.0
+                      }
+                      sourceEditor(
+                        title = "RepositoryConfig.kt",
+                        text = "data class RepositoryConfig(\n    val branch: String,\n    val remote: String,\n)",
+                        language = "kotlin",
+                        readOnly = true,
+                        diagnostics = listOf(
+                          SourceDiagnostic(2, 9, "Preview mode keeps source read-only.", ComponentTone.INFO),
+                        ),
+                        init = {
+                          prefHeight = 260.0
+                        },
+                      ) {
+                        action("Open File") {
+                          feedbackLabel.text = "State: Open source file requested."
+                        }
+                      }
+                      queryEditor(
+                        text = "select id, name, owner from modules;",
+                        onRun = { sql ->
+                          feedbackLabel.text = "State: Run query with ${sql.length} chars."
+                        },
+                        onStop = {
+                          feedbackLabel.text = "State: Query stopped."
+                        },
+                        init = {
+                          prefHeight = 420.0
+                        },
+                      ) {
+                        diagnostics(
+                          listOf(
+                            SourceDiagnostic(
+                              1,
+                              8,
+                              "Demo diagnostic: query is not executed against a real database.",
+                              ComponentTone.WARNING
+                            ),
+                          ),
+                        )
+                        result(
+                          title = "Query Result",
+                          node = dataGrid(
+                            items = editableModules,
+                            showSearch = false,
+                            init = {
+                              prefHeight = 160.0
+                              maxWidth = Double.MAX_VALUE
+                            },
+                          ) {
+                            constrainedResize()
+                            readOnlyTextColumn("Module") { it.name }
+                            readOnlyTextColumn("Owner") { it.owner }
+                            readOnlyTextColumn("Status") { it.status }
+                          },
+                        )
+                      }
+                    }
+
+                    section(
+                      title = "Layout And Data Grid Components",
+                      description = "Semantic workbench slots, resource browsing, and searchable editable grids cover common tool surfaces.",
+                    ) {
+                      workspaceLayout(
+                        init = {
+                          prefHeight = 260.0
+                          maxWidth = Double.MAX_VALUE
+                        },
+                      ) {
+                        topBar {
+                          hbox(spacing = 10.0) {
+                            label("Git / Database Workspace") {
+                              styleClasses(ThemeStyleClass.Headline)
+                            }
+                            badge("WorkspaceLayout", ComponentTone.INFO)
+                          }
+                        }
+                        navigation {
+                          resourceExplorer(
+                            items = explorerResources,
+                            childrenOf = { it.children },
+                            textOf = { it.name },
+                            init = {
+                              prefWidth = 240.0
+                              maxHeight = Double.MAX_VALUE
+                            },
+                          ) {
+                            search(prompt = "Search repository or database...")
+                            onSelect { resource ->
+                              if (resource != null) {
+                                feedbackLabel.text = "State: Selected resource ${resource.name}."
+                              }
+                            }
+                            rowAction { resource ->
+                              openResourceTab(resource)
+                            }
+                            contextMenu { resource ->
+                              actionItem("Open") {
+                                openResourceTab(resource)
+                              }
+                              actionItem("Inspect") {
+                                feedbackLabel.text = "State: Inspect ${resource.name}."
+                              }
+                            }
+                          }
+                        }
+                        content {
+                          tabWorkspace(
+                            emptyText = "Open a repository file or database object...",
+                            init = {
+                              workspaceTabs = this
+                            },
+                          ) {
+                            onSelect { id ->
+                              feedbackLabel.text = "State: Selected tab $id."
+                            }
+                            onClose { id ->
+                              feedbackLabel.text = "State: Closed tab $id."
+                            }
+                            tab("welcome", "Welcome", closable = false, select = true) {
+                              card(spacing = 8.0, padding = 12.0) {
+                                label("TabWorkspace") {
+                                  styleClasses(ThemeStyleClass.Headline)
+                                }
+                                label("Double-click an explorer item to open a reusable source preview tab.")
+                              }
+                            }
+                            tab("query:modules", "Modules Query", dirty = true) {
+                              queryEditor(
+                                text = "select name, owner, status from modules;",
+                                onRun = { sql ->
+                                  feedbackLabel.text = "State: Workspace query run with ${sql.length} chars."
+                                },
+                              ) {
+                                result(
+                                  title = "Modules",
+                                  node = dataGrid(
+                                    items = editableModules,
+                                    showSearch = false,
+                                    init = {
+                                      prefHeight = 150.0
+                                      maxWidth = Double.MAX_VALUE
+                                    },
+                                  ) {
+                                    constrainedResize()
+                                    readOnlyTextColumn("Module") { it.name }
+                                    readOnlyTextColumn("Owner") { it.owner }
+                                    readOnlyTextColumn("Status") { it.status }
+                                  },
+                                )
+                              }
+                            }
+                          }
+                        }
+                        details {
+                          inspectorPanel(
+                            title = "Repository",
+                            subtitle = "Selection details for Git and database resources.",
+                          ) {
+                            badge("Connected", ComponentTone.SUCCESS)
+                            property("Branch", "main")
+                            property("Connection", "local")
+                            section("Metadata") {
+                              property("Schema", "public")
+                              property("Dirty rows", "1")
+                            }
+                            actions {
+                              action("Inspect") {
+                                feedbackLabel.text = "State: Inspector action requested."
+                              }
+                            }
+                          }
+                        }
+                        status {
+                          label("Ready - 3 modules loaded")
+                        }
+                        overlay(alignment = Pos.BOTTOM_RIGHT) {
+                          badge("Overlay slot", ComponentTone.SUCCESS)
+                        }
+                      }
+
+                      borderLayout(
+                        init = {
+                          prefHeight = 220.0
+                          maxWidth = Double.MAX_VALUE
+                        },
+                      ) {
+                        header {
+                          label("Workspace Layout") {
+                            styleClasses(ThemeStyleClass.Headline)
+                          }
+                        }
+                        sidebar {
+                          vbox(spacing = 8.0) {
+                            label("Overview")
+                            label("Modules")
+                            label("Settings")
+                          }
+                        }
+                        content {
+                          card(spacing = 8.0, padding = 12.0) {
+                            label("BorderLayout") {
+                              styleClasses(ThemeStyleClass.Headline)
+                            }
+                            label("Header, sidebar, content and footer are plain JavaFX nodes with stable theme slot classes.")
+                          }
+                        }
+                        footer {
+                          label("Footer slot keeps its own themed boundary.")
+                        }
+                      }
+
+                      dataGrid(
+                        items = editableModules,
+                        searchPrompt = "Search modules...",
+                        init = {
+                          prefHeight = 230.0
+                          maxWidth = Double.MAX_VALUE
+                          growVertical(Priority.SOMETIMES)
+                        },
+                      ) {
+                        search(textOf = { "${it.name} ${it.owner} ${it.status}" })
+                        dirtyRows { it.status == "Draft" }
+                        emptyState("No modules match the current filter")
+                        footer("${editableModules.size} modules - draft rows are marked")
+                        toolbar {
+                          action("Refresh") {
+                            feedbackLabel.text = "State: Data grid refresh requested."
+                          }
+                        }
+                        constrainedResize()
+                        editableTextColumn("Module", valueOf = { it.name }) { row, value ->
+                          row.name = value
+                          feedbackLabel.text = "State: Renamed module to $value."
+                        }
+                        editableTextColumn("Owner", valueOf = { it.owner }) { row, value ->
+                          row.owner = value
+                          feedbackLabel.text = "State: ${row.name} owner changed to $value."
+                        }
+                        readOnlyTextColumn("Status") { it.status }
+                        actionColumn(title = "Action", text = "Open") { row ->
+                          feedbackLabel.text = "State: Open data grid row ${row.name}."
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Activity Timeline Component",
+                      description = "A grouped event surface for Git history, query execution history and background task logs.",
+                    ) {
+                      activityTimeline(
+                        events = activityEvents,
+                        emptyText = "No activity yet",
+                      ) {
+                        groupBy { it.group }
+                        timeOf { it.time }
+                        titleOf { it.title }
+                        messageOf { it.message }
+                        toneOf { it.tone }
+                        action("Open") { event ->
+                          feedbackLabel.text = "State: Open activity ${event.title}."
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Form And Table DSL",
+                      description = "Common controls stay close to JavaFX while removing repetitive layout code.",
+                    ) {
+                      form {
+                        lateinit var projectField: TextField
+
+                        item(
+                          label = "Project",
+                          helper = "Validation is just Flow binding; no form model is required.",
+                        ) {
+                          projectField = textField {
+                            maxWidth = Double.MAX_VALUE
+                            bindTextBidirectional(uiScope, dslProjectName)
+                            bindInvalid(
+                              uiScope,
+                              dslProjectNameError.map { it != null },
+                            )
+                          }
+                          validationMessage(uiScope, dslProjectNameError)
+                        }
+
+                        checkBox(
+                          label = "Options",
+                          text = "Keep MVVM independent from DI",
+                        ) {
+                          isSelected = true
+                        }
+
+                        item(
+                          label = "Mode",
+                          helper = "ComboBox selection can bind directly to MutableStateFlow.",
+                        ) {
+                          comboBox(
+                            items = dslModeOptions,
+                            init = {
+                              maxWidth = Double.MAX_VALUE
+                            },
+                          ) {
+                            select("DSL First")
+                          }.bindSelectedItemBidirectional(uiScope, dslMode)
+                        }
+
+                        item(label = "Runtime") {
+                          choiceBox(items = dslRuntimeOptions) {
+                            select("Manual JavaFX")
+                          }.bindSelectedItemBidirectional(uiScope, dslRuntime)
+                        }
+
+                        item(label = "Parallel Work") {
+                          intSpinner(
+                            min = 1,
+                            max = 8,
+                            initialValue = dslParallelism.value,
+                          ) {
+                            isEditable = true
+                            bindValueBidirectional(uiScope, dslParallelism)
+                          }
+                        }
+
+                        item(label = "Target Date") {
+                          datePicker {
+                            bindValueBidirectional(uiScope, dslTargetDate)
+                          }
+                        }
+
+                        submitBar {
+                          secondaryButton("Reset") {
+                            onAction {
+                              dslProjectName.value = "KoraFX"
+                              dslMode.value = "DSL First"
+                              dslRuntime.value = "Manual JavaFX"
+                              dslParallelism.value = 2
+                              dslTargetDate.value = LocalDate.now().plusWeeks(1)
+                            }
+                          }
+                          primaryButton("Apply") {
+                            onAction {
+                              val project = projectField.text.trim()
+                              feedbackLabel.text =
+                                if (project.isEmpty()) {
+                                  "State: Form validation blocked submit."
+                                } else {
+                                  "State: $project uses ${dslMode.value} with ${dslParallelism.value} workers."
+                                }
+                            }
+                          }
+                        }
+                      }
+
+                      tableView(
+                        items = moduleSummaries,
+                        init = {
+                          prefHeight = 180.0
+                          maxWidth = Double.MAX_VALUE
+                          growVertical(Priority.SOMETIMES)
+                        },
+                      ) {
+                        constrainedResize()
+                        placeholder("No modules")
+                        textColumn("Module") { it.name }
+                        textColumn("Responsibility") { it.responsibility }
+                        actionColumn(title = "Action", text = "Inspect") { row ->
+                          feedbackLabel.text = "State: Inspect ${row.name}."
+                        }
+                      }
+                    }
+
+                    card {
+                      label("Composable TreeView") {
+                        styleClasses(ThemeStyleClass.Headline)
+                      }
+                      treeView<String>(
+                        init = {
+                          prefHeight = 150.0
+                        },
+                      ) {
+                        root("DSL Coverage") {
+                          item("Layouts")
+                          item("Controls")
+                          item("Bindings")
+                          item("Menus")
+                          item("Components")
+                        }
+                        showRoot(true)
+                        render { "• $it" }
+                        rowAction { item ->
+                          feedbackLabel.text = "State: Tree row action: $item"
+                        }
+                      }
+                    }
+
+                    emptyState(
+                      title = "Feedback components",
+                      message = "emptyState, loadingState and errorState are plain JavaFX nodes.",
+                      actionText = "Mark Reviewed",
+                      onAction = {
+                        feedbackLabel.text = "State: Feedback component action."
+                      },
+                    ) {
+                      prefHeight = 180.0
+                    }
+                  }.stateVisible(uiScope, viewModel.state) {
+                    it.currentRouteId == WorkbenchRoute.Dsl.id
+                  }
+                  vbox(spacing = 16.0) {
+                    section(
+                      title = "StateFlow-backed ViewModel",
+                      description = "Buttons dispatch actions. The ViewModel updates state and emits feedback events.",
+                    ) {
+                      label {
+                        styleClasses(ThemeStyleClass.Headline)
+                      }.stateText(uiScope, viewModel.state) { "Count: ${it.mvvmCount}" }
+
+                      actionBar(alignEnd = false) {
+                        alignment(Pos.CENTER_LEFT)
+
+                        button("-1") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.DecrementCounter)
+                          }
+                        }
+                        button("+1") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.IncrementCounter)
+                          }
+                        }
+                        ghostButton("Reset") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.ResetCounter)
+                          }
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Action / Event Flow",
+                      description = "Text input updates ViewModel state. Submit emits a one-shot event and renders notes from state.",
+                    ) {
+                      gridPane(
+                        hgap = 12.0,
+                        vgap = 10.0,
+                      ) {
+                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                        column(grow = Priority.ALWAYS, fillWidth = true)
+
+                        label(0, 0, "Draft")
+                        textField(1, 0, "") {
+                          promptText = "Type a note for the ViewModel"
+                          maxWidth = Double.MAX_VALUE
+                        }.stateText(
+                          scope = uiScope,
+                          state = viewModel.state,
+                          onTextChange = { nextValue ->
+                            viewModel.dispatch(WorkbenchAction.UpdateDraft(nextValue))
+                          }
+                        ) { it.mvvmDraft }
+
+                        label(0, 1, "Notes")
+                        cell(1, 1, horizontalGrow = Priority.ALWAYS) {
+                          vbox(
+                            spacing = 10.0,
+                            init = {
+                              minHeight = 150.0
+                            },
+                          ) {
+                          }.stateList(
+                            scope = uiScope,
+                            state = viewModel.state,
+                            items = { it.mvvmNotes },
+                            empty = {
+                              emptyState(
+                                title = "No notes yet",
+                                message = "Submit the draft to prove state-driven rendering.",
+                              ) {
+                                prefHeight = 130.0
+                              }
+                            },
+                          ) { note ->
+                            ghostButton(note) {
+                              maxWidth = Double.MAX_VALUE
+                              onAction {
+                                viewModel.dispatch(WorkbenchAction.RecallNote(note))
+                              }
+                            }
+                          }
+                        }
+                      }
+
+                      actionBar {
+                        ghostButton("Clear Notes") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.ClearNotes)
+                          }
+                        }
+                        button("Submit Draft") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.SubmitDraft)
+                          }
+                        }.stateDisable(uiScope, viewModel.state) {
+                          it.mvvmDraft.isBlank()
+                        }
+                      }
+                    }
+                  }.stateVisible(uiScope, viewModel.state) {
+                    it.currentRouteId == WorkbenchRoute.Mvvm.id
+                  }
+                  vbox(spacing = 16.0) {
+                    section(
+                      title = "Theme Presets",
+                      description = "Choose any built-in theme. The Scene stylesheet is regenerated from typed tokens.",
+                    ) {
+                      gridPane(
+                        hgap = 12.0,
+                        vgap = 10.0,
+                      ) {
+                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                        column(grow = Priority.ALWAYS, fillWidth = true)
+
+                        label(0, 0, "Preset")
+                        cell(1, 0, horizontalGrow = Priority.ALWAYS) {
+                          comboBox<KoraTheme>(
+                            items = themeManager.availableThemes,
+                            init = {
+                              maxWidth = Double.MAX_VALUE
+                            },
+                          ) {
+                            render { it.displayName }
+                            onSelect { theme ->
+                              if (theme != null) {
+                                viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+                              }
+                            }
+                          }.also {
+                            it.bindSelectedItem(uiScope, themeManager.theme)
+                          }
+                        }
+
+                        label(0, 1, "Current")
+                        label(1, 1) {
+                          styleClasses(ThemeStyleClass.Muted)
+                        }.stateText(uiScope, themeManager.theme) { "${it.displayName} (${it.id})" }
+                      }
+
+                      actionBar(alignEnd = false) {
+                        ghostButton("Previous") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.PreviousTheme)
+                          }
+                        }
+                        button("Next") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.NextTheme)
+                          }
+                        }
+                        ghostButton("Light / Dark") {
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                          }
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Current Theme Tokens",
+                      description = "These values are the source for generated JavaFX CSS.",
+                    ) {
+                      gridPane(
+                        hgap = 12.0,
+                        vgap = 10.0,
+                      ) {
+                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                        column(grow = Priority.ALWAYS, fillWidth = true)
+
+                        label(0, 0, "Primary")
+                        label(1, 0).stateText(uiScope, themeManager.theme) { it.tokens.colors.primary }
+                        label(0, 1, "Surface")
+                        label(1, 1).stateText(uiScope, themeManager.theme) { it.tokens.colors.surface }
+                        label(0, 2, "Muted Surface")
+                        label(1, 2).stateText(uiScope, themeManager.theme) { it.tokens.colors.surfaceMuted }
+                        label(0, 3, "Text")
+                        label(1, 3).stateText(uiScope, themeManager.theme) {
+                          "${it.tokens.colors.textPrimary} / ${it.tokens.colors.textSecondary}"
+                        }
+                        label(0, 4, "Semantic")
+                        label(1, 4).stateText(uiScope, themeManager.theme) {
+                          "success ${it.tokens.colors.success}, warning ${it.tokens.colors.warning}, danger ${it.tokens.colors.danger}, info ${it.tokens.colors.info}"
+                        }
+                        label(0, 5, "Typography")
+                        label(1, 5).stateText(uiScope, themeManager.theme) {
+                          "${it.tokens.typography.fontFamily}, ${it.tokens.typography.baseSize}px / ${it.tokens.typography.headlineSize}px"
+                        }
+                        label(0, 6, "Radius")
+                        label(1, 6).stateText(uiScope, themeManager.theme) { "${it.tokens.radius}px" }
+                        label(0, 7, "Radii")
+                        label(1, 7).stateText(uiScope, themeManager.theme) {
+                          "small ${it.tokens.radii.small}px, medium ${it.tokens.radii.medium}px, large ${it.tokens.radii.large}px"
+                        }
+                        label(0, 8, "Spacing")
+                        label(1, 8).stateText(uiScope, themeManager.theme) {
+                          "sm ${it.tokens.spacing.sm}px, md ${it.tokens.spacing.md}px, xl ${it.tokens.spacing.xl}px"
+                        }
+                        label(0, 9, "States")
+                        label(1, 9).stateText(uiScope, themeManager.theme) {
+                          "hover ${it.tokens.states.surfaceHover}, selected ${it.tokens.states.selected}, disabled ${it.tokens.states.disabledOpacity}"
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Theme Control Gallery",
+                      description = "Switch presets above and check whether common JavaFX controls keep a consistent surface, radius and interaction style.",
+                    ) {
+                      vbox(spacing = 16.0) {
+                        flowPane(
+                          hgap = 10.0,
+                          vgap = 10.0,
+                        ) {
+                          button("Primary")
+                          ghostButton("Ghost")
+                          toggleButton("Toggle") {
+                            isSelected = true
+                          }
+                          menuButton("Menu") {
+                            actionItem("Refresh") {
+                              feedbackLabel.text = "State: Menu action."
+                            }
+                            actionItem("Export") {
+                              feedbackLabel.text = "State: Export action."
+                            }
+                          }
+                          splitMenuButton("Split Action") {
+                            actionItem("Run now") {
+                              feedbackLabel.text = "State: Split action."
+                            }
+                            actionItem("Schedule") {
+                              feedbackLabel.text = "State: Schedule action."
+                            }
+                          }
+                          hyperlink("Documentation") {
+                            onAction {
+                              feedbackLabel.text = "State: Hyperlink action."
+                            }
+                          }
+                          badge("Success", ComponentTone.SUCCESS)
+                          badge("Warning", ComponentTone.WARNING)
+                          badge("Danger", ComponentTone.DANGER)
+                          chip("Selected", ComponentTone.PRIMARY, selected = true)
+                          chip("Info", ComponentTone.INFO)
+                        }
+
+                        hbox(spacing = 12.0) {
+                          metricCard(
+                            label = "Presets",
+                            value = themeManager.availableThemes.size.toString(),
+                            helper = "Built-in themes",
+                            tone = ComponentTone.INFO,
+                          )
+                          metricCard(
+                            label = "Tones",
+                            value = ComponentTone.entries.size.toString(),
+                            helper = "Semantic component states",
+                            tone = ComponentTone.SUCCESS,
+                          )
+                        }
+
+                        alertBanner(
+                          title = "Semantic theme coverage",
+                          message = "Badges, chips, metric cards and alert banners share the same tone classes.",
+                          tone = ComponentTone.WARNING,
+                          actionText = "Switch Theme",
+                          onAction = {
+                            viewModel.dispatch(WorkbenchAction.NextTheme)
+                          },
+                        )
+
+                        gridPane(
+                          hgap = 12.0,
+                          vgap = 10.0,
+                        ) {
+                          val toneGroup = javafx.scene.control.ToggleGroup()
+
+                          column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                          column(grow = Priority.ALWAYS, fillWidth = true)
+                          column(grow = Priority.ALWAYS, fillWidth = true)
+
+                          label(0, 0, "Text")
+                          textField(1, 0, "Editable value") {
+                            maxWidth = Double.MAX_VALUE
+                          }
+                          cell(2, 0, horizontalGrow = Priority.ALWAYS) {
+                            passwordField("secret") {
+                              maxWidth = Double.MAX_VALUE
+                            }
+                          }
+
+                          label(0, 1, "Selection")
+                          cell(1, 1, horizontalGrow = Priority.ALWAYS) {
+                            comboBox(
+                              items = listOf("Kotlin", "JavaFX", "StateFlow"),
+                              init = {
+                                maxWidth = Double.MAX_VALUE
+                              },
+                            ) {
+                              select("Kotlin")
+                            }
+                          }
+                          cell(2, 1, horizontalGrow = Priority.ALWAYS) {
+                            choiceBox(
+                              items = listOf("Light", "Dark", "Brand"),
+                              init = {
+                                maxWidth = Double.MAX_VALUE
+                              },
+                            ) {
+                              select("Brand")
+                            }
+                          }
+
+                          label(0, 2, "Pickers")
+                          cell(1, 2, horizontalGrow = Priority.ALWAYS) {
+                            datePicker(LocalDate.now()) {
+                              maxWidth = Double.MAX_VALUE
+                            }
+                          }
+                          cell(2, 2, horizontalGrow = Priority.ALWAYS) {
+                            colorPicker(Color.web("#246BFD")) {
+                              maxWidth = Double.MAX_VALUE
+                            }
+                          }
+
+                          label(0, 3, "Inputs")
+                          cell(1, 3, horizontalGrow = Priority.ALWAYS) {
+                            intSpinner(
+                              min = 1,
+                              max = 12,
+                              initialValue = 4,
+                            ) {
+                              isEditable = true
+                              maxWidth = Double.MAX_VALUE
+                            }
+                          }
+                          cell(2, 3, horizontalGrow = Priority.ALWAYS) {
+                            hbox(spacing = 12.0) {
+                              checkBox("Enabled") {
+                                isSelected = true
+                              }
+                              radioButton("A", toneGroup) {
+                                isSelected = true
+                              }
+                              radioButton("B", toneGroup)
+                            }
+                          }
+                        }
+
+                        tabPane {
+                          tab("Controls") {
+                            vbox(
+                              spacing = 10.0,
+                              init = {
+                                prefHeight = 160.0
+                              },
+                            ) {
+                              label("Progress")
+                              progressBar(0.68) {
+                                maxWidth = Double.MAX_VALUE
+                              }
+                              label("Slider")
+                              slider(
+                                min = 0.0,
+                                max = 100.0,
+                                value = 68.0,
+                              ) {
+                                maxWidth = Double.MAX_VALUE
+                              }
+                            }
+                          }
+                          tab("Navigation") {
+                            accordion {
+                              pane("Accordion Pane", expanded = true) {
+                                vbox(spacing = 8.0) {
+                                  label("Accordion, titled panes and tabs share the same theme tokens.")
+                                  pagination(
+                                    pageCount = 3,
+                                    init = {
+                                      maxPageIndicatorCount = 3
+                                    },
+                                  ) { pageIndex ->
+                                    Label("Preview page ${pageIndex + 1}").apply {
+                                      styleClasses(ThemeStyleClass.Muted)
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                          tab("Lists") {
+                            listView(
+                              items = listOf("List item", "Selected row style", "Hover row style"),
+                              init = {
+                                prefHeight = 160.0
+                                selectionModel.select("Selected row style")
+                              },
+                            ) {
+                              render { it }
+                            }
+                          }
+                        }
+                      }
+                    }
+
+                    section(
+                      title = "Built-In Theme Catalog",
+                      description = "The catalog is plain data, so applications can expose all presets or only a curated subset.",
+                    ) {
+                      tableView(
                         items = themeManager.availableThemes,
                         init = {
-                            prefWidth = 180.0
+                          prefHeight = 240.0
+                          maxWidth = Double.MAX_VALUE
+                          growVertical(Priority.SOMETIMES)
                         },
-                    ) {
-                        render { it.displayName }
-                        onSelect { theme ->
-                            if (theme != null) {
-                                viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
-                            }
+                      ) {
+                        constrainedResize()
+                        textColumn("Theme") { it.displayName }
+                        textColumn("ID") { it.id }
+                        textColumn("Primary") { it.tokens.colors.primary }
+                        textColumn("Radius") { "${it.tokens.radius}px" }
+                        actionColumn(title = "Action", text = "Use") { theme ->
+                          viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
                         }
-                    }.bindSelectedItem(uiScope, themeManager.theme)
-                    ghostButton("Next Theme") {
-                        onAction {
-                            viewModel.dispatch(WorkbenchAction.NextTheme)
-                        }
+                      }
                     }
+                  }.stateVisible(uiScope, viewModel.state) {
+                    it.currentRouteId == WorkbenchRoute.Theme.id
+                  }
                 }
+              }
             }
+          }
 
-            navigation {
-                navigationRail(uiScope, navigator)
+          footer {
+            statusBar {
+            }.stateList(
+              scope = uiScope,
+              state = viewModel.state,
+              items = { it.statusItems },
+            ) { item ->
+              label(item) {
+                styleClasses(ThemeStyleClass.Muted)
+              }
             }
-
-            content {
-                scrollPane(
-                    init = {
-                        isFitToWidth = true
-                    },
-                ) {
-                    content {
-                        panel {
-                            label {
-                                styleClasses(ThemeStyleClass.Headline)
-                            }.stateText(uiScope, viewModel.state) { it.title }
-                            label {
-                                isWrapText = true
-                                styleClasses(ThemeStyleClass.Muted)
-                            }.stateText(uiScope, viewModel.state) { it.summary }
-                            textArea {
-                                isEditable = false
-                                prefRowCount = 16
-                            }.stateText(uiScope, viewModel.state) { it.document }
-                            label {
-                                styleClasses(ThemeStyleClass.Muted)
-                            }.stateText(uiScope, viewModel.state) { "Theme: ${it.currentThemeName}" }
-                            feedbackLabel = label {
-                                styleClasses(ThemeStyleClass.Muted)
-                            }.stateText(uiScope, viewModel.state) { "State: ${it.feedbackMessage}" }
-                            label {
-                                styleClasses(ThemeStyleClass.Muted)
-                            }.stateText(uiScope, viewModel.events) { event ->
-                                when (event) {
-                                    is WorkbenchEvent.Feedback -> "Last event: ${event.message}"
-                                }
-                            }
-                            vbox(spacing = 16.0) {
-                                menuBar {
-                                    menu("DSL Actions") {
-                                        actionItem("Toggle Theme") {
-                                            viewModel.dispatch(WorkbenchAction.ToggleTheme)
-                                        }
-                                        actionItem("Open MVVM Route") {
-                                            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Mvvm.id))
-                                        }
-                                        actionItem("Open Theme Route") {
-                                            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Theme.id))
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Surface Components",
-                                    description = "section, card and actionBar are lightweight containers built on top of the DSL.",
-                                ) {
-                                    gridPane(
-                                        hgap = 12.0,
-                                        vgap = 10.0,
-                                    ) {
-                                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
-                                        column(grow = Priority.ALWAYS, fillWidth = true)
-
-                                        label(0, 0, "Project")
-                                        textField(1, 0, "KoraFX") {
-                                            maxWidth = Double.MAX_VALUE
-                                        }
-
-                                        label(0, 1, "Mode")
-                                        checkBox(1, 1, "Kotlin-first JavaFX DSL") {
-                                            isSelected = true
-                                        }
-                                    }
-
-                                    actionBar {
-                                        ghostButton("Secondary") {
-                                            onAction {
-                                                feedbackLabel.text = "State: Secondary action from actionBar."
-                                            }
-                                        }
-                                        button("Primary") {
-                                            onAction {
-                                                feedbackLabel.text = "State: Primary action from actionBar."
-                                            }
-                                        }
-                                    }
-
-                                    hbox(spacing = 8.0) {
-                                        badge("Stable", ComponentTone.SUCCESS)
-                                        badge("Theme", ComponentTone.INFO)
-                                        chip("DSL", ComponentTone.PRIMARY, selected = true)
-                                        chip("Samples", ComponentTone.NEUTRAL) {
-                                            onAction {
-                                                feedbackLabel.text = "State: Chip action."
-                                            }
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Code Editor Component",
-                                    description = "A lightweight TextArea based editor with toolbar, dirty state and themed status bar.",
-                                ) {
-                                    codeEditor(
-                                        title = "Kotlin Scratch",
-                                        text = "fun main() {\n    println(\"KoraFX\")\n}",
-                                        language = "kotlin",
-                                        placeholder = "Start typing...",
-                                        onTextChange = { text ->
-                                            feedbackLabel.text = "State: Editor changed, ${text.length} chars."
-                                        },
-                                    ) {
-                                        prefHeight = 220.0
-                                    }
-                                }
-
-                                section(
-                                    title = "Layout And Data Grid Components",
-                                    description = "Semantic workbench slots, resource browsing, and searchable editable grids cover common tool surfaces.",
-                                ) {
-                                    workspaceLayout(
-                                        init = {
-                                            prefHeight = 260.0
-                                            maxWidth = Double.MAX_VALUE
-                                        },
-                                    ) {
-                                        topBar {
-                                            hbox(spacing = 10.0) {
-                                                label("Git / Database Workspace") {
-                                                    styleClasses(ThemeStyleClass.Headline)
-                                                }
-                                                badge("WorkspaceLayout", ComponentTone.INFO)
-                                            }
-                                        }
-                                        navigation {
-                                            resourceExplorer(
-                                                items = explorerResources,
-                                                childrenOf = { it.children },
-                                                textOf = { it.name },
-                                                init = {
-                                                    prefWidth = 240.0
-                                                    maxHeight = Double.MAX_VALUE
-                                                },
-                                            ) {
-                                                search(prompt = "Search repository or database...")
-                                                onSelect { resource ->
-                                                    if (resource != null) {
-                                                        feedbackLabel.text = "State: Selected resource ${resource.name}."
-                                                    }
-                                                }
-                                                rowAction { resource ->
-                                                    feedbackLabel.text = "State: Open resource ${resource.name}."
-                                                }
-                                                contextMenu { resource ->
-                                                    actionItem("Open") {
-                                                        feedbackLabel.text = "State: Open ${resource.name} from context menu."
-                                                    }
-                                                    actionItem("Inspect") {
-                                                        feedbackLabel.text = "State: Inspect ${resource.name}."
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        content {
-                                            card(spacing = 8.0, padding = 12.0) {
-                                                label("Main Work Area") {
-                                                    styleClasses(ThemeStyleClass.Headline)
-                                                }
-                                                label("Use this slot for source views, query editors, tables, and route content.")
-                                            }
-                                        }
-                                        details {
-                                            inspectorPanel(
-                                                title = "Repository",
-                                                subtitle = "Selection details for Git and database resources.",
-                                            ) {
-                                                badge("Connected", ComponentTone.SUCCESS)
-                                                property("Branch", "main")
-                                                property("Connection", "local")
-                                                section("Metadata") {
-                                                    property("Schema", "public")
-                                                    property("Dirty rows", "1")
-                                                }
-                                                actions {
-                                                    action("Inspect") {
-                                                        feedbackLabel.text = "State: Inspector action requested."
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        status {
-                                            label("Ready - 3 modules loaded")
-                                        }
-                                        overlay(alignment = Pos.BOTTOM_RIGHT) {
-                                            badge("Overlay slot", ComponentTone.SUCCESS)
-                                        }
-                                    }
-
-                                    borderLayout(
-                                        init = {
-                                            prefHeight = 220.0
-                                            maxWidth = Double.MAX_VALUE
-                                        },
-                                    ) {
-                                        header {
-                                            label("Workspace Layout") {
-                                                styleClasses(ThemeStyleClass.Headline)
-                                            }
-                                        }
-                                        sidebar {
-                                            vbox(spacing = 8.0) {
-                                                label("Overview")
-                                                label("Modules")
-                                                label("Settings")
-                                            }
-                                        }
-                                        content {
-                                            card(spacing = 8.0, padding = 12.0) {
-                                                label("BorderLayout") {
-                                                    styleClasses(ThemeStyleClass.Headline)
-                                                }
-                                                label("Header, sidebar, content and footer are plain JavaFX nodes with stable theme slot classes.")
-                                            }
-                                        }
-                                        footer {
-                                            label("Footer slot keeps its own themed boundary.")
-                                        }
-                                    }
-
-                                    dataGrid(
-                                        items = editableModules,
-                                        searchPrompt = "Search modules...",
-                                        init = {
-                                            prefHeight = 230.0
-                                            maxWidth = Double.MAX_VALUE
-                                            growVertical(Priority.SOMETIMES)
-                                        },
-                                    ) {
-                                        search(textOf = { "${it.name} ${it.owner} ${it.status}" })
-                                        dirtyRows { it.status == "Draft" }
-                                        emptyState("No modules match the current filter")
-                                        footer("${editableModules.size} modules - draft rows are marked")
-                                        toolbar {
-                                            action("Refresh") {
-                                                feedbackLabel.text = "State: Data grid refresh requested."
-                                            }
-                                        }
-                                        constrainedResize()
-                                        editableTextColumn("Module", valueOf = { it.name }) { row, value ->
-                                            row.name = value
-                                            feedbackLabel.text = "State: Renamed module to $value."
-                                        }
-                                        editableTextColumn("Owner", valueOf = { it.owner }) { row, value ->
-                                            row.owner = value
-                                            feedbackLabel.text = "State: ${row.name} owner changed to $value."
-                                        }
-                                        readOnlyTextColumn("Status") { it.status }
-                                        actionColumn(title = "Action", text = "Open") { row ->
-                                            feedbackLabel.text = "State: Open data grid row ${row.name}."
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Form And Table DSL",
-                                    description = "Common controls stay close to JavaFX while removing repetitive layout code.",
-                                ) {
-                                    form {
-                                        lateinit var projectField: TextField
-
-                                        item(
-                                            label = "Project",
-                                            helper = "Validation is just Flow binding; no form model is required.",
-                                        ) {
-                                            projectField = textField {
-                                                maxWidth = Double.MAX_VALUE
-                                                bindTextBidirectional(uiScope, dslProjectName)
-                                                bindInvalid(
-                                                    uiScope,
-                                                    dslProjectNameError.map { it != null },
-                                                )
-                                            }
-                                            validationMessage(uiScope, dslProjectNameError)
-                                        }
-
-                                        checkBox(
-                                            label = "Options",
-                                            text = "Keep MVVM independent from DI",
-                                        ) {
-                                            isSelected = true
-                                        }
-
-                                        item(
-                                            label = "Mode",
-                                            helper = "ComboBox selection can bind directly to MutableStateFlow.",
-                                        ) {
-                                            comboBox(
-                                                items = dslModeOptions,
-                                                init = {
-                                                    maxWidth = Double.MAX_VALUE
-                                                },
-                                            ) {
-                                                select("DSL First")
-                                            }.bindSelectedItemBidirectional(uiScope, dslMode)
-                                        }
-
-                                        item(label = "Runtime") {
-                                            choiceBox(items = dslRuntimeOptions) {
-                                                select("Manual JavaFX")
-                                            }.bindSelectedItemBidirectional(uiScope, dslRuntime)
-                                        }
-
-                                        item(label = "Parallel Work") {
-                                            intSpinner(
-                                                min = 1,
-                                                max = 8,
-                                                initialValue = dslParallelism.value,
-                                            ) {
-                                                isEditable = true
-                                                bindValueBidirectional(uiScope, dslParallelism)
-                                            }
-                                        }
-
-                                        item(label = "Target Date") {
-                                            datePicker {
-                                                bindValueBidirectional(uiScope, dslTargetDate)
-                                            }
-                                        }
-
-                                        submitBar {
-                                            secondaryButton("Reset") {
-                                                onAction {
-                                                    dslProjectName.value = "KoraFX"
-                                                    dslMode.value = "DSL First"
-                                                    dslRuntime.value = "Manual JavaFX"
-                                                    dslParallelism.value = 2
-                                                    dslTargetDate.value = LocalDate.now().plusWeeks(1)
-                                                }
-                                            }
-                                            primaryButton("Apply") {
-                                                onAction {
-                                                    val project = projectField.text.trim()
-                                                    feedbackLabel.text =
-                                                        if (project.isEmpty()) {
-                                                            "State: Form validation blocked submit."
-                                                        } else {
-                                                            "State: $project uses ${dslMode.value} with ${dslParallelism.value} workers."
-                                                        }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    tableView(
-                                        items = moduleSummaries,
-                                        init = {
-                                            prefHeight = 180.0
-                                            maxWidth = Double.MAX_VALUE
-                                            growVertical(Priority.SOMETIMES)
-                                        },
-                                    ) {
-                                        constrainedResize()
-                                        placeholder("No modules")
-                                        textColumn("Module") { it.name }
-                                        textColumn("Responsibility") { it.responsibility }
-                                        actionColumn(title = "Action", text = "Inspect") { row ->
-                                            feedbackLabel.text = "State: Inspect ${row.name}."
-                                        }
-                                    }
-                                }
-
-                                card {
-                                    label("Composable TreeView") {
-                                        styleClasses(ThemeStyleClass.Headline)
-                                    }
-                                    treeView<String>(
-                                        init = {
-                                            prefHeight = 150.0
-                                        },
-                                    ) {
-                                        root("DSL Coverage") {
-                                            item("Layouts")
-                                            item("Controls")
-                                            item("Bindings")
-                                            item("Menus")
-                                            item("Components")
-                                        }
-                                        showRoot(true)
-                                        render { "• $it" }
-                                        rowAction { item ->
-                                            feedbackLabel.text = "State: Tree row action: $item"
-                                        }
-                                    }
-                                }
-
-                                emptyState(
-                                    title = "Feedback components",
-                                    message = "emptyState, loadingState and errorState are plain JavaFX nodes.",
-                                    actionText = "Mark Reviewed",
-                                    onAction = {
-                                        feedbackLabel.text = "State: Feedback component action."
-                                    },
-                                ) {
-                                    prefHeight = 180.0
-                                }
-                            }.stateVisible(uiScope, viewModel.state) {
-                                it.currentRouteId == WorkbenchRoute.Dsl.id
-                            }
-                            vbox(spacing = 16.0) {
-                                section(
-                                    title = "StateFlow-backed ViewModel",
-                                    description = "Buttons dispatch actions. The ViewModel updates state and emits feedback events.",
-                                ) {
-                                    label {
-                                        styleClasses(ThemeStyleClass.Headline)
-                                    }.stateText(uiScope, viewModel.state) { "Count: ${it.mvvmCount}" }
-
-                                    actionBar(alignEnd = false) {
-                                        alignment(Pos.CENTER_LEFT)
-
-                                        button("-1") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.DecrementCounter)
-                                            }
-                                        }
-                                        button("+1") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.IncrementCounter)
-                                            }
-                                        }
-                                        ghostButton("Reset") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.ResetCounter)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Action / Event Flow",
-                                    description = "Text input updates ViewModel state. Submit emits a one-shot event and renders notes from state.",
-                                ) {
-                                    gridPane(
-                                        hgap = 12.0,
-                                        vgap = 10.0,
-                                    ) {
-                                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
-                                        column(grow = Priority.ALWAYS, fillWidth = true)
-
-                                        label(0, 0, "Draft")
-                                        textField(1, 0, "") {
-                                            promptText = "Type a note for the ViewModel"
-                                            maxWidth = Double.MAX_VALUE
-                                        }.stateText(
-                                            scope = uiScope,
-                                            state = viewModel.state,
-                                            onTextChange = { nextValue ->
-                                                viewModel.dispatch(WorkbenchAction.UpdateDraft(nextValue))
-                                            }
-                                        ) { it.mvvmDraft }
-
-                                        label(0, 1, "Notes")
-                                        cell(1, 1, horizontalGrow = Priority.ALWAYS) {
-                                            vbox(
-                                                spacing = 10.0,
-                                                init = {
-                                                    minHeight = 150.0
-                                                },
-                                            ) {
-                                            }.stateList(
-                                                scope = uiScope,
-                                                state = viewModel.state,
-                                                items = { it.mvvmNotes },
-                                                empty = {
-                                                    emptyState(
-                                                        title = "No notes yet",
-                                                        message = "Submit the draft to prove state-driven rendering.",
-                                                    ) {
-                                                        prefHeight = 130.0
-                                                    }
-                                                },
-                                            ) { note ->
-                                                ghostButton(note) {
-                                                    maxWidth = Double.MAX_VALUE
-                                                    onAction {
-                                                        viewModel.dispatch(WorkbenchAction.RecallNote(note))
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    actionBar {
-                                        ghostButton("Clear Notes") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.ClearNotes)
-                                            }
-                                        }
-                                        button("Submit Draft") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.SubmitDraft)
-                                            }
-                                        }.stateDisable(uiScope, viewModel.state) {
-                                            it.mvvmDraft.isBlank()
-                                        }
-                                    }
-                                }
-                            }.stateVisible(uiScope, viewModel.state) {
-                                it.currentRouteId == WorkbenchRoute.Mvvm.id
-                            }
-                            vbox(spacing = 16.0) {
-                                section(
-                                    title = "Theme Presets",
-                                    description = "Choose any built-in theme. The Scene stylesheet is regenerated from typed tokens.",
-                                ) {
-                                    gridPane(
-                                        hgap = 12.0,
-                                        vgap = 10.0,
-                                    ) {
-                                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
-                                        column(grow = Priority.ALWAYS, fillWidth = true)
-
-                                        label(0, 0, "Preset")
-                                        cell(1, 0, horizontalGrow = Priority.ALWAYS) {
-                                            comboBox<KoraTheme>(
-                                                items = themeManager.availableThemes,
-                                                init = {
-                                                    maxWidth = Double.MAX_VALUE
-                                                },
-                                            ) {
-                                                render { it.displayName }
-                                                onSelect { theme ->
-                                                    if (theme != null) {
-                                                        viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
-                                                    }
-                                                }
-                                            }.also {
-                                                it.bindSelectedItem(uiScope, themeManager.theme)
-                                            }
-                                        }
-
-                                        label(0, 1, "Current")
-                                        label(1, 1) {
-                                            styleClasses(ThemeStyleClass.Muted)
-                                        }.stateText(uiScope, themeManager.theme) { "${it.displayName} (${it.id})" }
-                                    }
-
-                                    actionBar(alignEnd = false) {
-                                        ghostButton("Previous") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.PreviousTheme)
-                                            }
-                                        }
-                                        button("Next") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.NextTheme)
-                                            }
-                                        }
-                                        ghostButton("Light / Dark") {
-                                            onAction {
-                                                viewModel.dispatch(WorkbenchAction.ToggleTheme)
-                                            }
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Current Theme Tokens",
-                                    description = "These values are the source for generated JavaFX CSS.",
-                                ) {
-                                    gridPane(
-                                        hgap = 12.0,
-                                        vgap = 10.0,
-                                    ) {
-                                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
-                                        column(grow = Priority.ALWAYS, fillWidth = true)
-
-                                        label(0, 0, "Primary")
-                                        label(1, 0).stateText(uiScope, themeManager.theme) { it.tokens.colors.primary }
-                                        label(0, 1, "Surface")
-                                        label(1, 1).stateText(uiScope, themeManager.theme) { it.tokens.colors.surface }
-                                        label(0, 2, "Muted Surface")
-                                        label(1, 2).stateText(uiScope, themeManager.theme) { it.tokens.colors.surfaceMuted }
-                                        label(0, 3, "Text")
-                                        label(1, 3).stateText(uiScope, themeManager.theme) {
-                                            "${it.tokens.colors.textPrimary} / ${it.tokens.colors.textSecondary}"
-                                        }
-                                        label(0, 4, "Semantic")
-                                        label(1, 4).stateText(uiScope, themeManager.theme) {
-                                            "success ${it.tokens.colors.success}, warning ${it.tokens.colors.warning}, danger ${it.tokens.colors.danger}, info ${it.tokens.colors.info}"
-                                        }
-                                        label(0, 5, "Typography")
-                                        label(1, 5).stateText(uiScope, themeManager.theme) {
-                                            "${it.tokens.typography.fontFamily}, ${it.tokens.typography.baseSize}px / ${it.tokens.typography.headlineSize}px"
-                                        }
-                                        label(0, 6, "Radius")
-                                        label(1, 6).stateText(uiScope, themeManager.theme) { "${it.tokens.radius}px" }
-                                        label(0, 7, "Radii")
-                                        label(1, 7).stateText(uiScope, themeManager.theme) {
-                                            "small ${it.tokens.radii.small}px, medium ${it.tokens.radii.medium}px, large ${it.tokens.radii.large}px"
-                                        }
-                                        label(0, 8, "Spacing")
-                                        label(1, 8).stateText(uiScope, themeManager.theme) {
-                                            "sm ${it.tokens.spacing.sm}px, md ${it.tokens.spacing.md}px, xl ${it.tokens.spacing.xl}px"
-                                        }
-                                        label(0, 9, "States")
-                                        label(1, 9).stateText(uiScope, themeManager.theme) {
-                                            "hover ${it.tokens.states.surfaceHover}, selected ${it.tokens.states.selected}, disabled ${it.tokens.states.disabledOpacity}"
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Theme Control Gallery",
-                                    description = "Switch presets above and check whether common JavaFX controls keep a consistent surface, radius and interaction style.",
-                                ) {
-                                    vbox(spacing = 16.0) {
-                                        flowPane(
-                                            hgap = 10.0,
-                                            vgap = 10.0,
-                                        ) {
-                                            button("Primary")
-                                            ghostButton("Ghost")
-                                            toggleButton("Toggle") {
-                                                isSelected = true
-                                            }
-                                            menuButton("Menu") {
-                                                actionItem("Refresh") {
-                                                    feedbackLabel.text = "State: Menu action."
-                                                }
-                                                actionItem("Export") {
-                                                    feedbackLabel.text = "State: Export action."
-                                                }
-                                            }
-                                            splitMenuButton("Split Action") {
-                                                actionItem("Run now") {
-                                                    feedbackLabel.text = "State: Split action."
-                                                }
-                                                actionItem("Schedule") {
-                                                    feedbackLabel.text = "State: Schedule action."
-                                                }
-                                            }
-                                            hyperlink("Documentation") {
-                                                onAction {
-                                                    feedbackLabel.text = "State: Hyperlink action."
-                                                }
-                                            }
-                                            badge("Success", ComponentTone.SUCCESS)
-                                            badge("Warning", ComponentTone.WARNING)
-                                            badge("Danger", ComponentTone.DANGER)
-                                            chip("Selected", ComponentTone.PRIMARY, selected = true)
-                                            chip("Info", ComponentTone.INFO)
-                                        }
-
-                                        hbox(spacing = 12.0) {
-                                            metricCard(
-                                                label = "Presets",
-                                                value = themeManager.availableThemes.size.toString(),
-                                                helper = "Built-in themes",
-                                                tone = ComponentTone.INFO,
-                                            )
-                                            metricCard(
-                                                label = "Tones",
-                                                value = ComponentTone.entries.size.toString(),
-                                                helper = "Semantic component states",
-                                                tone = ComponentTone.SUCCESS,
-                                            )
-                                        }
-
-                                        alertBanner(
-                                            title = "Semantic theme coverage",
-                                            message = "Badges, chips, metric cards and alert banners share the same tone classes.",
-                                            tone = ComponentTone.WARNING,
-                                            actionText = "Switch Theme",
-                                            onAction = {
-                                                viewModel.dispatch(WorkbenchAction.NextTheme)
-                                            },
-                                        )
-
-                                        gridPane(
-                                            hgap = 12.0,
-                                            vgap = 10.0,
-                                        ) {
-                                            val toneGroup = javafx.scene.control.ToggleGroup()
-
-                                            column(prefWidth = 120.0, alignment = HPos.RIGHT)
-                                            column(grow = Priority.ALWAYS, fillWidth = true)
-                                            column(grow = Priority.ALWAYS, fillWidth = true)
-
-                                            label(0, 0, "Text")
-                                            textField(1, 0, "Editable value") {
-                                                maxWidth = Double.MAX_VALUE
-                                            }
-                                            cell(2, 0, horizontalGrow = Priority.ALWAYS) {
-                                                passwordField("secret") {
-                                                    maxWidth = Double.MAX_VALUE
-                                                }
-                                            }
-
-                                            label(0, 1, "Selection")
-                                            cell(1, 1, horizontalGrow = Priority.ALWAYS) {
-                                                comboBox(
-                                                    items = listOf("Kotlin", "JavaFX", "StateFlow"),
-                                                    init = {
-                                                        maxWidth = Double.MAX_VALUE
-                                                    },
-                                                ) {
-                                                    select("Kotlin")
-                                                }
-                                            }
-                                            cell(2, 1, horizontalGrow = Priority.ALWAYS) {
-                                                choiceBox(
-                                                    items = listOf("Light", "Dark", "Brand"),
-                                                    init = {
-                                                        maxWidth = Double.MAX_VALUE
-                                                    },
-                                                ) {
-                                                    select("Brand")
-                                                }
-                                            }
-
-                                            label(0, 2, "Pickers")
-                                            cell(1, 2, horizontalGrow = Priority.ALWAYS) {
-                                                datePicker(LocalDate.now()) {
-                                                    maxWidth = Double.MAX_VALUE
-                                                }
-                                            }
-                                            cell(2, 2, horizontalGrow = Priority.ALWAYS) {
-                                                colorPicker(Color.web("#246BFD")) {
-                                                    maxWidth = Double.MAX_VALUE
-                                                }
-                                            }
-
-                                            label(0, 3, "Inputs")
-                                            cell(1, 3, horizontalGrow = Priority.ALWAYS) {
-                                                intSpinner(
-                                                    min = 1,
-                                                    max = 12,
-                                                    initialValue = 4,
-                                                ) {
-                                                    isEditable = true
-                                                    maxWidth = Double.MAX_VALUE
-                                                }
-                                            }
-                                            cell(2, 3, horizontalGrow = Priority.ALWAYS) {
-                                                hbox(spacing = 12.0) {
-                                                    checkBox("Enabled") {
-                                                        isSelected = true
-                                                    }
-                                                    radioButton("A", toneGroup) {
-                                                        isSelected = true
-                                                    }
-                                                    radioButton("B", toneGroup)
-                                                }
-                                            }
-                                        }
-
-                                        tabPane {
-                                            tab("Controls") {
-                                                vbox(
-                                                    spacing = 10.0,
-                                                    init = {
-                                                        prefHeight = 160.0
-                                                    },
-                                                ) {
-                                                    label("Progress")
-                                                    progressBar(0.68) {
-                                                        maxWidth = Double.MAX_VALUE
-                                                    }
-                                                    label("Slider")
-                                                    slider(
-                                                        min = 0.0,
-                                                        max = 100.0,
-                                                        value = 68.0,
-                                                    ) {
-                                                        maxWidth = Double.MAX_VALUE
-                                                    }
-                                                }
-                                            }
-                                            tab("Navigation") {
-                                                accordion {
-                                                    pane("Accordion Pane", expanded = true) {
-                                                        vbox(spacing = 8.0) {
-                                                            label("Accordion, titled panes and tabs share the same theme tokens.")
-                                                            pagination(
-                                                                pageCount = 3,
-                                                                init = {
-                                                                    maxPageIndicatorCount = 3
-                                                                },
-                                                            ) { pageIndex ->
-                                                                Label("Preview page ${pageIndex + 1}").apply {
-                                            styleClasses(ThemeStyleClass.Muted)
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            tab("Lists") {
-                                                listView(
-                                                    items = listOf("List item", "Selected row style", "Hover row style"),
-                                                    init = {
-                                                        prefHeight = 160.0
-                                                        selectionModel.select("Selected row style")
-                                                    },
-                                                ) {
-                                                    render { it }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                section(
-                                    title = "Built-In Theme Catalog",
-                                    description = "The catalog is plain data, so applications can expose all presets or only a curated subset.",
-                                ) {
-                                    tableView(
-                                        items = themeManager.availableThemes,
-                                        init = {
-                                            prefHeight = 240.0
-                                            maxWidth = Double.MAX_VALUE
-                                            growVertical(Priority.SOMETIMES)
-                                        },
-                                    ) {
-                                        constrainedResize()
-                                        textColumn("Theme") { it.displayName }
-                                        textColumn("ID") { it.id }
-                                        textColumn("Primary") { it.tokens.colors.primary }
-                                        textColumn("Radius") { "${it.tokens.radius}px" }
-                                        actionColumn(title = "Action", text = "Use") { theme ->
-                                            viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
-                                        }
-                                    }
-                                }
-                            }.stateVisible(uiScope, viewModel.state) {
-                                it.currentRouteId == WorkbenchRoute.Theme.id
-                            }
-                        }
-                    }
-                }
-            }
-
-            footer {
-                statusBar {
-                }.stateList(
-                    scope = uiScope,
-                    state = viewModel.state,
-                    items = { it.statusItems },
-                ) { item ->
-                    label(item) {
-                        styleClasses(ThemeStyleClass.Muted)
-                    }
-                }
-            }
-        }
-
-    override fun stop() {
-        uiScope.cancel()
-        viewModel.close()
-        themeController.dispose()
+          }
+        },
+      )
+      commandPalette(commandPaletteHost) {
+        emptyState("No commands match the current search.")
+      }
     }
+
+  override fun stop() {
+    uiScope.cancel()
+    viewModel.close()
+    themeController.dispose()
+  }
 }

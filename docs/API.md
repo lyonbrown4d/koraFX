@@ -153,6 +153,10 @@ Main API:
 - Resource browsing: `resourceExplorer`, `ResourceExplorer`, `ResourceExplorerBuilder`
 - Data grids: `dataGrid`, `DataGrid`, `DataGridBuilder`, `editableTable`, `EditableTableBuilder`
 - Details: `inspectorPanel`, `InspectorPanel`, `InspectorPanelBuilder`
+- Editor surfaces: `sourceEditor`, `queryEditor`, `SourceEditor`, `SourceDiagnostic`
+- Workspaces: `tabWorkspace`, `TabWorkspace`, `TabWorkspaceBuilder`
+- Activity: `activityTimeline`, `ActivityTimeline`, `ActivityTimelineBuilder`
+- Commands: `CommandPaletteHost`, `CommandPaletteCommand`, `commandPalette`, `CommandPalette`
 - Navigation: `navigationRail`、`routeHost`、`routeStateHost`
 - Feedback: `feedbackState`、`emptyState`、`loadingState`、`errorState`、`ToastHost`、`toastHost`、`snackbar`
 - Surfaces: `card`、`section`、`actionBar`

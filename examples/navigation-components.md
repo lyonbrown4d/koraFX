@@ -337,6 +337,177 @@ val editor = codeEditor(
 editor.markClean()
 ```
 
+## Source And Query Editor
+
+```kotlin
+val source = sourceEditor(
+    title = "RepositoryConfig.kt",
+    text = "data class RepositoryConfig(val branch: String)",
+    language = "kotlin",
+    readOnly = true,
+    diagnostics = listOf(
+        SourceDiagnostic(1, 12, "Read-only source preview.", ComponentTone.INFO),
+    ),
+) {
+    action("Open File") {
+        println("Open source file")
+    }
+}
+
+data class QueryRow(
+    val id: Int,
+    val name: String,
+)
+
+val query = queryEditor(
+    text = "select id, name from users;",
+    onRun = { sql ->
+        println("Run query: $sql")
+    },
+    onStop = {
+        println("Stop query")
+    },
+) {
+    diagnostics(
+        listOf(
+            SourceDiagnostic(1, 8, "Demo warning from SQL parser.", ComponentTone.WARNING),
+        ),
+    )
+    result(
+        title = "Query Result",
+        node = dataGrid(
+            items = listOf(QueryRow(1, "Ada"), QueryRow(2, "Linus")),
+            showSearch = false,
+        ) {
+            constrainedResize()
+            readOnlyTextColumn("ID") { it.id }
+            readOnlyTextColumn("Name") { it.name }
+        },
+    )
+}
+```
+
+## Tab Workspace
+
+```kotlin
+val workspace = tabWorkspace(
+    emptyText = "Open a file or query...",
+) {
+    onSelect { id ->
+        println("Selected tab: $id")
+    }
+    onClose { id ->
+        println("Closed tab: $id")
+    }
+    tab(
+        id = "readme",
+        title = "README.md",
+        closable = false,
+    ) {
+        sourceEditor(
+            title = "README.md",
+            text = "# KoraFX",
+            language = "markdown",
+            readOnly = true,
+        )
+    }
+    tab(
+        id = "query:users",
+        title = "Users Query",
+        dirty = true,
+    ) {
+        queryEditor(
+            text = "select * from users;",
+            onRun = { sql -> println(sql) },
+        )
+    }
+}
+
+workspace.openTab("src/Main.kt", "Main.kt") {
+    sourceEditor(
+        title = "Main.kt",
+        text = "fun main() {}",
+        language = "kotlin",
+        readOnly = true,
+    )
+}
+```
+
+## Activity Timeline
+
+```kotlin
+data class ActivityEvent(
+    val title: String,
+    val message: String,
+    val time: String,
+    val group: String,
+    val tone: ComponentTone,
+)
+
+val timeline = activityTimeline(
+    events = listOf(
+        ActivityEvent("Commit 4a18c2", "Theme coverage refined.", "09:12", "Git", ComponentTone.SUCCESS),
+        ActivityEvent("Query finished", "24 rows returned.", "09:20", "Database", ComponentTone.INFO),
+        ActivityEvent("Migration warning", "Missing index.", "09:32", "Database", ComponentTone.WARNING),
+    ),
+    emptyText = "No activity yet",
+) {
+    groupBy { it.group }
+    timeOf { it.time }
+    titleOf { it.title }
+    messageOf { it.message }
+    toneOf { it.tone }
+    action("Open") { event ->
+        println("Open ${event.title}")
+    }
+}
+```
+
+## Command Palette
+
+```kotlin
+val paletteHost = CommandPaletteHost(
+    listOf(
+        CommandPaletteCommand(
+            id = "open-file",
+            title = "Open File",
+            description = "Open a repository file in the workspace.",
+            group = "Navigation",
+        ) {
+            println("Open file")
+        },
+        CommandPaletteCommand(
+            id = "theme.next",
+            title = "Next Theme",
+            description = "Switch to the next built-in theme preset.",
+            group = "Theme",
+        ) {
+            println("Next theme")
+        },
+    ),
+)
+
+val root = stackPane {
+    add(workbenchLayout {
+        topBar {
+            toolbar {
+                ghostButton("Commands") {
+                    onAction {
+                        paletteHost.show()
+                    }
+                }
+            }
+        }
+        content {
+            label("Workbench content")
+        }
+    })
+    commandPalette(paletteHost) {
+        emptyState("No commands match the current search.")
+    }
+}
+```
+
 ## Layout And Data Grid
 
 ```kotlin
