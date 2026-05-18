@@ -9,6 +9,7 @@ implementation("io.github.daiyuang:korafx-components")
 ```
 
 Runtime code is intentionally split into three publishable modules: `korafx-dsl`, `korafx-framework`, and `korafx-components`.
+`korafx-components` exposes Ikonli JavaFX core for icon-ready components, but applications should choose their own icon pack dependency.
 
 ## korafx-framework
 
@@ -24,21 +25,65 @@ Runtime code is intentionally split into three publishable modules: `korafx-dsl`
 
 Main API:
 
-- `KoraWindowConfig`
-- `KoraAppServices<R>`
-- `koraFrameworkModule(initialRoute, routes)`
+- `koraApplication { ... }`
+- `KoraApplication`
+- `KoraApplicationBuilder`
+- `window { title / width / height / size(...) }`
+- `installKoin { modules(...) }`
+- `theme { presets(...); default(...); persistSelection = true }`
+- `navigation { initialRoute = ...; routes(...) }`
+- `content { ... }`
+- `lifecycle { close<T>(); cancel<T>(); onStop { ... } }`
 - `ViewModel<S, A, E>`
 - `ViewState`, `UiAction`, `UiEvent`
 - `Route`, `Navigator<R>`, `NavigationState<R>`
 - `ThemeManager`, `SceneThemeController`, `BuiltInThemes`
 
+Example:
+
+```kotlin
+fun main(args: Array<String>) = koraApplication(args) {
+    window {
+        title = "KoraFX Workbench"
+        width = 1280.0
+        height = 820.0
+    }
+
+    installKoin {
+        modules(appModule, repositoryModule)
+    }
+
+    theme {
+        presets(BuiltInThemes.all)
+        default(BuiltInThemes.Nord)
+        persistSelection = true
+    }
+
+    navigation {
+        initialRoute = WorkbenchRoute.Overview
+        routes(WorkbenchRoute.all)
+    }
+
+    content {
+        AppRoot(this).buildRoot()
+    }
+
+    lifecycle {
+        close<AppViewModel>()
+    }
+}
+```
+
 Guidelines:
 
 - Prefer constructor injection and register application services in Koin.
-- Keep JavaFX lifecycle in the `Application` class and put app services in Koin modules.
+- Keep application structure in `koraApplication`; only drop to JavaFX `Application` directly for advanced platform integration.
 - Use `Navigator` as the single source of route state.
 - Use `ThemeManager` as the single source of theme state.
+- Use `KoraApplication.uiScope` for JavaFX UI bindings; the framework cancels it during shutdown.
 - Keep screen state in ViewModels and render it through `stateText`, `stateList`, `stateVisible`, and related DSL bindings.
+- Register closeable app services with `lifecycle { close<T>() }` instead of writing raw shutdown handlers when possible.
+- Keep command palette commands in application/component modules for now; do not put command registration in the framework entry.
 
 ## korafx-dsl
 
@@ -81,13 +126,29 @@ Main API:
 - Navigation: `navigationRail`, `routeHost`, `routeStateHost`
 - Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
 - Surfaces: `card`, `section`, `actionBar`
+- Icons: `koraIcon`, `iconButton`, `setKoraIcon`, `clearKoraIcon`
 - Semantic display: `badge`, `chip`, `metricCard`, `alertBanner`, `ComponentTone`
+
+Icon usage:
+
+```kotlin
+dependencies {
+    implementation("org.kordamp.ikonli:ikonli-bootstrapicons-pack:<ikonli-version>")
+}
+
+chip(
+    text = "Connected",
+    tone = ComponentTone.SUCCESS,
+    icon = BootstrapIcons.CHECK_CIRCLE,
+)
+```
 
 Guidelines:
 
 - Components are still JavaFX nodes and should remain composable.
 - Components may accept explicit framework services such as `CoroutineScope`, `Navigator`, `ThemeManager`, and command hosts.
 - Components should have stable style classes so `korafx-framework` theme services can fully cover them.
+- Keep concrete Ikonli icon packs in application/sample modules; `korafx-components` should only require Ikonli JavaFX core.
 
 ## Naming Checklist
 

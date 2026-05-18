@@ -52,7 +52,7 @@ class WorkbenchViewModel(
         document = navigator.currentRoute.document,
         currentThemeName = themeManager.currentTheme().displayName,
         statusItems = listOf("DSL", "StateFlow", "MVVM", "Navigation", "Theme", "Components", "DI Graph"),
-        feedbackMessage = "Workbench started from WorkbenchAppGraph composition root.",
+        feedbackMessage = "Workbench started from koraApplication framework entry.",
         mvvmCount = 0,
         mvvmDraft = "StateFlow keeps JavaFX views predictable.",
         mvvmNotes = emptyList(),

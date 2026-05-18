@@ -17,8 +17,8 @@ sealed class WorkbenchRoute(
             KoraFX Workbench Demo
 
             This sample is intentionally structured as a real desktop application:
-            - Application owns only JavaFX lifecycle
-            - di.WorkbenchAppGraph is the composition root
+            - Main.kt uses koraApplication as the framework entry
+            - di.WorkbenchAppGraph is a typed access layer over injected services
             - data/domain packages provide demo data and models
             - viewmodel owns StateFlow-backed state and actions
             - ui renders JavaFX nodes through the KoraFX DSL and components

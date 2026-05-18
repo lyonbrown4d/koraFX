@@ -10,6 +10,7 @@ The default stack is:
 - Route navigation for desktop screens.
 - Token-driven theme presets.
 - Optional workbench components for real desktop tools.
+- Ikonli-ready component APIs without forcing a concrete icon pack.
 
 ## Modules
 
@@ -28,6 +29,43 @@ Application code should start from the direct dependency path:
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
 implementation("io.github.daiyuang:korafx-framework")
 implementation("io.github.daiyuang:korafx-components")
+// Pick any Ikonli pack in the application when icons are needed.
+implementation("org.kordamp.ikonli:ikonli-bootstrapicons-pack:<ikonli-version>")
+```
+
+Minimal framework entry:
+
+```kotlin
+fun main(args: Array<String>) = koraApplication(args) {
+    window {
+        title = "KoraFX Workbench"
+        width = 1280.0
+        height = 820.0
+    }
+
+    installKoin {
+        modules(appModule)
+    }
+
+    theme {
+        presets(BuiltInThemes.all)
+        default(BuiltInThemes.Nord)
+        persistSelection = true
+    }
+
+    navigation {
+        initialRoute = WorkbenchRoute.Overview
+        routes(WorkbenchRoute.all)
+    }
+
+    content {
+        AppRoot(this).buildRoot()
+    }
+
+    lifecycle {
+        close<AppViewModel>()
+    }
+}
 ```
 
 ## Build

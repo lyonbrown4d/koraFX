@@ -10,6 +10,7 @@ import dev.korafx.dsl.styleClasses
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.VBox
+import org.kordamp.ikonli.Ikon
 
 enum class ComponentTone(
     internal val styleClass: String,
@@ -25,10 +26,15 @@ enum class ComponentTone(
 fun badge(
     text: String,
     tone: ComponentTone = ComponentTone.NEUTRAL,
+    icon: Ikon? = null,
+    iconSize: Int = 14,
     init: Label.() -> Unit = {},
 ): Label =
     Label(text).apply {
         styleClasses("badge", tone.styleClass)
+        if (icon != null) {
+            setKoraIcon(icon, iconSize)
+        }
         init()
     }
 
@@ -36,12 +42,17 @@ fun chip(
     text: String,
     tone: ComponentTone = ComponentTone.NEUTRAL,
     selected: Boolean = false,
+    icon: Ikon? = null,
+    iconSize: Int = 14,
     init: Button.() -> Unit = {},
 ): Button =
     Button(text).apply {
         styleClasses("chip", tone.styleClass)
         if (selected) {
             styleClass("chip-selected")
+        }
+        if (icon != null) {
+            setKoraIcon(icon, iconSize)
         }
         init()
     }
@@ -81,6 +92,8 @@ fun alertBanner(
     title: String,
     message: String? = null,
     tone: ComponentTone = ComponentTone.INFO,
+    icon: Ikon? = null,
+    iconSize: Int = 18,
     actionText: String? = null,
     onAction: (() -> Unit)? = null,
     init: VBox.() -> Unit = {},
@@ -95,6 +108,9 @@ fun alertBanner(
     ) {
         label(title) {
             styleClass("alert-title")
+            if (icon != null) {
+                setKoraIcon(icon, iconSize)
+            }
             isWrapText = true
         }
         if (message != null) {
@@ -114,17 +130,21 @@ fun alertBanner(
 fun NodeContainerBuilder.badge(
     text: String,
     tone: ComponentTone = ComponentTone.NEUTRAL,
+    icon: Ikon? = null,
+    iconSize: Int = 14,
     init: Label.() -> Unit = {},
 ): Label =
-    add(dev.korafx.components.badge(text, tone, init))
+    add(dev.korafx.components.badge(text, tone, icon, iconSize, init))
 
 fun NodeContainerBuilder.chip(
     text: String,
     tone: ComponentTone = ComponentTone.NEUTRAL,
     selected: Boolean = false,
+    icon: Ikon? = null,
+    iconSize: Int = 14,
     init: Button.() -> Unit = {},
 ): Button =
-    add(dev.korafx.components.chip(text, tone, selected, init))
+    add(dev.korafx.components.chip(text, tone, selected, icon, iconSize, init))
 
 fun NodeContainerBuilder.metricCard(
     label: String,
@@ -149,6 +169,8 @@ fun NodeContainerBuilder.alertBanner(
     title: String,
     message: String? = null,
     tone: ComponentTone = ComponentTone.INFO,
+    icon: Ikon? = null,
+    iconSize: Int = 18,
     actionText: String? = null,
     onAction: (() -> Unit)? = null,
     init: VBox.() -> Unit = {},
@@ -158,6 +180,8 @@ fun NodeContainerBuilder.alertBanner(
             title = title,
             message = message,
             tone = tone,
+            icon = icon,
+            iconSize = iconSize,
             actionText = actionText,
             onAction = onAction,
             init = init,

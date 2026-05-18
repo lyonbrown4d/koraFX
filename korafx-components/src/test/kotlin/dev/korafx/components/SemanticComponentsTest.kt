@@ -5,6 +5,8 @@ import dev.korafx.dsl.panel
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.VBox
+import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
+import org.kordamp.ikonli.javafx.FontIcon
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -14,11 +16,16 @@ class SemanticComponentsTest {
     @Test
     fun `badge renders semantic tone classes`() {
         FxTestSupport.runOnFxThread {
-            val badge = badge("Stable", ComponentTone.SUCCESS)
+            val badge = badge(
+                text = "Stable",
+                tone = ComponentTone.SUCCESS,
+                icon = BootstrapIcons.ALARM,
+            )
 
             assertEquals("Stable", badge.text)
             assertTrue("badge" in badge.styleClass)
             assertTrue("tone-success" in badge.styleClass)
+            assertEquals(BootstrapIcons.ALARM, assertIs<FontIcon>(badge.graphic).iconCode)
         }
     }
 
@@ -29,12 +36,14 @@ class SemanticComponentsTest {
                 text = "Theme",
                 tone = ComponentTone.PRIMARY,
                 selected = true,
+                icon = BootstrapIcons.ALARM,
             )
 
             assertEquals("Theme", chip.text)
             assertTrue("chip" in chip.styleClass)
             assertTrue("chip-selected" in chip.styleClass)
             assertTrue("tone-primary" in chip.styleClass)
+            assertEquals(BootstrapIcons.ALARM, assertIs<FontIcon>(chip.graphic).iconCode)
         }
     }
 
@@ -73,6 +82,7 @@ class SemanticComponentsTest {
                 title = "Publish blocked",
                 message = "Fix validation errors before releasing.",
                 tone = ComponentTone.WARNING,
+                icon = BootstrapIcons.ALARM,
                 actionText = "Review",
                 onAction = { handled = true },
             )
@@ -85,6 +95,7 @@ class SemanticComponentsTest {
             assertTrue("tone-warning" in alert.styleClass)
             assertEquals("Publish blocked", labels[0].text)
             assertTrue("alert-title" in labels[0].styleClass)
+            assertEquals(BootstrapIcons.ALARM, assertIs<FontIcon>(labels[0].graphic).iconCode)
             assertEquals("Fix validation errors before releasing.", labels[1].text)
             assertTrue("alert-message" in labels[1].styleClass)
             assertEquals("Review", action.text)

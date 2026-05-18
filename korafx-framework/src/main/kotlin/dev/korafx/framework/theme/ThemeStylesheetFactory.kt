@@ -137,6 +137,10 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
         fx("text-fill", colors.textPrimary)
     }
 
+    rule(".ikonli-font-icon", ".korafx-icon") {
+        fx("icon-color", colors.textSecondary)
+    }
+
     rule(".label.${ThemeStyleClass.Headline}") {
         fx("font-size", "${typography.headlineSize}px")
         fx("font-weight", "700")
@@ -351,6 +355,12 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         ghostControl(context)
     }
 
+    rule(".button.icon-only-button") {
+        padding(spacing.md)
+        fx("min-width", "34px")
+        fx("pref-width", "34px")
+    }
+
     rule(".button.ghost-button:hover", ".button.nav-button:hover", ".toggle-button:hover") {
         fx("background-color", states.surfaceHover)
     }
@@ -368,6 +378,29 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
 
     rule(".menu-button .label", ".split-menu-button .label", ".button.nav-button-active .label") {
         fx("text-fill", states.selectedText)
+    }
+
+    rule(
+        ".button .ikonli-font-icon",
+        ".menu-button .ikonli-font-icon",
+        ".split-menu-button .ikonli-font-icon",
+    ) {
+        fx("icon-color", states.selectedText)
+    }
+
+    rule(
+        ".button.ghost-button .ikonli-font-icon",
+        ".button.nav-button .ikonli-font-icon",
+        ".toggle-button .ikonli-font-icon",
+    ) {
+        fx("icon-color", colors.textPrimary)
+    }
+
+    rule(
+        ".button.nav-button-active .ikonli-font-icon",
+        ".toggle-button:selected .ikonli-font-icon",
+    ) {
+        fx("icon-color", states.selectedText)
     }
 }
 
@@ -1404,6 +1437,10 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("text-fill", states.selectedText)
     }
 
+    rule(".command-palette-row-selected .ikonli-font-icon") {
+        fx("icon-color", states.selectedText)
+    }
+
     rule(".command-palette-id") {
         fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
         fx("font-size", "${typography.baseSize - 1}px")
@@ -1440,6 +1477,10 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("background-color", states.selected)
         fx("text-fill", states.selectedText)
         fx("border-color", states.selected)
+    }
+
+    rule(".chip.chip-selected .ikonli-font-icon") {
+        fx("icon-color", states.selectedText)
     }
 
     semanticTone("neutral", colors.textSecondary, colors.surfaceMuted, colors.border)
@@ -1771,6 +1812,10 @@ private fun StylesheetBuilder.semanticTone(
         fx("background-color", background)
         fx("text-fill", text)
         fx("border-color", border)
+    }
+
+    rule(".tone-$name .ikonli-font-icon") {
+        fx("icon-color", text)
     }
 
     rule(".metric-card.tone-$name") {
