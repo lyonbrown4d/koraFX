@@ -1,10 +1,11 @@
-package dev.korafx.sample
+package dev.korafx.sample.viewmodel
 
 import dev.korafx.mvvm.UiAction
 import dev.korafx.mvvm.UiEvent
 import dev.korafx.mvvm.ViewModel
 import dev.korafx.mvvm.ViewState
 import dev.korafx.navigation.Navigator
+import dev.korafx.sample.navigation.WorkbenchRoute
 import dev.korafx.theme.ThemeManager
 import kotlinx.coroutines.flow.collectLatest
 
@@ -50,8 +51,8 @@ class WorkbenchViewModel(
         summary = navigator.currentRoute.summary,
         document = navigator.currentRoute.document,
         currentThemeName = themeManager.currentTheme().displayName,
-        statusItems = listOf("DSL", "StateFlow", "MVVM", "Navigation", "Theme"),
-        feedbackMessage = "Workbench started without DI or starter framework.",
+        statusItems = listOf("DSL", "StateFlow", "MVVM", "Navigation", "Theme", "Components", "DI Graph"),
+        feedbackMessage = "Workbench started from WorkbenchAppGraph composition root.",
         mvvmCount = 0,
         mvvmDraft = "StateFlow keeps JavaFX views predictable.",
         mvvmNotes = emptyList(),

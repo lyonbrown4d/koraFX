@@ -1,4 +1,4 @@
-package dev.korafx.sample
+package dev.korafx.sample.navigation
 
 import dev.korafx.navigation.Route
 
@@ -11,20 +11,25 @@ sealed class WorkbenchRoute(
     data object Overview : WorkbenchRoute(
         id = "overview",
         title = "Overview",
-        summary = "KoraFX is kept intentionally small: Kotlin DSL, MVVM helpers, and a few optional JavaFX components.",
+        summary = "This workbench is the complete demo application for KoraFX DSL, MVVM, theme and component modules.",
         document =
             """
-            KoraFX Lean Baseline
+            KoraFX Workbench Demo
 
-            The sample now starts from plain JavaFX Application and wires dependencies by hand.
-            This keeps the library independent from any DI container or application framework.
+            This sample is intentionally structured as a real desktop application:
+            - Application owns only JavaFX lifecycle
+            - di.WorkbenchAppGraph is the composition root
+            - data/domain packages provide demo data and models
+            - viewmodel owns StateFlow-backed state and actions
+            - ui renders JavaFX nodes through the KoraFX DSL and components
 
-            Kept modules:
+            Demonstrated modules:
             - framework-dsl
             - framework-state
             - framework-mvvm
             - framework-navigation
             - framework-theme
+            - framework-components
             """.trimIndent(),
     )
 
@@ -44,6 +49,28 @@ sealed class WorkbenchRoute(
             - styling helpers
 
             Native JavaFX nodes remain directly accessible.
+            """.trimIndent(),
+    )
+
+    data object Components : WorkbenchRoute(
+        id = "components",
+        title = "Components",
+        summary = "The component package provides reusable workbench surfaces for editors, data grids, resources, tabs and command launchers.",
+        document =
+            """
+            Component Layer
+
+            Components are optional, composable JavaFX nodes:
+            - workbench and border layouts
+            - source editor and query editor
+            - resource explorer
+            - tab workspace
+            - data grid and editable table
+            - inspector panel
+            - activity timeline
+            - command palette
+
+            Applications can use these pieces independently or compose them into a full desktop tool.
             """.trimIndent(),
     )
 
@@ -89,6 +116,6 @@ sealed class WorkbenchRoute(
 
     companion object {
         val all: List<WorkbenchRoute>
-            get() = listOf(Overview, Dsl, Mvvm, Theme)
+            get() = listOf(Overview, Dsl, Components, Mvvm, Theme)
     }
 }

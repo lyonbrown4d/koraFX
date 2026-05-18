@@ -19,6 +19,8 @@ dependencies {
     implementation(project(":framework-mvvm"))
     implementation(project(":framework-navigation"))
     implementation(project(":framework-theme"))
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.javafx)
 }
 
