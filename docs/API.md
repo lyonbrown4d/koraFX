@@ -149,10 +149,15 @@ Main API:
 
 - Shell: `appShell`
 - Overlays: `ModalHost`, `modalHost`, `ModalAction`
+- Layout: `borderLayout`, `BorderLayoutBuilder`, `workspaceLayout`, `WorkspaceLayout`
+- Resource browsing: `resourceExplorer`, `ResourceExplorer`, `ResourceExplorerBuilder`
+- Data grids: `dataGrid`, `DataGrid`, `DataGridBuilder`, `editableTable`, `EditableTableBuilder`
+- Details: `inspectorPanel`, `InspectorPanel`, `InspectorPanelBuilder`
 - Navigation: `navigationRail`、`routeHost`、`routeStateHost`
 - Feedback: `feedbackState`、`emptyState`、`loadingState`、`errorState`、`ToastHost`、`toastHost`、`snackbar`
 - Surfaces: `card`、`section`、`actionBar`
 - Semantic display: `badge`、`chip`、`metricCard`、`alertBanner`、`ComponentTone`
+- Editors: `codeEditor`、`CodeEditor`
 
 `routeStateHost` 按路由执行渲染取消：路由切换后只会渲染当前路由的 `stateFor` 流，不会被旧路由更新覆盖。
 `appShell` provides stable top/navigation/content/footer/overlay slots for common desktop layouts.

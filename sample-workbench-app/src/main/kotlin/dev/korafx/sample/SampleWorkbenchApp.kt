@@ -4,12 +4,18 @@ import dev.korafx.components.actionBar
 import dev.korafx.components.alertBanner
 import dev.korafx.components.ComponentTone
 import dev.korafx.components.badge
+import dev.korafx.components.borderLayout
 import dev.korafx.components.card
 import dev.korafx.components.chip
+import dev.korafx.components.codeEditor
+import dev.korafx.components.dataGrid
 import dev.korafx.components.emptyState
+import dev.korafx.components.inspectorPanel
 import dev.korafx.components.metricCard
 import dev.korafx.components.navigationRail
+import dev.korafx.components.resourceExplorer
 import dev.korafx.components.section
+import dev.korafx.components.workspaceLayout
 import dev.korafx.dsl.accordion
 import dev.korafx.dsl.bindInvalid
 import dev.korafx.dsl.bindSelectedItem
@@ -76,12 +82,56 @@ private data class ModuleSummary(
     val responsibility: String,
 )
 
+private data class EditableModule(
+    var name: String,
+    var owner: String,
+    val status: String,
+)
+
+private data class ExplorerResource(
+    val name: String,
+    val children: List<ExplorerResource> = emptyList(),
+)
+
 class SampleWorkbenchApp : Application() {
     private val moduleSummaries = listOf(
         ModuleSummary("framework-dsl", "Kotlin-first JavaFX construction API"),
         ModuleSummary("framework-mvvm", "StateFlow ViewModel helpers without DI coupling"),
         ModuleSummary("framework-components", "Optional reusable JavaFX components"),
         ModuleSummary("framework-theme", "Selectable JavaFX theme presets from typed tokens"),
+    )
+    private val editableModules = listOf(
+        EditableModule("DSL", "Core", "Ready"),
+        EditableModule("Theme", "Design", "Review"),
+        EditableModule("Components", "Product", "Draft"),
+    )
+    private val explorerResources = listOf(
+        ExplorerResource(
+            "Repository",
+            listOf(
+                ExplorerResource(
+                    "src",
+                    listOf(
+                        ExplorerResource("Main.kt"),
+                        ExplorerResource("Theme.kt"),
+                    ),
+                ),
+                ExplorerResource("README.md"),
+            ),
+        ),
+        ExplorerResource(
+            "Database",
+            listOf(
+                ExplorerResource(
+                    "public",
+                    listOf(
+                        ExplorerResource("users"),
+                        ExplorerResource("orders"),
+                    ),
+                ),
+                ExplorerResource("analytics"),
+            ),
+        ),
     )
     private val dslProjectName = MutableStateFlow("KoraFX")
     private val dslProjectNameError = dslProjectName.map { value ->
@@ -237,6 +287,170 @@ class SampleWorkbenchApp : Application() {
                                             onAction {
                                                 feedbackLabel.text = "State: Chip action."
                                             }
+                                        }
+                                    }
+                                }
+
+                                section(
+                                    title = "Code Editor Component",
+                                    description = "A lightweight TextArea based editor with toolbar, dirty state and themed status bar.",
+                                ) {
+                                    codeEditor(
+                                        title = "Kotlin Scratch",
+                                        text = "fun main() {\n    println(\"KoraFX\")\n}",
+                                        language = "kotlin",
+                                        placeholder = "Start typing...",
+                                        onTextChange = { text ->
+                                            feedbackLabel.text = "State: Editor changed, ${text.length} chars."
+                                        },
+                                    ) {
+                                        prefHeight = 220.0
+                                    }
+                                }
+
+                                section(
+                                    title = "Layout And Data Grid Components",
+                                    description = "Semantic workbench slots, resource browsing, and searchable editable grids cover common tool surfaces.",
+                                ) {
+                                    workspaceLayout(
+                                        init = {
+                                            prefHeight = 260.0
+                                            maxWidth = Double.MAX_VALUE
+                                        },
+                                    ) {
+                                        topBar {
+                                            hbox(spacing = 10.0) {
+                                                label("Git / Database Workspace") {
+                                                    styleClasses(ThemeStyleClass.Headline)
+                                                }
+                                                badge("WorkspaceLayout", ComponentTone.INFO)
+                                            }
+                                        }
+                                        navigation {
+                                            resourceExplorer(
+                                                items = explorerResources,
+                                                childrenOf = { it.children },
+                                                textOf = { it.name },
+                                                init = {
+                                                    prefWidth = 240.0
+                                                    maxHeight = Double.MAX_VALUE
+                                                },
+                                            ) {
+                                                search(prompt = "Search repository or database...")
+                                                onSelect { resource ->
+                                                    if (resource != null) {
+                                                        feedbackLabel.text = "State: Selected resource ${resource.name}."
+                                                    }
+                                                }
+                                                rowAction { resource ->
+                                                    feedbackLabel.text = "State: Open resource ${resource.name}."
+                                                }
+                                                contextMenu { resource ->
+                                                    actionItem("Open") {
+                                                        feedbackLabel.text = "State: Open ${resource.name} from context menu."
+                                                    }
+                                                    actionItem("Inspect") {
+                                                        feedbackLabel.text = "State: Inspect ${resource.name}."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        content {
+                                            card(spacing = 8.0, padding = 12.0) {
+                                                label("Main Work Area") {
+                                                    styleClasses(ThemeStyleClass.Headline)
+                                                }
+                                                label("Use this slot for source views, query editors, tables, and route content.")
+                                            }
+                                        }
+                                        details {
+                                            inspectorPanel(
+                                                title = "Repository",
+                                                subtitle = "Selection details for Git and database resources.",
+                                            ) {
+                                                badge("Connected", ComponentTone.SUCCESS)
+                                                property("Branch", "main")
+                                                property("Connection", "local")
+                                                section("Metadata") {
+                                                    property("Schema", "public")
+                                                    property("Dirty rows", "1")
+                                                }
+                                                actions {
+                                                    action("Inspect") {
+                                                        feedbackLabel.text = "State: Inspector action requested."
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        status {
+                                            label("Ready - 3 modules loaded")
+                                        }
+                                        overlay(alignment = Pos.BOTTOM_RIGHT) {
+                                            badge("Overlay slot", ComponentTone.SUCCESS)
+                                        }
+                                    }
+
+                                    borderLayout(
+                                        init = {
+                                            prefHeight = 220.0
+                                            maxWidth = Double.MAX_VALUE
+                                        },
+                                    ) {
+                                        header {
+                                            label("Workspace Layout") {
+                                                styleClasses(ThemeStyleClass.Headline)
+                                            }
+                                        }
+                                        sidebar {
+                                            vbox(spacing = 8.0) {
+                                                label("Overview")
+                                                label("Modules")
+                                                label("Settings")
+                                            }
+                                        }
+                                        content {
+                                            card(spacing = 8.0, padding = 12.0) {
+                                                label("BorderLayout") {
+                                                    styleClasses(ThemeStyleClass.Headline)
+                                                }
+                                                label("Header, sidebar, content and footer are plain JavaFX nodes with stable theme slot classes.")
+                                            }
+                                        }
+                                        footer {
+                                            label("Footer slot keeps its own themed boundary.")
+                                        }
+                                    }
+
+                                    dataGrid(
+                                        items = editableModules,
+                                        searchPrompt = "Search modules...",
+                                        init = {
+                                            prefHeight = 230.0
+                                            maxWidth = Double.MAX_VALUE
+                                            growVertical(Priority.SOMETIMES)
+                                        },
+                                    ) {
+                                        search(textOf = { "${it.name} ${it.owner} ${it.status}" })
+                                        dirtyRows { it.status == "Draft" }
+                                        emptyState("No modules match the current filter")
+                                        footer("${editableModules.size} modules - draft rows are marked")
+                                        toolbar {
+                                            action("Refresh") {
+                                                feedbackLabel.text = "State: Data grid refresh requested."
+                                            }
+                                        }
+                                        constrainedResize()
+                                        editableTextColumn("Module", valueOf = { it.name }) { row, value ->
+                                            row.name = value
+                                            feedbackLabel.text = "State: Renamed module to $value."
+                                        }
+                                        editableTextColumn("Owner", valueOf = { it.owner }) { row, value ->
+                                            row.owner = value
+                                            feedbackLabel.text = "State: ${row.name} owner changed to $value."
+                                        }
+                                        readOnlyTextColumn("Status") { it.status }
+                                        actionColumn(title = "Action", text = "Open") { row ->
+                                            feedbackLabel.text = "State: Open data grid row ${row.name}."
                                         }
                                     }
                                 }

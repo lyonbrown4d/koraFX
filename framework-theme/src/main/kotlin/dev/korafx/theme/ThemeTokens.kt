@@ -111,6 +111,7 @@ data class StateColorTokens(
 
 data class ElevationTokens(
     val card: String = "dropshadow(gaussian, rgba(0, 0, 0, 0.06), 10, 0.10, 0, 2)",
+    val dropdown: String = "dropshadow(gaussian, rgba(0, 0, 0, 0.14), 14, 0.12, 0, 4)",
     val modal: String = "dropshadow(gaussian, rgba(0, 0, 0, 0.22), 18, 0.16, 0, 8)",
     val snackbar: String = "dropshadow(gaussian, rgba(0, 0, 0, 0.18), 12, 0.12, 0, 4)",
 )

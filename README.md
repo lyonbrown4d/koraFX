@@ -85,3 +85,4 @@ The current iteration order is:
 3. Extract common components on top of DSL + MVVM.
 
 See [DESIGN.md](DESIGN.md) for the project boundary and non-goals.
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the component iteration roadmap.

@@ -317,3 +317,181 @@ val summary = section(
     )
 }
 ```
+
+## Code Editor
+
+```kotlin
+val editor = codeEditor(
+    title = "Kotlin Scratch",
+    text = "fun main() {\n    println(\"KoraFX\")\n}",
+    language = "kotlin",
+    placeholder = "Start typing...",
+    onTextChange = { text ->
+        println("Document changed: ${text.length} chars")
+    },
+) {
+    prefHeight = 260.0
+    tabSize(4)
+}
+
+editor.markClean()
+```
+
+## Layout And Data Grid
+
+```kotlin
+data class TaskRow(
+    var title: String,
+    var owner: String,
+    val status: String,
+)
+
+val layout = borderLayout {
+    header {
+        label("Workspace")
+    }
+    sidebar {
+        vbox(spacing = 8.0) {
+            label("Inbox")
+            label("Roadmap")
+            label("Settings")
+        }
+    }
+    content {
+        dataGrid(
+            items = listOf(
+                TaskRow("Document DSL", "Core", "Draft"),
+                TaskRow("Theme coverage", "Design", "Review"),
+            ),
+            searchPrompt = "Search tasks...",
+        ) {
+            search(textOf = { "${it.title} ${it.owner} ${it.status}" })
+            dirtyRows { it.status == "Draft" }
+            emptyState("No tasks match the current search.")
+            footer("2 tasks")
+            toolbar {
+                action("Refresh") {
+                    println("Refresh tasks")
+                }
+            }
+            constrainedResize()
+            editableTextColumn("Title", valueOf = { it.title }) { row, value ->
+                row.title = value
+            }
+            editableTextColumn("Owner", valueOf = { it.owner }) { row, value ->
+                row.owner = value
+            }
+            readOnlyTextColumn("Status") { it.status }
+        }
+    }
+    footer {
+        label("DataGrid keeps TableView editable commits explicit.")
+    }
+}
+```
+
+For a full tool-style workbench, use `workspaceLayout` when the UI needs navigation, details, status, and overlay slots:
+
+```kotlin
+val workspace = workspaceLayout {
+    topBar {
+        label("Git / Database Workspace")
+    }
+    navigation {
+        vbox(spacing = 8.0) {
+            label("Repository")
+            label("Branches")
+            label("Schemas")
+        }
+    }
+    content {
+        codeEditor(
+            title = "Query.sql",
+            text = "select * from users;",
+            language = "sql",
+        )
+    }
+    details {
+        section(title = "Inspector") {
+            label("Connection: local")
+            label("Branch: main")
+        }
+    }
+    status {
+        label("Ready")
+    }
+    overlay {
+        badge("Saved", ComponentTone.SUCCESS)
+    }
+}
+```
+
+## Inspector Panel
+
+```kotlin
+val inspector = inspectorPanel(
+    title = "users",
+    subtitle = "public.users table",
+) {
+    badge("Selected", ComponentTone.INFO)
+    property("Rows", "128")
+    property("Owner", "analytics")
+    section("Columns") {
+        property("id", "uuid")
+        property("email", "varchar")
+        badge("indexed", ComponentTone.SUCCESS)
+    }
+    actions {
+        action("Open") {
+            println("Open selected resource")
+        }
+    }
+}
+
+val emptyInspector = inspectorPanel(emptyText = "Select a resource to inspect.")
+```
+
+## Resource Explorer
+
+```kotlin
+data class Resource(
+    val name: String,
+    val children: List<Resource> = emptyList(),
+)
+
+val roots = listOf(
+    Resource(
+        "Repository",
+        listOf(
+            Resource("src", listOf(Resource("Main.kt"), Resource("Theme.kt"))),
+            Resource("README.md"),
+        ),
+    ),
+    Resource(
+        "Database",
+        listOf(Resource("public", listOf(Resource("users"), Resource("orders")))),
+    ),
+)
+
+val explorer = resourceExplorer(
+    items = roots,
+    childrenOf = { it.children },
+    textOf = { it.name },
+) {
+    search(prompt = "Search resources...")
+    onSelect { resource ->
+        println("Selected: ${resource?.name}")
+    }
+    rowAction { resource ->
+        println("Open: ${resource.name}")
+    }
+    contextMenu { resource ->
+        actionItem("Open") {
+            println("Open ${resource.name}")
+        }
+        actionItem("Inspect") {
+            println("Inspect ${resource.name}")
+        }
+    }
+}
+```

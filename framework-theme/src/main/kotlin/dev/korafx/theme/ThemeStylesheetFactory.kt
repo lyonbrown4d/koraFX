@@ -9,6 +9,7 @@ object ThemeStylesheetFactory {
             inputStyles(context)
             dataControlStyles(context)
             navigationControlStyles(context)
+            overlayControlStyles(context)
             componentStyles(context)
         }
     }
@@ -119,6 +120,7 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     val typography = context.typography
     val spacing = context.spacing
     val states = context.states
+    val elevation = context.elevation
 
     rule(".root.${ThemeStyleClass.Root}") {
         fx("base", colors.surfaceMuted)
@@ -158,13 +160,19 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     }
 
     rule(".context-menu") {
+        surface(colors.surface, colors.border, context.radius)
         radius(context.smallRadius)
         padding(spacing.xs)
+        fx("effect", elevation.dropdown)
+        fx("background-insets", "0")
+        fx("border-insets", "0")
     }
 
     rule(".menu", ".menu-item", ".check-menu-item", ".radio-menu-item") {
         fx("background-color", "transparent")
         fx("text-fill", colors.textPrimary)
+        fx("background-radius", "${context.smallRadius}px")
+        fx("border-radius", "${context.smallRadius}px")
     }
 
     rule(".menu .label", ".menu-item .label", ".check-menu-item .label", ".radio-menu-item .label") {
@@ -172,23 +180,136 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
     }
 
     rule(".menu:hover", ".menu:showing", ".menu-item:focused", ".check-menu-item:focused", ".radio-menu-item:focused") {
-        fx("background-color", states.rowHover)
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".menu-item:focused .label", ".check-menu-item:focused .label", ".radio-menu-item:focused .label") {
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".check-menu-item:checked > .left-container > .check", ".radio-menu-item:checked > .left-container > .radio") {
+        fx("background-color", states.selected)
+        fx("background-insets", "0")
     }
 }
 
 private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
+    val colors = context.colors
+    val spacing = context.spacing
     val states = context.states
 
-    rule(".button", ".toggle-button", ".menu-button", ".split-menu-button") {
+    rule(".button", ".toggle-button", ".menu-button") {
         primaryControl(context)
     }
 
-    rule(".button:hover", ".toggle-button:hover", ".menu-button:hover", ".split-menu-button:hover") {
+    rule(".button:hover", ".toggle-button:hover", ".menu-button:hover") {
         fx("background-color", states.controlHover)
     }
 
-    rule(".button:armed", ".toggle-button:selected", ".menu-button:showing", ".split-menu-button:showing") {
+    rule(".button:armed", ".toggle-button:selected", ".menu-button:showing") {
         fx("background-color", states.controlPressed)
+    }
+
+    rule(".menu-button > .label") {
+        fx("background-color", "transparent")
+        fx("text-fill", states.selectedText)
+        fx("padding", "0")
+        fx("alignment", "center-left")
+    }
+
+    rule(".menu-button > .arrow-button") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+        fx("padding", "0 0 0 ${spacing.md}")
+    }
+
+    rule(".split-menu-button") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+        fx("padding", "0")
+        fx("cursor", "hand")
+    }
+
+    rule(".split-menu-button > .label", ".split-menu-button > .arrow-button") {
+        fx("background-color", states.selected)
+        fx("border-color", "transparent")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+        fx("text-fill", states.selectedText)
+        fx("cursor", "hand")
+    }
+
+    rule(".split-menu-button > .label") {
+        padding(spacing.md, spacing.xl)
+        fx("alignment", "center-left")
+        fx("background-radius", "${context.radius}px 0 0 ${context.radius}px")
+        fx("border-radius", "${context.radius}px 0 0 ${context.radius}px")
+    }
+
+    rule(".split-menu-button > .arrow-button") {
+        padding(spacing.md, spacing.lg)
+        fx("border-color", "transparent transparent transparent rgba(255, 255, 255, 0.28)")
+        fx("border-width", "0 0 0 1px")
+        fx("background-radius", "0 ${context.radius}px ${context.radius}px 0")
+        fx("border-radius", "0 ${context.radius}px ${context.radius}px 0")
+    }
+
+    rule(
+        ".menu-button > .arrow-button > .arrow",
+        ".split-menu-button > .arrow-button > .arrow",
+    ) {
+        fx("background-color", states.selectedText)
+        fx("background-insets", "0")
+    }
+
+    rule(".split-menu-button > .label:hover", ".split-menu-button > .arrow-button:hover") {
+        fx("background-color", states.controlHover)
+    }
+
+    rule(
+        ".split-menu-button:armed > .label",
+        ".split-menu-button > .arrow-button:pressed",
+        ".split-menu-button:showing > .arrow-button",
+    ) {
+        fx("background-color", states.controlPressed)
+    }
+
+    rule(".split-menu-button:focused") {
+        fx("effect", "dropshadow(gaussian, derive(${states.focus}, 55%), 8, 0.18, 0, 0)")
+    }
+
+    rule(".menu-button > .context-menu", ".split-menu-button > .context-menu") {
+        surface(colors.surface, colors.border, context.radius)
+        fx("effect", context.elevation.dropdown)
+    }
+
+    rule(".menu-bar > .container > .menu-button") {
+        fx("background-color", "transparent")
+        fx("text-fill", colors.textPrimary)
+        fx("border-color", "transparent")
+        radius(context.smallRadius)
+        padding(spacing.sm, spacing.lg)
+        fx("cursor", "hand")
+    }
+
+    rule(".menu-bar > .container > .menu-button:hover", ".menu-bar > .container > .menu-button:showing") {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".menu-bar > .container > .menu-button > .label") {
+        fx("background-color", "transparent")
+        fx("text-fill", colors.textPrimary)
+        fx("padding", "0")
+    }
+
+    rule(".menu-bar > .container > .menu-button > .arrow-button") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("padding", "0")
     }
 
     rule(
@@ -254,6 +375,7 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
     val colors = context.colors
     val spacing = context.spacing
     val states = context.states
+    val elevation = context.elevation
 
     rule(".check-box", ".radio-button") {
         fx("text-fill", colors.textPrimary)
@@ -300,20 +422,106 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
         fx("padding", "${spacing.sm}px")
     }
 
-    rule(".text-area .content", ".scroll-pane", ".scroll-pane .viewport") {
+    rule(".text-area .content", ".text-area .scroll-pane", ".text-area .scroll-pane .viewport") {
         fx("background-color", colors.surfaceMuted)
         fx("background-radius", "${context.radius}px")
     }
 
     rule(
+        ".combo-box-base",
+        ".choice-box",
+        ".date-picker",
+        ".color-picker",
+        ".spinner",
+    ) {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        fx("border-width", "1px")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+    }
+
+    rule(
+        ".combo-box-base:hover",
+        ".choice-box:hover",
+        ".date-picker:hover",
+        ".color-picker:hover",
+        ".spinner:hover",
+    ) {
+        fx("background-color", states.surfaceHover)
+        fx("border-color", colors.textSecondary)
+    }
+
+    rule(
+        ".combo-box-base:focused",
+        ".combo-box-base:showing",
+        ".choice-box:focused",
+        ".choice-box:showing",
+        ".date-picker:focused",
+        ".date-picker:showing",
+        ".color-picker:focused",
+        ".color-picker:showing",
+        ".spinner:focused",
+    ) {
+        fx("background-color", colors.surface)
+        fx("border-color", states.focus)
+        fx("effect", "dropshadow(gaussian, derive(${states.focus}, 55%), 8, 0.18, 0, 0)")
+    }
+
+    rule(
+        ".combo-box-base .text-field",
+        ".combo-box-base .list-cell",
+        ".choice-box .label",
+        ".date-picker .text-field",
+        ".color-picker .color-picker-label",
+        ".color-picker.split-button > .color-picker-label",
+        ".spinner .text-field",
+    ) {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+        fx("text-fill", colors.textPrimary)
+        fx("padding", "0")
+    }
+
+    rule(
+        ".combo-box-base .text-field:focused",
+        ".date-picker .text-field:focused",
+        ".spinner .text-field:focused",
+    ) {
+        fx("border-color", "transparent")
+    }
+
+    rule(
         ".combo-box-base .arrow-button",
+        ".combo-box-base:editable > .arrow-button",
+        ".choice-box .open-button",
         ".date-picker .arrow-button",
+        ".date-picker > .arrow-button",
         ".color-picker .arrow-button",
+        ".color-picker.split-button > .arrow-button",
         ".spinner .increment-arrow-button",
         ".spinner .decrement-arrow-button",
     ) {
         fx("background-color", "transparent")
         fx("background-radius", "${context.radius}px")
+        fx("border-color", "transparent")
+        fx("padding", "0 ${spacing.sm} 0 ${spacing.sm}")
+    }
+
+    rule(
+        ".combo-box-base .arrow-button:hover",
+        ".combo-box-base:editable > .arrow-button:hover",
+        ".choice-box .open-button:hover",
+        ".date-picker .arrow-button:hover",
+        ".date-picker > .arrow-button:hover",
+        ".color-picker .arrow-button:hover",
+        ".color-picker.split-button > .arrow-button:hover",
+        ".spinner .increment-arrow-button:hover",
+        ".spinner .decrement-arrow-button:hover",
+    ) {
+        fx("background-color", states.surfaceHover)
     }
 
     rule(
@@ -321,10 +529,80 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
         ".choice-box .open-button .arrow",
         ".date-picker .arrow",
         ".color-picker .arrow",
+        ".color-picker.split-button > .arrow-button > .arrow",
         ".spinner .increment-arrow",
         ".spinner .decrement-arrow",
     ) {
         fx("background-color", colors.textSecondary)
+    }
+
+    rule(
+        ".combo-box-popup .list-view",
+        ".choice-box .context-menu",
+        ".date-picker-popup",
+        ".color-palette",
+    ) {
+        surface(colors.surface, colors.border, context.radius)
+        fx("padding", "${spacing.xs}px")
+        fx("effect", elevation.dropdown)
+    }
+
+    rule(".date-picker-popup .month-year-pane") {
+        fx("background-color", colors.surface)
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(spacing.sm)
+    }
+
+    rule(".combo-box-popup .list-view") {
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+    }
+
+    rule(
+        ".combo-box-popup .list-cell",
+        ".choice-box .menu-item",
+        ".date-picker-popup .day-cell",
+        ".date-picker-popup .day-name-cell",
+        ".date-picker-popup .week-number-cell",
+        ".color-palette .color-picker-grid",
+    ) {
+        fx("background-color", "transparent")
+        fx("text-fill", colors.textPrimary)
+        fx("background-radius", "${context.smallRadius}px")
+        fx("border-radius", "${context.smallRadius}px")
+    }
+
+    rule(
+        ".combo-box-popup .list-cell:hover",
+        ".combo-box-popup .list-cell:filled:hover",
+        ".choice-box .menu-item:focused",
+        ".date-picker-popup .day-cell:hover",
+        ".date-picker-popup .today",
+    ) {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(
+        ".combo-box-popup .list-cell:selected",
+        ".choice-box .menu-item:focused .label",
+        ".date-picker-popup .day-cell:selected",
+    ) {
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".date-picker-popup .previous-month", ".date-picker-popup .next-month") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".color-palette .color-square") {
+        fx("background-radius", "${context.smallRadius}px")
+        fx("border-radius", "${context.smallRadius}px")
+        fx("border-color", colors.border)
+    }
+
+    rule(".choice-box .menu-item:focused .label") {
+        fx("text-fill", states.selectedText)
     }
 
     rule(
@@ -342,42 +620,81 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
 
 private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
     val colors = context.colors
+    val spacing = context.spacing
     val states = context.states
 
-    rule(".list-view", ".table-view", ".tree-view") {
+    rule(".list-view", ".table-view", ".tree-view", ".tree-table-view") {
         fx("padding", "0")
     }
 
-    rule(".list-cell", ".tree-cell", ".table-row-cell") {
+    rule(".list-cell", ".tree-cell", ".table-row-cell", ".tree-table-row-cell") {
         fx("background-color", colors.surfaceMuted)
         fx("text-fill", colors.textPrimary)
         fx("border-color", "transparent")
     }
 
-    rule(".list-cell:odd", ".tree-cell:odd", ".table-row-cell:odd") {
+    rule(".table-cell", ".tree-table-cell") {
+        fx("text-fill", colors.textPrimary)
+        fx("border-color", "transparent")
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".list-cell:odd", ".tree-cell:odd", ".table-row-cell:odd", ".tree-table-row-cell:odd") {
         fx("background-color", states.rowAlternate)
     }
 
-    rule(".list-cell:hover", ".tree-cell:hover", ".table-row-cell:hover") {
+    rule(".list-cell:hover", ".tree-cell:hover", ".table-row-cell:hover", ".tree-table-row-cell:hover") {
         fx("background-color", states.rowHover)
     }
 
-    rule(".list-cell:selected", ".tree-cell:selected", ".table-row-cell:selected") {
+    rule(".list-cell:selected", ".tree-cell:selected", ".table-row-cell:selected", ".tree-table-row-cell:selected") {
         fx("background-color", states.selected)
         fx("text-fill", states.selectedText)
     }
 
-    rule(".table-view .column-header-background", ".table-view .column-header", ".table-view .filler") {
+    rule(".table-row-cell:selected .table-cell", ".tree-table-row-cell:selected .tree-table-cell") {
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".table-row-cell:empty", ".tree-table-row-cell:empty") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".table-row-cell:empty .table-cell", ".tree-table-row-cell:empty .tree-table-cell") {
+        fx("border-color", "transparent")
+    }
+
+    rule(
+        ".list-view .placeholder .label",
+        ".table-view .placeholder .label",
+        ".tree-view .placeholder .label",
+        ".tree-table-view .placeholder .label",
+    ) {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(
+        ".table-view .column-header-background",
+        ".table-view .column-header",
+        ".table-view .filler",
+        ".tree-table-view .column-header-background",
+        ".tree-table-view .column-header",
+        ".tree-table-view .filler",
+    ) {
         fx("background-color", states.surfaceHover)
         fx("border-color", colors.border)
     }
 
-    rule(".table-view .column-header .label") {
+    rule(".table-view .column-header .label", ".tree-table-view .column-header .label") {
         fx("text-fill", colors.textPrimary)
         fx("font-weight", "700")
     }
 
-    rule(".tree-view .tree-cell .tree-disclosure-node .arrow") {
+    rule(".table-view .column-resize-line", ".tree-table-view .column-resize-line") {
+        fx("background-color", states.focus)
+    }
+
+    rule(".tree-view .tree-cell .tree-disclosure-node .arrow", ".tree-table-view .tree-table-row-cell .tree-disclosure-node .arrow") {
         fx("background-color", colors.textSecondary)
     }
 }
@@ -412,11 +729,19 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("text-fill", states.selectedText)
     }
 
+    rule(".tab-pane .tab:focused") {
+        fx("border-color", states.focus)
+    }
+
+    rule(".tab-pane .tab-close-button") {
+        fx("background-color", colors.textSecondary)
+    }
+
     rule(".split-pane") {
         fx("background-color", colors.surface)
     }
 
-    rule(".split-pane-divider") {
+    rule(".split-pane-divider", ".split-pane:horizontal > .split-pane-divider", ".split-pane:vertical > .split-pane-divider") {
         fx("background-color", colors.border)
         fx("padding", "0 1 0 1")
     }
@@ -438,6 +763,10 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("background-color", "transparent")
     }
 
+    rule(".accordion > .titled-pane > .title") {
+        fx("background-color", colors.surfaceMuted)
+    }
+
     rule(".slider .track") {
         fx("background-color", colors.border)
         fx("background-radius", "${context.radius}px")
@@ -453,7 +782,16 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("border-color", colors.border)
     }
 
-    rule(".progress-bar .bar", ".progress-indicator .percentage") {
+    rule(".progress-bar .bar", ".progress-indicator .percentage", ".progress-indicator > .determinate-indicator > .progress") {
+        fx("background-color", states.selected)
+    }
+
+    rule(".progress-indicator > .determinate-indicator > .indicator") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", colors.border)
+    }
+
+    rule(".progress-indicator:indeterminate .segment") {
         fx("background-color", states.selected)
     }
 
@@ -471,8 +809,17 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("text-fill", states.selectedText)
     }
 
-    rule(".separator .line") {
+    rule(".separator .line", ".separator:horizontal .line", ".separator:vertical .line") {
         fx("border-color", colors.border)
+    }
+
+    rule(".scroll-pane", ".scroll-pane > .viewport", ".scroll-pane > .corner") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+    }
+
+    rule(".scroll-pane > .viewport") {
+        fx("border-color", "transparent")
     }
 
     rule(".scroll-bar", ".scroll-bar .track") {
@@ -493,6 +840,68 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("border-color", "transparent")
         fx("padding", "0")
     }
+
+    rule(".tool-bar:horizontal .separator .line", ".tool-bar:vertical .separator .line") {
+        fx("border-color", colors.border)
+    }
+}
+
+private fun StylesheetBuilder.overlayControlStyles(context: ThemeCssContext) {
+    val colors = context.colors
+    val typography = context.typography
+    val spacing = context.spacing
+    val states = context.states
+    val elevation = context.elevation
+
+    rule(".tooltip") {
+        surface(colors.surfaceMuted, colors.border, context.smallRadius)
+        fx("text-fill", colors.textPrimary)
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("effect", elevation.dropdown)
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".dialog-pane") {
+        surface(colors.surface, colors.border, context.radii.large)
+        fx("effect", elevation.modal)
+        fx("padding", "0")
+    }
+
+    rule(".dialog-pane > .header-panel") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        fx("background-radius", "${context.radii.large}px ${context.radii.large}px 0 0")
+        padding(spacing.xl)
+    }
+
+    rule(".dialog-pane > .header-panel .label") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "800")
+    }
+
+    rule(".dialog-pane > .content", ".dialog-pane > .content.label") {
+        fx("text-fill", colors.textPrimary)
+        padding(spacing.xl)
+    }
+
+    rule(".dialog-pane > .button-bar", ".dialog-pane > .button-bar > .container", ".button-bar", ".button-bar > .container") {
+        fx("background-color", colors.surface)
+        fx("border-color", "${colors.border} transparent transparent transparent")
+        padding(spacing.lg, spacing.xl)
+    }
+
+    rule(".button-bar .button") {
+        padding(spacing.md, spacing.xl)
+    }
+
+    rule(".dialog-pane .graphic-container") {
+        fx("background-color", "transparent")
+        padding(spacing.xl, 0, spacing.xl, spacing.xl)
+    }
+
+    rule(".dialog-pane:focused") {
+        fx("border-color", states.focus)
+    }
 }
 
 private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
@@ -508,6 +917,291 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
 
     rule(".panel", ".card") {
         fx("effect", elevation.card)
+    }
+
+    rule(".border-layout") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        fx("padding", "0")
+    }
+
+    rule(".border-layout-top", ".border-layout-bottom", ".border-layout-left", ".border-layout-right") {
+        fx("background-color", colors.surfaceMuted)
+        padding(spacing.lg, spacing.xl)
+    }
+
+    rule(".border-layout-top") {
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        fx("background-radius", "${context.radii.large}px ${context.radii.large}px 0 0")
+    }
+
+    rule(".border-layout-bottom") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+        fx("background-radius", "0 0 ${context.radii.large}px ${context.radii.large}px")
+    }
+
+    rule(".border-layout-left") {
+        fx("border-color", "transparent ${colors.border} transparent transparent")
+    }
+
+    rule(".border-layout-right") {
+        fx("border-color", "transparent transparent transparent ${colors.border}")
+    }
+
+    rule(".border-layout-center") {
+        fx("background-color", colors.surface)
+        padding(spacing.xl)
+    }
+
+    rule(".workspace-layout") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".workspace-layout-frame", ".workspace-layout-body") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".workspace-layout-top-bar", ".workspace-layout-status") {
+        fx("background-color", colors.surfaceMuted)
+        padding(spacing.lg, spacing.xl)
+    }
+
+    rule(".workspace-layout-top-bar") {
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+    }
+
+    rule(".workspace-layout-status") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+    }
+
+    rule(".workspace-layout-navigation", ".workspace-layout-details") {
+        fx("background-color", colors.surfaceMuted)
+        padding(spacing.xl)
+    }
+
+    rule(".workspace-layout-navigation") {
+        fx("border-color", "transparent ${colors.border} transparent transparent")
+    }
+
+    rule(".workspace-layout-details") {
+        fx("border-color", "transparent transparent transparent ${colors.border}")
+    }
+
+    rule(".workspace-layout-content") {
+        fx("background-color", colors.surface)
+        padding(spacing.xl)
+    }
+
+    rule(".workspace-layout-overlay") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".workspace-layout-overlay-item") {
+        fx("effect", elevation.dropdown)
+    }
+
+    rule(".resource-explorer") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.md)
+    }
+
+    rule(".resource-explorer-search") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        fx("text-fill", colors.textPrimary)
+        radius(context.radius)
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".resource-explorer-search:focused") {
+        fx("border-color", states.focus)
+    }
+
+    rule(".resource-explorer-tree") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("padding", "0")
+    }
+
+    rule(".resource-explorer-tree .tree-cell", ".resource-explorer-cell") {
+        fx("background-color", "transparent")
+        fx("text-fill", colors.textPrimary)
+        fx("background-radius", "${context.smallRadius}px")
+        fx("border-radius", "${context.smallRadius}px")
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".resource-explorer-tree .tree-cell:hover") {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".resource-explorer-tree .tree-cell:selected") {
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".resource-explorer-tree .tree-cell:selected .tree-disclosure-node .arrow") {
+        fx("background-color", states.selectedText)
+    }
+
+    rule(".editable-table") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+    }
+
+    rule(".editable-table .table-cell:editing") {
+        fx("background-color", colors.surface)
+        fx("border-color", states.focus)
+        fx("padding", "0")
+    }
+
+    rule(".editable-table .table-cell:editing .text-field") {
+        fx("background-color", colors.surface)
+        fx("border-color", "transparent")
+        fx("background-radius", "0")
+        fx("border-radius", "0")
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".editable-table-action") {
+        ghostControl(context)
+        padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".data-grid") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.md)
+    }
+
+    rule(".data-grid-toolbar") {
+        fx("background-color", "transparent")
+        padding(0, 0, spacing.sm, 0)
+    }
+
+    rule(".data-grid-search") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        fx("text-fill", colors.textPrimary)
+        radius(context.radius)
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".data-grid-search:focused") {
+        fx("border-color", states.focus)
+    }
+
+    rule(".data-grid-toolbar-action") {
+        ghostControl(context)
+        padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".data-grid-table") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+    }
+
+    rule(".data-grid-row-dirty") {
+        fx("background-color", "derive(${colors.warning}, 88%)")
+    }
+
+    rule(".data-grid-row-dirty .table-cell") {
+        fx("border-color", "transparent transparent transparent ${colors.warning}")
+        fx("border-width", "0 0 0 3px")
+    }
+
+    rule(".data-grid-footer") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+        padding(spacing.sm, 0, 0, 0)
+    }
+
+    rule(".data-grid-footer-label", ".data-grid-empty", ".data-grid-loading") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".inspector-panel") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.lg)
+    }
+
+    rule(".inspector-panel-header") {
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(0, 0, spacing.md, 0)
+    }
+
+    rule(".inspector-panel-title-row", ".inspector-panel-metadata", ".inspector-panel-actions") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".inspector-panel-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-size", "${typography.baseSize + 2}px")
+        fx("font-weight", "800")
+    }
+
+    rule(".inspector-panel-subtitle") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".inspector-panel-metadata-item") {
+        fx("font-size", "${typography.baseSize - 1}px")
+    }
+
+    rule(".inspector-panel-body") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".inspector-panel-section") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.md)
+    }
+
+    rule(".inspector-panel-section-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "700")
+    }
+
+    rule(".inspector-panel-property") {
+        fx("background-color", "transparent")
+        padding(spacing.xs, 0)
+    }
+
+    rule(".inspector-panel-property-name") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-weight", "700")
+        fx("min-width", "96px")
+        fx("pref-width", "96px")
+    }
+
+    rule(".inspector-panel-property-value", ".inspector-panel-content", ".inspector-panel-section-content") {
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".inspector-panel-actions") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+        padding(spacing.md, 0, 0, 0)
+    }
+
+    rule(".inspector-panel-action") {
+        fx("cursor", "hand")
+    }
+
+    rule(".button.inspector-panel-action") {
+        ghostControl(context)
+        padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".inspector-panel-empty") {
+        fx("text-fill", colors.textSecondary)
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.lg)
     }
 
     rule(".badge", ".chip") {
@@ -577,6 +1271,54 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     rule(".alert-action") {
         ghostControl(context)
         padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".code-editor") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        fx("padding", "0")
+    }
+
+    rule(".code-editor-toolbar", ".code-editor-status") {
+        fx("background-color", colors.surfaceMuted)
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".code-editor-toolbar") {
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        fx("background-radius", "${context.radii.large}px ${context.radii.large}px 0 0")
+    }
+
+    rule(".code-editor-status") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+        fx("background-radius", "0 0 ${context.radii.large}px ${context.radii.large}px")
+    }
+
+    rule(".code-editor-title") {
+        fx("font-weight", "800")
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".code-editor-area") {
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("font-size", "${typography.baseSize}px")
+        fx("text-fill", colors.textPrimary)
+        fx("highlight-fill", states.selected)
+        fx("highlight-text-fill", states.selectedText)
+        fx("background-color", colors.surface)
+        fx("border-color", "transparent")
+        fx("background-radius", "0")
+        fx("border-radius", "0")
+    }
+
+    rule(".code-editor-area .content") {
+        fx("background-color", colors.surface)
+        fx("background-radius", "0")
+    }
+
+    rule(".code-editor-status-text") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
     }
 
     rule(".section") {
