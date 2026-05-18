@@ -282,3 +282,38 @@ val dashboard = card {
     }
 }
 ```
+
+## Semantic Display
+
+```kotlin
+val summary = section(
+    title = "Release readiness",
+    description = "Small semantic components share the same theme tone classes.",
+) {
+    hbox(spacing = 8.0) {
+        badge("Stable", ComponentTone.SUCCESS)
+        badge("Docs", ComponentTone.INFO)
+        chip("Theme", tone = ComponentTone.PRIMARY, selected = true)
+        chip("Samples", tone = ComponentTone.NEUTRAL)
+    }
+
+    metricCard(
+        label = "Styled controls",
+        value = "24",
+        helper = "Covered by generated JavaFX CSS",
+        tone = ComponentTone.INFO,
+    ) {
+        badge("Theme ready", ComponentTone.SUCCESS)
+    }
+
+    alertBanner(
+        title = "Theme coverage changed",
+        message = "Review the generated CSS before publishing a new preset.",
+        tone = ComponentTone.WARNING,
+        actionText = "Inspect",
+        onAction = {
+            println("Inspect theme coverage")
+        },
+    )
+}
+```

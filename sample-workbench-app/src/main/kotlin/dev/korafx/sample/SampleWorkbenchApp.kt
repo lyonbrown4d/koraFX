@@ -1,8 +1,13 @@
 package dev.korafx.sample
 
 import dev.korafx.components.actionBar
+import dev.korafx.components.alertBanner
+import dev.korafx.components.ComponentTone
+import dev.korafx.components.badge
 import dev.korafx.components.card
+import dev.korafx.components.chip
 import dev.korafx.components.emptyState
+import dev.korafx.components.metricCard
 import dev.korafx.components.navigationRail
 import dev.korafx.components.section
 import dev.korafx.dsl.accordion
@@ -220,6 +225,17 @@ class SampleWorkbenchApp : Application() {
                                         button("Primary") {
                                             onAction {
                                                 feedbackLabel.text = "State: Primary action from actionBar."
+                                            }
+                                        }
+                                    }
+
+                                    hbox(spacing = 8.0) {
+                                        badge("Stable", ComponentTone.SUCCESS)
+                                        badge("Theme", ComponentTone.INFO)
+                                        chip("DSL", ComponentTone.PRIMARY, selected = true)
+                                        chip("Samples", ComponentTone.NEUTRAL) {
+                                            onAction {
+                                                feedbackLabel.text = "State: Chip action."
                                             }
                                         }
                                     }
@@ -609,7 +625,37 @@ class SampleWorkbenchApp : Application() {
                                                     feedbackLabel.text = "State: Hyperlink action."
                                                 }
                                             }
+                                            badge("Success", ComponentTone.SUCCESS)
+                                            badge("Warning", ComponentTone.WARNING)
+                                            badge("Danger", ComponentTone.DANGER)
+                                            chip("Selected", ComponentTone.PRIMARY, selected = true)
+                                            chip("Info", ComponentTone.INFO)
                                         }
+
+                                        hbox(spacing = 12.0) {
+                                            metricCard(
+                                                label = "Presets",
+                                                value = themeManager.availableThemes.size.toString(),
+                                                helper = "Built-in themes",
+                                                tone = ComponentTone.INFO,
+                                            )
+                                            metricCard(
+                                                label = "Tones",
+                                                value = ComponentTone.entries.size.toString(),
+                                                helper = "Semantic component states",
+                                                tone = ComponentTone.SUCCESS,
+                                            )
+                                        }
+
+                                        alertBanner(
+                                            title = "Semantic theme coverage",
+                                            message = "Badges, chips, metric cards and alert banners share the same tone classes.",
+                                            tone = ComponentTone.WARNING,
+                                            actionText = "Switch Theme",
+                                            onAction = {
+                                                viewModel.dispatch(WorkbenchAction.NextTheme)
+                                            },
+                                        )
 
                                         gridPane(
                                             hgap = 12.0,
