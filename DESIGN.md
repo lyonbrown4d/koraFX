@@ -69,7 +69,8 @@ Responsibilities:
 - Register a `devtools { ... }` extension for `koraApplication`.
 - Provide runtime inspection panels for scene graph, node properties, navigation state, and theme tokens.
 - Provide Chrome DevTools-like node picking and visual highlighting for JavaFX nodes.
-- Open as a bottom dock by default, while keeping an independent-window placement available for secondary monitors.
+- Open as a resizable bottom dock by default, with left, right, bottom, and independent-window placements.
+- Keep inspection in-process: picker events, hit-testing, and highlight overlays target the application scene, not the DevTools scene.
 - Reuse KoraFX framework/components as a subapp: internal routes, theme binding, iconography, and localized strings.
 - Stay out of production dependencies unless the application explicitly opts in.
 

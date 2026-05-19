@@ -24,6 +24,7 @@ class KoraDevtoolsBuilderTest {
         assertEquals(KeyCombination.keyCombination("Ctrl+Shift+C"), spec.pickerShortcut)
         assertEquals(KoraDevtoolsLanguage.SYSTEM, spec.language)
         assertEquals(KoraDevtoolsPlacement.BOTTOM, spec.placement)
+        assertEquals(420.0, spec.dockWidth)
         assertEquals(360.0, spec.dockHeight)
     }
 
@@ -36,7 +37,8 @@ class KoraDevtoolsBuilderTest {
             pickerShortcut = "Alt+P"
             highlightSelection = false
             language = KoraDevtoolsLanguage.CHINESE
-            placement = KoraDevtoolsPlacement.WINDOW
+            placement = KoraDevtoolsPlacement.RIGHT
+            dockWidth = 480.0
             dockHeight = 420.0
             panels {
                 theme()
@@ -50,7 +52,8 @@ class KoraDevtoolsBuilderTest {
         assertEquals(KeyCombination.keyCombination("Alt+P"), spec.pickerShortcut)
         assertFalse(spec.highlightSelection)
         assertEquals(KoraDevtoolsLanguage.CHINESE, spec.language)
-        assertEquals(KoraDevtoolsPlacement.WINDOW, spec.placement)
+        assertEquals(KoraDevtoolsPlacement.RIGHT, spec.placement)
+        assertEquals(480.0, spec.dockWidth)
         assertEquals(420.0, spec.dockHeight)
         assertEquals(listOf(KoraDevtoolsPanel.Theme, KoraDevtoolsPanel.Navigation), spec.panels)
     }

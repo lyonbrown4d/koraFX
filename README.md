@@ -66,6 +66,7 @@ fun main(args: Array<String>) = koraApplication(args) {
         pickerShortcut = "Ctrl+Shift+C"
         language = KoraDevtoolsLanguage.SYSTEM
         placement = KoraDevtoolsPlacement.BOTTOM
+        dockWidth = 420.0
         dockHeight = 360.0
     }
 

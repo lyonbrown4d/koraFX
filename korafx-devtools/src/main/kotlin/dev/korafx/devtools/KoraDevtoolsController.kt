@@ -1,19 +1,22 @@
 package dev.korafx.devtools
 
+import dev.korafx.dsl.rectangle
+import dev.korafx.dsl.scene
+import dev.korafx.dsl.splitPane
+import dev.korafx.dsl.stackPane
+import dev.korafx.dsl.stage
+import dev.korafx.dsl.styleClass
 import dev.korafx.framework.KoraApplication
 import dev.korafx.framework.theme.SceneThemeController
 import dev.korafx.framework.theme.ThemeStyleClass
-import dev.korafx.dsl.borderPane
-import dev.korafx.dsl.scene
-import dev.korafx.dsl.stage
-import dev.korafx.dsl.styleClass
+import javafx.application.Platform
 import javafx.event.EventHandler
-import javafx.scene.Node
+import javafx.geometry.Orientation
 import javafx.scene.Parent
+import javafx.scene.control.SplitPane
 import javafx.scene.input.KeyEvent
-import javafx.scene.input.MouseEvent
-import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Region
+import javafx.scene.layout.StackPane
 import javafx.stage.Stage
 import kotlinx.coroutines.Job
 
@@ -21,6 +24,8 @@ internal interface DevtoolsActions {
     fun startPicking()
 
     fun clearSelection()
+
+    fun setPlacement(placement: KoraDevtoolsPlacement)
 }
 
 internal class KoraDevtoolsController(
@@ -31,11 +36,21 @@ internal class KoraDevtoolsController(
     private val highlighter: NodeHighlighter,
 ) : DevtoolsActions {
     private var stage: Stage? = null
-    private var dockRoot: BorderPane? = null
+    private var currentPlacement: KoraDevtoolsPlacement = spec.placement
+    private var dockRoot: SplitPane? = null
+    private var inspectedHost: StackPane? = null
+    private var devtoolsRoot: Parent? = null
     private var originalRoot: Parent? = null
     private var themeController: SceneThemeController? = null
     private val jobs = mutableListOf<Job>()
-    private var picking = false
+    private val inspector = InProcessInspector(
+        scene = app.scene,
+        selection = selection,
+        highlighter = highlighter,
+        inspectedRoot = ::inspectedRoot,
+        excludedRoots = { listOfNotNull(devtoolsRoot) },
+        highlightSelection = spec.highlightSelection,
+    )
     private val shortcutHandler = EventHandler<KeyEvent> { event ->
         if (spec.shortcut.match(event)) {
             event.consume()
@@ -46,45 +61,43 @@ internal class KoraDevtoolsController(
             startPicking()
         }
     }
-    private val pickMoveHandler = EventHandler<MouseEvent> { event ->
-        if (picking) {
-            highlight(event.pickResult.intersectedNode)
-        }
-    }
-    private val pickClickHandler = EventHandler<MouseEvent> { event ->
-        if (picking) {
-            event.consume()
-            selection.select(event.pickResult.intersectedNode)
-            stopPicking()
-            open()
-        }
-    }
 
     fun install() {
         app.scene.addEventFilter(KeyEvent.KEY_PRESSED, shortcutHandler)
         selection.selectedNode.addListener { _, _, node ->
-            highlight(node)
+            inspector.highlight(node)
         }
     }
 
     fun dispose() {
         app.scene.removeEventFilter(KeyEvent.KEY_PRESSED, shortcutHandler)
-        stopPicking()
+        inspector.stopPicking()
         close()
     }
 
     override fun startPicking() {
-        if (picking) {
-            return
-        }
-        picking = true
-        app.scene.addEventFilter(MouseEvent.MOUSE_MOVED, pickMoveHandler)
-        app.scene.addEventFilter(MouseEvent.MOUSE_CLICKED, pickClickHandler)
+        open()
+        inspector.startPicking()
     }
 
     override fun clearSelection() {
         selection.clear()
-        highlighter.hide()
+        inspector.hideHighlight()
+    }
+
+    override fun setPlacement(placement: KoraDevtoolsPlacement) {
+        Platform.runLater {
+            if (placement == currentPlacement && isOpen()) {
+                stage?.requestFocus()
+                return@runLater
+            }
+
+            if (isOpen()) {
+                close()
+            }
+            currentPlacement = placement
+            open()
+        }
     }
 
     fun track(job: Job) {
@@ -100,22 +113,32 @@ internal class KoraDevtoolsController(
     }
 
     private fun open() {
-        when (spec.placement) {
-            KoraDevtoolsPlacement.BOTTOM -> openDocked()
+        when (currentPlacement) {
+            KoraDevtoolsPlacement.LEFT,
+            KoraDevtoolsPlacement.RIGHT,
+            KoraDevtoolsPlacement.BOTTOM,
+            -> openDocked()
             KoraDevtoolsPlacement.WINDOW -> openWindow()
         }
     }
 
     private fun close() {
-        when (spec.placement) {
-            KoraDevtoolsPlacement.BOTTOM -> closeDocked()
+        inspector.stopPicking()
+        when (currentPlacement) {
+            KoraDevtoolsPlacement.LEFT,
+            KoraDevtoolsPlacement.RIGHT,
+            KoraDevtoolsPlacement.BOTTOM,
+            -> closeDocked()
             KoraDevtoolsPlacement.WINDOW -> closeWindow()
         }
     }
 
     private fun isOpen(): Boolean =
-        when (spec.placement) {
-            KoraDevtoolsPlacement.BOTTOM -> dockRoot != null
+        when (currentPlacement) {
+            KoraDevtoolsPlacement.LEFT,
+            KoraDevtoolsPlacement.RIGHT,
+            KoraDevtoolsPlacement.BOTTOM,
+            -> dockRoot != null
             KoraDevtoolsPlacement.WINDOW -> stage?.isShowing == true
         }
 
@@ -125,26 +148,47 @@ internal class KoraDevtoolsController(
         }
 
         val currentRoot = app.scene.root
+        val host = createInspectedHost()
         val shell = createShell { currentRoot }.apply {
             styleClass("korafx-devtools-docked")
             if (this is Region) {
                 minHeight = 240.0
                 prefHeight = spec.dockHeight
+                minWidth = 280.0
+                prefWidth = spec.dockWidth
             }
         }
-        val container = borderPane(
+        val container = splitPane(
+            orientation = currentPlacement.dockOrientation(),
             init = {
                 styleClass(ThemeStyleClass.Root)
                 styleClass("korafx-devtools-dock-host")
             },
         ) {
-            center(currentRoot)
-            bottom(shell)
+            when (currentPlacement) {
+                KoraDevtoolsPlacement.LEFT -> {
+                    add(shell)
+                    add(host)
+                }
+                KoraDevtoolsPlacement.RIGHT,
+                KoraDevtoolsPlacement.BOTTOM,
+                -> {
+                    add(host)
+                    add(shell)
+                }
+                KoraDevtoolsPlacement.WINDOW -> Unit
+            }
         }
 
         originalRoot = currentRoot
+        inspectedHost = host
+        devtoolsRoot = shell
+        highlighter.limitTo(host)
         dockRoot = container
         app.scene.root = container
+        host.children.setAll(currentRoot)
+        highlighter.renderIn(host)
+        container.setDividerPositions(currentPlacement.initialDivider(app.scene.width, app.scene.height))
     }
 
     private fun closeDocked() {
@@ -152,12 +196,16 @@ internal class KoraDevtoolsController(
         val root = originalRoot
 
         disposeRenderedResources()
-        container.bottom = null
-        container.center = null
+        inspectedHost?.children?.clear()
+        highlighter.limitTo(null)
+        highlighter.renderIn(null)
+        container.items.clear()
         if (root != null && app.scene.root === container) {
             app.scene.root = root
         }
         dockRoot = null
+        inspectedHost = null
+        devtoolsRoot = null
         originalRoot = null
     }
 
@@ -167,7 +215,10 @@ internal class KoraDevtoolsController(
             return
         }
 
-        val scene = scene(createShell(), spec.width, spec.height)
+        installWindowOverlay()
+        val shell = createShell()
+        devtoolsRoot = shell
+        val scene = scene(shell, spec.width, spec.height)
         val controller = SceneThemeController(app.themeManager)
         controller.bind(scene)
         themeController = controller
@@ -179,27 +230,79 @@ internal class KoraDevtoolsController(
             scene(scene)
             onHidden {
                 disposeRenderedResources()
+                restoreWindowOverlay()
             }
             show()
         }
     }
 
     private fun closeWindow() {
-        stage?.close()
-        disposeRenderedResources()
+        val window = stage
+        if (window != null) {
+            window.close()
+        } else {
+            disposeRenderedResources()
+            restoreWindowOverlay()
+        }
     }
 
     private fun disposeRenderedResources() {
-        highlighter.hide()
+        inspector.stopPicking()
+        inspector.hideHighlight()
         jobs.forEach(Job::cancel)
         jobs.clear()
         selection.disposeWindowListeners()
+        highlighter.limitTo(null)
+        highlighter.renderIn(null)
         themeController?.dispose()
         themeController = null
         stage = null
     }
 
-    private fun createShell(inspectedRoot: () -> Parent = { app.scene.root }): Parent =
+    private fun installWindowOverlay() {
+        val currentRoot = originalRoot ?: app.scene.root
+        if (inspectedHost != null && app.scene.root === inspectedHost) {
+            highlighter.limitTo(inspectedHost)
+            highlighter.renderIn(inspectedHost)
+            return
+        }
+
+        val host = createInspectedHost()
+        originalRoot = currentRoot
+        inspectedHost = host
+        app.scene.root = host
+        host.children.setAll(currentRoot)
+        highlighter.limitTo(host)
+        highlighter.renderIn(host)
+    }
+
+    private fun restoreWindowOverlay() {
+        val host = inspectedHost
+        val root = originalRoot
+        highlighter.limitTo(null)
+        highlighter.renderIn(null)
+        host?.children?.clear()
+        if (host != null && root != null && app.scene.root === host) {
+            app.scene.root = root
+        }
+        inspectedHost = null
+        devtoolsRoot = null
+        originalRoot = null
+    }
+
+    private fun createInspectedHost(): StackPane =
+        stackPane(
+            init = {
+                styleClass("korafx-devtools-inspected-host")
+                val host = this
+                clip = rectangle {
+                    widthProperty().bind(host.widthProperty())
+                    heightProperty().bind(host.heightProperty())
+                }
+            },
+        ) {}
+
+    private fun createShell(inspectedRoot: () -> Parent = ::inspectedRoot): Parent =
         DevtoolsShell(
             app = app,
             spec = spec,
@@ -210,18 +313,32 @@ internal class KoraDevtoolsController(
             inspectedRoot = inspectedRoot,
         ).build()
 
-    private fun stopPicking() {
-        if (!picking) {
-            return
-        }
-        picking = false
-        app.scene.removeEventFilter(MouseEvent.MOUSE_MOVED, pickMoveHandler)
-        app.scene.removeEventFilter(MouseEvent.MOUSE_CLICKED, pickClickHandler)
-    }
+    private fun inspectedRoot(): Parent =
+        originalRoot ?: app.scene.root
 
-    private fun highlight(node: Node?) {
-        if (spec.highlightSelection) {
-            highlighter.show(node)
+    private fun KoraDevtoolsPlacement.dockOrientation(): Orientation =
+        when (this) {
+            KoraDevtoolsPlacement.BOTTOM -> Orientation.VERTICAL
+            KoraDevtoolsPlacement.LEFT,
+            KoraDevtoolsPlacement.RIGHT,
+            KoraDevtoolsPlacement.WINDOW,
+            -> Orientation.HORIZONTAL
         }
-    }
+
+    private fun KoraDevtoolsPlacement.initialDivider(
+        sceneWidth: Double,
+        sceneHeight: Double,
+    ): Double =
+        when (this) {
+            KoraDevtoolsPlacement.LEFT ->
+                (spec.dockWidth / sceneWidth.validSize()).coerceIn(0.15, 0.85)
+            KoraDevtoolsPlacement.RIGHT ->
+                ((sceneWidth.validSize() - spec.dockWidth) / sceneWidth.validSize()).coerceIn(0.15, 0.85)
+            KoraDevtoolsPlacement.BOTTOM ->
+                ((sceneHeight.validSize() - spec.dockHeight) / sceneHeight.validSize()).coerceIn(0.15, 0.85)
+            KoraDevtoolsPlacement.WINDOW -> 0.5
+        }
+
+    private fun Double.validSize(): Double =
+        takeIf { it.isFinite() && it > 0.0 } ?: 1.0
 }

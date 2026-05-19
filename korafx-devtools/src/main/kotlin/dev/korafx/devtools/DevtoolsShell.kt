@@ -8,6 +8,7 @@ import dev.korafx.components.setKoraIcon
 import dev.korafx.components.workspaceLayout
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.label
+import dev.korafx.dsl.onAction
 import dev.korafx.dsl.padding
 import dev.korafx.dsl.styleClass
 import dev.korafx.framework.KoraApplication
@@ -47,6 +48,7 @@ internal class DevtoolsShell(
         return workspaceLayout(
             init = {
                 styleClass += "korafx-devtools"
+                overlayLayer.isMouseTransparent = true
             },
         ) {
             topBar(createHeader())
@@ -85,6 +87,30 @@ internal class DevtoolsShell(
                 setKoraIcon(BootstrapIcons.TOOLS, size = 20)
             }
             badge(messages.subappBadge, ComponentTone.INFO, icon = BootstrapIcons.WINDOW_SIDEBAR)
+            button(messages.dockLeft) {
+                styleClass("ghost-button")
+                onAction {
+                    actions.setPlacement(KoraDevtoolsPlacement.LEFT)
+                }
+            }
+            button(messages.dockBottom) {
+                styleClass("ghost-button")
+                onAction {
+                    actions.setPlacement(KoraDevtoolsPlacement.BOTTOM)
+                }
+            }
+            button(messages.dockRight) {
+                styleClass("ghost-button")
+                onAction {
+                    actions.setPlacement(KoraDevtoolsPlacement.RIGHT)
+                }
+            }
+            button(messages.openWindow) {
+                styleClass("ghost-button")
+                onAction {
+                    actions.setPlacement(KoraDevtoolsPlacement.WINDOW)
+                }
+            }
             spacer()
             label(messages.shortcutHelp) {
                 styleClass(ThemeStyleClass.Muted)

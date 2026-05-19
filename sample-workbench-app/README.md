@@ -27,7 +27,7 @@ The sample uses `korafx-framework` as the application layer:
 
 - `koraApplication` creates the JavaFX application, scene, theme binding, Koin context, and framework services.
 - `installKoin` registers demo catalog, `WorkbenchViewModel`, and command palette host.
-- `devtools` enables the optional runtime inspector subapp. Press `Ctrl+Shift+I` to open the bottom dock or `Ctrl+Shift+C` to pick a node from the app window. Set `placement = KoraDevtoolsPlacement.WINDOW` for an independent window.
+- `devtools` enables the optional runtime inspector subapp. Press `Ctrl+Shift+I` to open the resizable dock or `Ctrl+Shift+C` to pick a node from the app window. Use `LEFT`, `RIGHT`, `BOTTOM`, or `WINDOW`, or switch placement from the DevTools header. Picking stays in-process and targets the application scene in every placement.
 - `KoraApplication.uiScope` drives JavaFX bindings and is cancelled by the framework on shutdown.
 - Commands remain a component/application concern; they are not registered through a framework-level command API.
 

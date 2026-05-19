@@ -15,6 +15,7 @@ class KoraDevtoolsBuilder {
     var highlightSelection: Boolean = true
     var language: KoraDevtoolsLanguage = KoraDevtoolsLanguage.SYSTEM
     var placement: KoraDevtoolsPlacement = KoraDevtoolsPlacement.BOTTOM
+    var dockWidth: Double = 420.0
     var dockHeight: Double = 360.0
     var width: Double = 1040.0
     var height: Double = 720.0
@@ -33,6 +34,7 @@ class KoraDevtoolsBuilder {
             highlightSelection = highlightSelection,
             language = language,
             placement = placement,
+            dockWidth = dockWidth,
             dockHeight = dockHeight,
             width = width,
             height = height,
@@ -76,6 +78,8 @@ enum class KoraDevtoolsLanguage {
 }
 
 enum class KoraDevtoolsPlacement {
+    LEFT,
+    RIGHT,
     BOTTOM,
     WINDOW,
 }
@@ -97,6 +101,7 @@ internal data class KoraDevtoolsSpec(
     val highlightSelection: Boolean,
     val language: KoraDevtoolsLanguage,
     val placement: KoraDevtoolsPlacement,
+    val dockWidth: Double,
     val dockHeight: Double,
     val width: Double,
     val height: Double,

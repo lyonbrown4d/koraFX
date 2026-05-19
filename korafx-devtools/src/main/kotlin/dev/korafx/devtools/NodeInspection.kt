@@ -2,6 +2,7 @@ package dev.korafx.devtools
 
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.dsl.splitPane
+import javafx.css.PseudoClass
 import javafx.geometry.Bounds
 import javafx.geometry.Orientation
 import javafx.scene.Node
@@ -63,16 +64,26 @@ internal fun describeNode(
         appendLine("localToScene = ${node.localToScene(node.boundsInLocal).format()}")
         appendLine()
         appendLine(messages.pseudoClassStates)
-        node.pseudoClassStates.sortedBy { it.pseudoClassName }.forEach { pseudoClass ->
-            appendLine("- ${pseudoClass.pseudoClassName}")
+        safePseudoClassNames(node.pseudoClassStates).forEach { pseudoClassName ->
+            appendLine("- $pseudoClassName")
         }
         appendLine()
         appendLine(messages.cssMetadata)
-        node.cssMetaData.map { it.property }.sorted().forEach { property ->
+        safeCssProperties(node).forEach { property ->
             appendLine("- $property")
         }
     }
 }
+
+internal fun safePseudoClassNames(states: Iterable<PseudoClass?>): List<String> =
+    states
+        .mapNotNull { pseudoClass -> pseudoClass?.pseudoClassName?.takeIf(String::isNotBlank) }
+        .sorted()
+
+private fun safeCssProperties(node: Node): List<String> =
+    node.cssMetaData
+        .mapNotNull { metadata -> metadata?.property?.takeIf(String::isNotBlank) }
+        .sorted()
 
 internal fun describeTheme(
     messages: DevtoolsMessages,

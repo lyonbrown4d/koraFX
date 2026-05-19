@@ -40,6 +40,7 @@ fun main(args: Array<String>) = koraApplication(args) {
     highlightSelection = true
     language = KoraDevtoolsLanguage.SYSTEM
     placement = KoraDevtoolsPlacement.BOTTOM
+    dockWidth = 420.0
     dockHeight = 360.0
   }
 

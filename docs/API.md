@@ -191,6 +191,7 @@ fun main(args: Array<String>) = koraApplication(args) {
         highlightSelection = true
         language = KoraDevtoolsLanguage.SYSTEM
         placement = KoraDevtoolsPlacement.BOTTOM
+        dockWidth = 420.0
         dockHeight = 360.0
         panels {
             sceneGraph()
@@ -209,7 +210,8 @@ Initial panels:
 - Navigation: view registered routes and jump to a route.
 - Theme: view theme tokens and switch the active theme at runtime.
 - Pick Node: press `Ctrl+Shift+C` or the `Pick Node` button, then click an application node to select and highlight it.
-- DevTools opens as a bottom dock by default. Set `placement = KoraDevtoolsPlacement.WINDOW` when an independent window is preferred.
+- DevTools opens as a resizable bottom dock by default. Use `LEFT`, `RIGHT`, `BOTTOM`, or `WINDOW`, or switch placement from the DevTools header at runtime.
+- Node picking is in-process. DevTools hit-tests the application scene by screen coordinates and renders highlights in an application overlay, so docked and window placements share the same picker behavior.
 - The DevTools surface is implemented as an internal KoraFX subapp using `workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
 - Built-in text supports `SYSTEM`, `ENGLISH`, and `CHINESE`.
 
