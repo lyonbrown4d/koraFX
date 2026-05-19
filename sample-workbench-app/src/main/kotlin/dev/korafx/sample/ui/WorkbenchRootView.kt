@@ -18,6 +18,7 @@ import dev.korafx.components.navigationRail
 import dev.korafx.components.queryEditor
 import dev.korafx.components.resourceExplorer
 import dev.korafx.components.section
+import dev.korafx.components.setKoraIcon
 import dev.korafx.components.sourceEditor
 import dev.korafx.components.SourceDiagnostic
 import dev.korafx.components.TabWorkspace
@@ -151,11 +152,13 @@ class WorkbenchRootView(
                 }
               }.bindSelectedItem(uiScope, themeManager.theme)
               ghostButton("Next Theme") {
+                setKoraIcon(WorkbenchIcons.NextTheme)
                 onAction {
                   viewModel.dispatch(WorkbenchAction.NextTheme)
                 }
               }
               ghostButton("Commands") {
+                setKoraIcon(WorkbenchIcons.Commands)
                 onAction {
                   commandPaletteHost.show()
                 }
@@ -164,7 +167,11 @@ class WorkbenchRootView(
           }
 
           navigation {
-            navigationRail(uiScope, navigator)
+            navigationRail(
+              scope = uiScope,
+              navigator = navigator,
+              icon = WorkbenchIcons::route,
+            )
           }
 
           content {
@@ -333,10 +340,10 @@ class WorkbenchRootView(
                       }
 
                       hbox(spacing = 8.0) {
-                        badge("Stable", ComponentTone.SUCCESS)
-                        badge("Theme", ComponentTone.INFO)
-                        chip("DSL", ComponentTone.PRIMARY, selected = true)
-                        chip("Samples", ComponentTone.NEUTRAL) {
+                        badge("Stable", ComponentTone.SUCCESS, icon = WorkbenchIcons.Stable)
+                        badge("Theme", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
+                        chip("DSL", ComponentTone.PRIMARY, selected = true, icon = WorkbenchIcons.Dsl)
+                        chip("Samples", ComponentTone.NEUTRAL, icon = WorkbenchIcons.Samples) {
                           onAction {
                             feedbackLabel.text = "State: Chip action."
                           }
@@ -516,7 +523,7 @@ class WorkbenchRootView(
                             title = "Repository",
                             subtitle = "Selection details for Git and database resources.",
                           ) {
-                            badge("Connected", ComponentTone.SUCCESS)
+                            badge("Connected", ComponentTone.SUCCESS, icon = WorkbenchIcons.Connected)
                             property("Branch", "main")
                             property("Connection", "local")
                             section("Metadata") {
@@ -534,7 +541,7 @@ class WorkbenchRootView(
                           label("Ready - 3 modules loaded")
                         }
                         overlay(alignment = Pos.BOTTOM_RIGHT) {
-                          badge("Overlay slot", ComponentTone.SUCCESS)
+                          badge("Overlay slot", ComponentTone.SUCCESS, icon = WorkbenchIcons.Overlay)
                         }
                       }
 
@@ -1006,11 +1013,11 @@ class WorkbenchRootView(
                               feedbackLabel.text = "State: Hyperlink action."
                             }
                           }
-                          badge("Success", ComponentTone.SUCCESS)
-                          badge("Warning", ComponentTone.WARNING)
+                          badge("Success", ComponentTone.SUCCESS, icon = WorkbenchIcons.Stable)
+                          badge("Warning", ComponentTone.WARNING, icon = WorkbenchIcons.Warning)
                           badge("Danger", ComponentTone.DANGER)
-                          chip("Selected", ComponentTone.PRIMARY, selected = true)
-                          chip("Info", ComponentTone.INFO)
+                          chip("Selected", ComponentTone.PRIMARY, selected = true, icon = WorkbenchIcons.Dsl)
+                          chip("Info", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
                         }
 
                         hbox(spacing = 12.0) {
@@ -1032,6 +1039,7 @@ class WorkbenchRootView(
                           title = "Semantic theme coverage",
                           message = "Badges, chips, metric cards and alert banners share the same tone classes.",
                           tone = ComponentTone.WARNING,
+                          icon = WorkbenchIcons.Warning,
                           actionText = "Switch Theme",
                           onAction = {
                             viewModel.dispatch(WorkbenchAction.NextTheme)

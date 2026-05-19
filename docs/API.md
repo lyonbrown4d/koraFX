@@ -141,6 +141,12 @@ chip(
     tone = ComponentTone.SUCCESS,
     icon = BootstrapIcons.CHECK_CIRCLE,
 )
+
+navigationRail(
+    scope = uiScope,
+    navigator = navigator,
+    icon = { route -> routeIcons[route.id] },
+)
 ```
 
 Guidelines:

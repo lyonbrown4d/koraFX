@@ -16,6 +16,7 @@ javafx {
 dependencies {
     implementation(project(":korafx-framework"))
     implementation(project(":korafx-components"))
+    implementation(libs.ikonli.bootstrapicons.pack)
 }
 
 application {

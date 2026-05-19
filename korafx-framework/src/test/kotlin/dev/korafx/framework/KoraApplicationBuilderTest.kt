@@ -4,6 +4,7 @@ import dev.korafx.framework.navigation.PageInstancePolicy
 import dev.korafx.framework.navigation.Route
 import dev.korafx.framework.theme.BuiltInThemes
 import javafx.scene.layout.Pane
+import java.lang.reflect.Modifier
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -64,6 +65,14 @@ class KoraApplicationBuilderTest {
         assertEquals("root", spec.navigation.initialRoute.id)
         assertEquals("Root", spec.navigation.initialRoute.title)
         assertEquals(listOf(spec.navigation.initialRoute), spec.navigation.routes)
+    }
+
+    @Test
+    fun `javafx launcher application is public for reflective launch`() {
+        val launcherClass = KoraFxApplication::class.java
+
+        assertTrue(Modifier.isPublic(launcherClass.modifiers))
+        assertTrue(Modifier.isPublic(launcherClass.getDeclaredConstructor().modifiers))
     }
 
     private enum class TestRoute(

@@ -329,7 +329,7 @@ private data object KoraRootRoute : Route {
 
 private val pendingApplication = AtomicReference<KoraApplicationSpec?>()
 
-private class KoraFxApplication : Application() {
+class KoraFxApplication : Application() {
     private var app: KoraApplication? = null
 
     override fun start(stage: Stage) {

@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
+import org.kordamp.ikonli.Ikon
 
 data class NavigationRailItem<R : Route>(
     val route: R,
@@ -31,6 +32,8 @@ fun <R : Route> navigationRail(
     navigator: Navigator<R>,
     width: Double = 220.0,
     spacing: Double = 10.0,
+    icon: (R) -> Ikon? = { null },
+    iconSize: Int = 16,
     init: VBox.() -> Unit = {},
     buttonInit: Button.(NavigationRailItem<R>) -> Unit = {},
 ): VBox =
@@ -50,6 +53,9 @@ fun <R : Route> navigationRail(
 
                         navButton(route.title, active = item.active) {
                             maxWidth = Double.MAX_VALUE
+                            icon(route)?.let { routeIcon ->
+                                setKoraIcon(routeIcon, iconSize)
+                            }
                             onAction {
                                 navigator.navigate(route.id)
                             }

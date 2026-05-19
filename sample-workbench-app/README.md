@@ -7,6 +7,7 @@ The sample depends on the direct framework path:
 ```kotlin
 implementation(project(":korafx-framework"))
 implementation(project(":korafx-components"))
+implementation(libs.ikonli.bootstrapicons.pack)
 ```
 
 ## Package Layout
@@ -35,3 +36,4 @@ The sample uses `korafx-framework` as the application layer:
 - Navigation: `Navigator`, `Route`, and route-driven page visibility.
 - Theme: token-driven built-in presets and `SceneThemeController`.
 - Components: workbench layout, border layout, resource explorer, tab workspace, source/query editors, data grid, inspector panel, activity timeline, command palette, Ikonli-ready controls, badges, chips, metrics, alerts, and feedback states.
+- Icons: the app chooses `ikonli-bootstrapicons-pack`; the reusable KoraFX component module only depends on Ikonli JavaFX core.

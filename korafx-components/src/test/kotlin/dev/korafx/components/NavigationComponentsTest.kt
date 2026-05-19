@@ -12,8 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
+import org.kordamp.ikonli.javafx.FontIcon
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -30,7 +33,11 @@ class NavigationComponentsTest {
             val rail = FxTestSupport.run {
                 lateinit var result: javafx.scene.layout.VBox
                 runOnFxThread {
-                    result = navigationRail(scope, navigator)
+                    result = navigationRail(
+                        scope = scope,
+                        navigator = navigator,
+                        icon = { BootstrapIcons.ALARM },
+                    )
                 }
                 result
             }
@@ -39,6 +46,10 @@ class NavigationComponentsTest {
                 rail.children.size == 2 &&
                     (rail.children[0] as Button).styleClass.contains("nav-button-active")
             }
+            assertEquals(
+                BootstrapIcons.ALARM,
+                assertIs<FontIcon>((rail.children[0] as Button).graphic).iconCode,
+            )
 
             navigator.navigate(TestRoute.Settings.id)
 
