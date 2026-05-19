@@ -1069,6 +1069,37 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("effect", elevation.dropdown)
     }
 
+    rule(".korafx-devtools-dock-host") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".korafx-devtools-docked") {
+        fx("background-color", colors.surface)
+        fx("border-color", "${colors.border} transparent transparent transparent")
+        fx("border-width", "1px 0 0 0")
+        fx("effect", elevation.dropdown)
+    }
+
+    rule(".korafx-devtools") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".korafx-devtools-header", ".korafx-devtools-status") {
+        fx("background-color", colors.surfaceMuted)
+    }
+
+    rule(".korafx-devtools-header") {
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+    }
+
+    rule(".korafx-devtools-status") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+    }
+
+    rule(".korafx-devtools-nav") {
+        fx("background-color", colors.surfaceMuted)
+    }
+
     rule(".resource-explorer") {
         surface(colors.surfaceMuted, colors.border, context.radii.large)
         fx("effect", elevation.card)

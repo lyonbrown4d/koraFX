@@ -1,5 +1,8 @@
 package dev.korafx.sample
 
+import dev.korafx.devtools.KoraDevtoolsLanguage
+import dev.korafx.devtools.KoraDevtoolsPlacement
+import dev.korafx.devtools.devtools
 import dev.korafx.framework.koraApplication
 import dev.korafx.framework.theme.BuiltInThemes
 import dev.korafx.sample.di.WorkbenchAppGraph
@@ -28,6 +31,16 @@ fun main(args: Array<String>) = koraApplication(args) {
   navigation {
     initialRoute = WorkbenchRoute.Overview
     routes(WorkbenchRoute.all)
+  }
+
+  devtools {
+    enabled = true
+    shortcut = "Ctrl+Shift+I"
+    pickerShortcut = "Ctrl+Shift+C"
+    highlightSelection = true
+    language = KoraDevtoolsLanguage.SYSTEM
+    placement = KoraDevtoolsPlacement.BOTTOM
+    dockHeight = 360.0
   }
 
   content {

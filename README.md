@@ -19,6 +19,7 @@ korafx-bom            Maven BOM for aligning KoraFX module versions
 korafx-dsl            Low-level JavaFX DSL and Flow state binding primitives
 korafx-framework      Default framework stack: MVVM, navigation, theme, Koin
 korafx-components     Optional workbench components and higher-level JavaFX surfaces
+korafx-devtools       Optional runtime inspector for KoraFX applications
 examples/*            Small runnable examples
 sample-workbench-app  Runnable sample app
 ```
@@ -29,6 +30,7 @@ Application code should start from the direct dependency path:
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
 implementation("io.github.daiyuang:korafx-framework")
 implementation("io.github.daiyuang:korafx-components")
+implementation("io.github.daiyuang:korafx-devtools") // keep this in development builds when possible
 // Pick any Ikonli pack in the application when icons are needed.
 implementation("org.kordamp.ikonli:ikonli-bootstrapicons-pack:<ikonli-version>")
 ```
@@ -56,6 +58,15 @@ fun main(args: Array<String>) = koraApplication(args) {
     navigation {
         initialRoute = WorkbenchRoute.Overview
         routes(WorkbenchRoute.all)
+    }
+
+    devtools {
+        enabled = true
+        shortcut = "Ctrl+Shift+I"
+        pickerShortcut = "Ctrl+Shift+C"
+        language = KoraDevtoolsLanguage.SYSTEM
+        placement = KoraDevtoolsPlacement.BOTTOM
+        dockHeight = 360.0
     }
 
     content {

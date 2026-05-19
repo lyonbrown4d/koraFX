@@ -8,8 +8,9 @@ implementation("io.github.daiyuang:korafx-framework")
 implementation("io.github.daiyuang:korafx-components")
 ```
 
-Runtime code is intentionally split into three publishable modules: `korafx-dsl`, `korafx-framework`, and `korafx-components`.
+Runtime code is intentionally split into three primary publishable modules: `korafx-dsl`, `korafx-framework`, and `korafx-components`.
 `korafx-components` exposes Ikonli JavaFX core for icon-ready components, but applications should choose their own icon pack dependency.
+`korafx-devtools` is an optional debug-only module and should not be required by production applications.
 
 ## korafx-framework
 
@@ -34,6 +35,7 @@ Main API:
 - `navigation { initialRoute = ...; routes(...) }`
 - `content { ... }`
 - `lifecycle { close<T>(); cancel<T>(); onStop { ... } }`
+- `install(plugin)`
 - `ViewModel<S, A, E>`
 - `ViewState`, `UiAction`, `UiEvent`
 - `Route`, `Navigator<R>`, `NavigationState<R>`
@@ -64,6 +66,10 @@ fun main(args: Array<String>) = koraApplication(args) {
         routes(WorkbenchRoute.all)
     }
 
+    devtools {
+        enabled = true
+    }
+
     content {
         AppRoot(this).buildRoot()
     }
@@ -84,6 +90,7 @@ Guidelines:
 - Keep screen state in ViewModels and render it through `stateText`, `stateList`, `stateVisible`, and related DSL bindings.
 - Register closeable app services with `lifecycle { close<T>() }` instead of writing raw shutdown handlers when possible.
 - Keep command palette commands in application/component modules for now; do not put command registration in the framework entry.
+- Use `install(plugin)` for optional framework add-ons; core framework should not directly depend on optional modules.
 
 ## korafx-dsl
 
@@ -99,6 +106,7 @@ Main API:
 - Render helpers: `fragment`, `renderIf`, `renderUnless`, `renderEach`, `bindContent`, `bindChildren`, `bindEach`, `bindList`, `bindRenderState`
 - Styling helpers: `styleClass`, `styleClasses`, `toggleStyleClass`, `pseudoClass`, `cssStyle`, `cssStyleOf`, `cssAppend`, `styleRaw`
 - Form/dialog helpers: `form`, `submitBar`, `validationMessage`, `alert`, `confirmation`, `textInputDialog`, `customDialog`
+- Window/shape helpers: `scene`, `stage`, `popup`, `rectangle`
 
 Guidelines:
 
@@ -155,6 +163,55 @@ Guidelines:
 - Components may accept explicit framework services such as `CoroutineScope`, `Navigator`, `ThemeManager`, and command hosts.
 - Components should have stable style classes so `korafx-framework` theme services can fully cover them.
 - Keep concrete Ikonli icon packs in application/sample modules; `korafx-components` should only require Ikonli JavaFX core.
+
+## korafx-devtools
+
+`korafx-devtools` is the optional runtime inspector for debugging KoraFX applications. Add it only to development builds when possible.
+
+Main API:
+
+- `devtools { ... }`
+- `KoraDevtoolsBuilder`
+- `KoraDevtoolsLanguage`
+- `KoraDevtoolsPlacement`
+- `KoraDevtoolsPanel`
+
+Example:
+
+```kotlin
+dependencies {
+    implementation("io.github.daiyuang:korafx-devtools")
+}
+
+fun main(args: Array<String>) = koraApplication(args) {
+    devtools {
+        enabled = System.getProperty("korafx.devtools") == "true"
+        shortcut = "Ctrl+Shift+I"
+        pickerShortcut = "Ctrl+Shift+C"
+        highlightSelection = true
+        language = KoraDevtoolsLanguage.SYSTEM
+        placement = KoraDevtoolsPlacement.BOTTOM
+        dockHeight = 360.0
+        panels {
+            sceneGraph()
+            inspector()
+            navigation()
+            theme()
+        }
+    }
+}
+```
+
+Initial panels:
+
+- Scene Graph: inspect the live JavaFX node tree.
+- Inspector: view selected node properties, bounds, pseudo classes, and CSS metadata.
+- Navigation: view registered routes and jump to a route.
+- Theme: view theme tokens and switch the active theme at runtime.
+- Pick Node: press `Ctrl+Shift+C` or the `Pick Node` button, then click an application node to select and highlight it.
+- DevTools opens as a bottom dock by default. Set `placement = KoraDevtoolsPlacement.WINDOW` when an independent window is preferred.
+- The DevTools surface is implemented as an internal KoraFX subapp using `workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
+- Built-in text supports `SYSTEM`, `ENGLISH`, and `CHINESE`.
 
 ## Naming Checklist
 

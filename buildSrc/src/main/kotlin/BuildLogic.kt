@@ -7,6 +7,7 @@ private val publishableModules =
         "korafx-framework",
         "korafx-dsl",
         "korafx-components",
+        "korafx-devtools",
     )
 
 private val publishingPropertyKeys =
@@ -41,6 +42,7 @@ fun Project.publishedArtifactId(): String =
         "korafx-framework" -> "korafx-framework"
         "korafx-dsl" -> "korafx-dsl"
         "korafx-components" -> "korafx-components"
+        "korafx-devtools" -> "korafx-devtools"
         else -> name
     }
 
@@ -50,6 +52,7 @@ fun Project.publishedDescription(): String =
         "korafx-dsl" -> "Kotlin-first JavaFX DSL and Flow state binding primitives."
         "korafx-framework" -> "Kotlin-first JavaFX application framework with Koin, MVVM, navigation and theme services."
         "korafx-components" -> "Reusable JavaFX workbench components for KoraFX applications."
+        "korafx-devtools" -> "Optional Chrome DevTools-inspired inspector for KoraFX applications."
         else -> "KoraFX module for Kotlin-friendly JavaFX development."
     }
 

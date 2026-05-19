@@ -77,6 +77,7 @@ class KoraApplicationBuilder {
     private val themeBuilder = KoraThemeBuilder()
     private val navigationBuilder = KoraNavigationBuilder()
     private val lifecycleBuilder = KoraLifecycleBuilder()
+    private val plugins = mutableListOf<KoraApplicationPlugin>()
     private var contentFactory: (KoraApplication.() -> Parent)? = null
 
     fun window(configure: KoraWindowBuilder.() -> Unit) {
@@ -103,6 +104,10 @@ class KoraApplicationBuilder {
         lifecycleBuilder.configure()
     }
 
+    fun install(plugin: KoraApplicationPlugin) {
+        plugins += plugin
+    }
+
     internal fun build(): KoraApplicationSpec =
         KoraApplicationSpec(
             window = windowBuilder.build(),
@@ -110,8 +115,15 @@ class KoraApplicationBuilder {
             theme = themeBuilder.build(),
             navigation = navigationBuilder.build(),
             contentFactory = contentFactory,
+            plugins = plugins.toList(),
             stopHandlers = lifecycleBuilder.build(),
         )
+}
+
+interface KoraApplicationPlugin {
+    fun onStart(app: KoraApplication) = Unit
+
+    fun onStop(app: KoraApplication) = Unit
 }
 
 class KoraWindowBuilder {
@@ -266,9 +278,25 @@ class KoraApplication internal constructor(
                 }
             }
         }
+        spec.plugins.forEach { plugin ->
+            runCatching {
+                plugin.onStart(this)
+            }.onFailure { error ->
+                System.err.println("KoraFX plugin start failed: ${error.message}")
+                error.printStackTrace()
+            }
+        }
     }
 
     override fun close() {
+        spec.plugins.asReversed().forEach { plugin ->
+            runCatching {
+                plugin.onStop(this)
+            }.onFailure { error ->
+                System.err.println("KoraFX plugin stop failed: ${error.message}")
+                error.printStackTrace()
+            }
+        }
         spec.stopHandlers.asReversed().forEach { handler ->
             runCatching {
                 handler()
@@ -290,6 +318,7 @@ internal data class KoraApplicationSpec(
     val theme: KoraThemeSpec,
     val navigation: KoraNavigationSpec,
     val contentFactory: (KoraApplication.() -> Parent)?,
+    val plugins: List<KoraApplicationPlugin>,
     val stopHandlers: List<KoraApplication.() -> Unit>,
 )
 

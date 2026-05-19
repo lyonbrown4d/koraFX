@@ -7,6 +7,7 @@ The sample depends on the direct framework path:
 ```kotlin
 implementation(project(":korafx-framework"))
 implementation(project(":korafx-components"))
+implementation(project(":korafx-devtools"))
 implementation(libs.ikonli.bootstrapicons.pack)
 ```
 
@@ -26,6 +27,7 @@ The sample uses `korafx-framework` as the application layer:
 
 - `koraApplication` creates the JavaFX application, scene, theme binding, Koin context, and framework services.
 - `installKoin` registers demo catalog, `WorkbenchViewModel`, and command palette host.
+- `devtools` enables the optional runtime inspector subapp. Press `Ctrl+Shift+I` to open the bottom dock or `Ctrl+Shift+C` to pick a node from the app window. Set `placement = KoraDevtoolsPlacement.WINDOW` for an independent window.
 - `KoraApplication.uiScope` drives JavaFX bindings and is cancelled by the framework on shutdown.
 - Commands remain a component/application concern; they are not registered through a framework-level command API.
 
@@ -37,3 +39,4 @@ The sample uses `korafx-framework` as the application layer:
 - Theme: token-driven built-in presets and `SceneThemeController`.
 - Components: workbench layout, border layout, resource explorer, tab workspace, source/query editors, data grid, inspector panel, activity timeline, command palette, Ikonli-ready controls, badges, chips, metrics, alerts, and feedback states.
 - Icons: the app chooses `ikonli-bootstrapicons-pack`; the reusable KoraFX component module only depends on Ikonli JavaFX core.
+- DevTools: localized subapp shell, Ikonli icons, scene graph, node picker/highlighter, node inspector, navigation state, and theme token panels.

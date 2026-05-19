@@ -20,6 +20,7 @@ include(
     ":korafx-dsl",
     ":korafx-framework",
     ":korafx-components",
+    ":korafx-devtools",
     ":examples:dsl-basic-app",
     ":examples:mvvm-counter-app",
     ":examples:navigation-theme-app",

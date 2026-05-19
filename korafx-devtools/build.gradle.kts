@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.openjfx)
-    application
 }
 
 kotlin {
@@ -14,12 +13,12 @@ javafx {
 }
 
 dependencies {
-    implementation(project(":korafx-framework"))
+    api(project(":korafx-framework"))
     implementation(project(":korafx-components"))
-    implementation(project(":korafx-devtools"))
     implementation(libs.ikonli.bootstrapicons.pack)
+    testImplementation(libs.kotlin.test.junit5)
 }
 
-application {
-    mainClass = "dev.korafx.sample.MainKt"
+tasks.test {
+    useJUnitPlatform()
 }

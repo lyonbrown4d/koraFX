@@ -37,6 +37,7 @@ class KoraApplicationBuilderTest {
             content {
                 Pane()
             }
+            install(object : KoraApplicationPlugin {})
             lifecycle {
                 close<TestCloseable>()
                 onStop {
@@ -55,6 +56,7 @@ class KoraApplicationBuilderTest {
         assertEquals(TestRoute.entries.toList(), spec.navigation.routes)
         assertEquals(PageInstancePolicy.KEEP_ALIVE, spec.navigation.pageInstancePolicy)
         assertNotNull(spec.contentFactory)
+        assertEquals(1, spec.plugins.size)
         assertEquals(2, spec.stopHandlers.size)
     }
 

@@ -9,5 +9,6 @@ dependencies {
         api(project(":korafx-dsl"))
         api(project(":korafx-framework"))
         api(project(":korafx-components"))
+        api(project(":korafx-devtools"))
     }
 }
