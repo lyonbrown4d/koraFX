@@ -230,16 +230,13 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
     }
 
     rule(".split-menu-button") {
-        fx("background-color", "transparent")
-        fx("border-color", "transparent")
-        fx("background-insets", "0")
-        fx("border-insets", "0")
+        primaryControl(context)
         fx("padding", "0")
         fx("cursor", "hand")
     }
 
     rule(".split-menu-button > .label", ".split-menu-button > .arrow-button") {
-        fx("background-color", states.selected)
+        fx("background-color", "transparent")
         fx("border-color", "transparent")
         fx("background-insets", "0")
         fx("border-insets", "0")
@@ -256,7 +253,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
 
     rule(".split-menu-button > .arrow-button") {
         padding(spacing.md, spacing.lg)
-        fx("border-color", "transparent transparent transparent rgba(255, 255, 255, 0.28)")
+        fx("border-color", "transparent transparent transparent derive(${states.selectedText}, -24%)")
         fx("border-width", "0 0 0 1px")
         fx("background-radius", "0 ${context.radius}px ${context.radius}px 0")
         fx("border-radius", "0 ${context.radius}px ${context.radius}px 0")
@@ -280,6 +277,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         ".split-menu-button:showing > .arrow-button",
     ) {
         fx("background-color", states.controlPressed)
+        fx("border-color", "transparent")
     }
 
     rule(".split-menu-button:focused") {
@@ -518,6 +516,10 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
         fx("padding", "0")
     }
 
+    rule(".choice-box > .label") {
+        fx("padding", "0")
+    }
+
     rule(
         ".combo-box-base .text-field:focused",
         ".date-picker .text-field:focused",
@@ -618,6 +620,7 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
     rule(
         ".combo-box-popup .list-cell:selected",
         ".choice-box .menu-item:focused .label",
+        ".choice-box .menu-item:selected",
         ".date-picker-popup .day-cell:selected",
     ) {
         fx("background-color", states.selected)
@@ -683,6 +686,7 @@ private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
     rule(".list-cell:selected", ".tree-cell:selected", ".table-row-cell:selected", ".tree-table-row-cell:selected") {
         fx("background-color", states.selected)
         fx("text-fill", states.selectedText)
+        fx("border-color", states.selected)
     }
 
     rule(".table-row-cell:selected .table-cell", ".tree-table-row-cell:selected .tree-table-cell") {
