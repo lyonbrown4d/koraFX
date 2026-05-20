@@ -294,6 +294,7 @@ internal class KoraDevtoolsController(
         stackPane(
             init = {
                 styleClass("korafx-devtools-inspected-host")
+                isPickOnBounds = false
                 val host = this
                 clip = rectangle {
                     widthProperty().bind(host.widthProperty())

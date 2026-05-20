@@ -6,31 +6,56 @@ import javafx.scene.Parent
 import javafx.scene.SubScene
 
 internal object NodeHitTester {
-    fun findDeepestAt(
+    fun findDeepestAtScreen(
         root: Node,
         screenX: Double,
         screenY: Double,
         excludedRoots: Collection<Node> = emptyList(),
-    ): Node? {
-        if (root.isExcludedBy(excludedRoots)) {
-            return null
+    ): Node? =
+        findDeepestAtPoint(
+            root = root,
+            excludedRoots = excludedRoots,
+            pointInRoot = runCatching { root.screenToLocal(Point2D(screenX, screenY)) }.getOrNull(),
+        ) { node ->
+            runCatching { node.screenToLocal(Point2D(screenX, screenY)) }.getOrNull()
         }
 
+    fun findDeepestAt(
+        root: Node,
+        sceneX: Double,
+        sceneY: Double,
+        excludedRoots: Collection<Node> = emptyList(),
+    ): Node? =
+        findDeepestAtPoint(
+            root = root,
+            excludedRoots = excludedRoots,
+            pointInRoot = runCatching { root.sceneToLocal(Point2D(sceneX, sceneY)) }.getOrNull(),
+        ) { node ->
+            runCatching { node.sceneToLocal(Point2D(sceneX, sceneY)) }.getOrNull()
+        }
+
+    private fun findDeepestAtPoint(
+        root: Node,
+        pointInRoot: Point2D?,
+        excludedRoots: Collection<Node>,
+        toPoint: (Node) -> Point2D?,
+    ): Node? {
         if (!root.isVisible || root.isMouseTransparent) {
             return null
         }
 
-        val localPoint = runCatching {
-            root.screenToLocal(Point2D(screenX, screenY))
-        }.getOrNull() ?: return null
-        if (!root.contains(localPoint)) {
+        if (pointInRoot == null || root.isExcludedBy(excludedRoots)) {
+            return null
+        }
+
+        if (!root.contains(pointInRoot)) {
             return null
         }
 
         val children = root.inspectableChildren()
         for (index in children.size - 1 downTo 0) {
             val child = children[index]
-            findDeepestAt(child, screenX, screenY, excludedRoots)?.let { return it }
+            findDeepestAtPoint(child, toPoint(child), excludedRoots, toPoint)?.let { return it }
         }
 
         return root
