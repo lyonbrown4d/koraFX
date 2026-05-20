@@ -191,6 +191,15 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
         fx("text-fill", colors.textPrimary)
     }
 
+    rule(".menu-item:selected", ".check-menu-item:selected", ".radio-menu-item:selected") {
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".menu-item:selected .label", ".check-menu-item:selected .label", ".radio-menu-item:selected .label") {
+        fx("text-fill", states.selectedText)
+    }
+
     rule(".check-menu-item:checked > .left-container > .check", ".radio-menu-item:checked > .left-container > .radio") {
         fx("background-color", states.selected)
         fx("background-insets", "0")
