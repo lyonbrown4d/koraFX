@@ -1041,6 +1041,22 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("padding", "0")
     }
 
+    rule(".hyperlink:hover") {
+        fx("text-fill", states.focus)
+    }
+
+    rule(".hyperlink:armed", ".hyperlink:visited") {
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".hyperlink:focused") {
+        fx("border-color", states.focus)
+    }
+
+    rule(".hyperlink:disabled") {
+        fx("opacity", states.disabledOpacity.toString())
+    }
+
     rule(".tool-bar:horizontal .separator .line", ".tool-bar:vertical .separator .line") {
         fx("border-color", colors.border)
     }
