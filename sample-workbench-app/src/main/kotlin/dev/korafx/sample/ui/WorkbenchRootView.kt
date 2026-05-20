@@ -157,6 +157,12 @@ class WorkbenchRootView(
                   viewModel.dispatch(WorkbenchAction.NextTheme)
                 }
               }
+              ghostButton("Toggle Theme") {
+                setKoraIcon(WorkbenchIcons.Theme)
+                onAction {
+                  viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                }
+              }
               ghostButton("Commands") {
                 setKoraIcon(WorkbenchIcons.Commands)
                 onAction {

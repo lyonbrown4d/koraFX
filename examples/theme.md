@@ -21,6 +21,7 @@ BuiltInThemes.all.forEach { theme ->
 
 themeManager.setTheme("material-light")
 themeManager.setTheme("material-dark")
+themeManager.toggle()
 themeManager.nextTheme()
 themeManager.previousTheme()
 ```
