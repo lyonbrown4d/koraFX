@@ -78,8 +78,7 @@ internal fun describeNode(
 internal fun safePseudoClassNames(states: Iterable<PseudoClass?>): List<String> =
     buildList {
         for (state in states) {
-            val pseudoClass = state ?: continue
-            val name = runCatching { pseudoClass.pseudoClassName }.getOrNull()?.trim()
+            val name = runCatching { state?.pseudoClassName?.trim() }.getOrNull()
             if (!name.isNullOrBlank()) {
                 add(name)
             }

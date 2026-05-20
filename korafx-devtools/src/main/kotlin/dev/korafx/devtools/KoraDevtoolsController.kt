@@ -294,6 +294,7 @@ internal class KoraDevtoolsController(
         stackPane(
             init = {
                 styleClass("korafx-devtools-inspected-host")
+                isMouseTransparent = true
                 isPickOnBounds = false
                 val host = this
                 clip = rectangle {
