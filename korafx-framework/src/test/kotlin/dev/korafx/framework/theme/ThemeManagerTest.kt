@@ -88,6 +88,19 @@ class ThemeManagerTest {
     }
 
     @Test
+    fun `material light and dark themes have distinct token sets`() {
+        val light = BuiltInThemes.MaterialLight
+        val dark = BuiltInThemes.MaterialDark
+
+        assertTrue(light.tokens.colors.surface != dark.tokens.colors.surface)
+        assertTrue(light.tokens.colors.surfaceMuted != dark.tokens.colors.surfaceMuted)
+        assertTrue(light.tokens.colors.textPrimary != dark.tokens.colors.textPrimary)
+        assertTrue(light.tokens.colors.textSecondary != dark.tokens.colors.textSecondary)
+        assertTrue(light.tokens.colors.border != dark.tokens.colors.border)
+        assertTrue(light.tokens.states.selected != dark.tokens.states.selected)
+    }
+
+    @Test
     fun `theme tokens reject invalid dimensions and opacity`() {
         assertFailsWith<IllegalArgumentException> {
             SpacingTokens(sm = -1)

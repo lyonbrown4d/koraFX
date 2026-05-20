@@ -96,6 +96,10 @@ sealed class WorkbenchRoute(
             ThemeManager owns the active KoraTheme as StateFlow.
             SceneThemeController binds a Scene to generated JavaFX CSS.
 
+            Built-in themes currently include a Material pair:
+            - Material Light
+            - Material Dark
+
             Built-in themes are intentionally plain values:
             - display name
             - color tokens
