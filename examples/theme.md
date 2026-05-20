@@ -19,7 +19,8 @@ BuiltInThemes.all.forEach { theme ->
     println("${theme.id}: ${theme.displayName}")
 }
 
-themeManager.setTheme("nord")
+themeManager.setTheme("material-light")
+themeManager.setTheme("material-dark")
 themeManager.nextTheme()
 themeManager.previousTheme()
 ```
@@ -46,11 +47,10 @@ Use `ThemeManager(availableThemes = listOf(...))` when an application should exp
 
 ```kotlin
 val themeManager = ThemeManager(
-    initialTheme = BuiltInThemes.Light,
+    initialTheme = BuiltInThemes.MaterialLight,
     availableThemes = listOf(
-        BuiltInThemes.Light,
-        BuiltInThemes.Dark,
-        BuiltInThemes.Nord,
+        BuiltInThemes.MaterialLight,
+        BuiltInThemes.MaterialDark,
     ),
 )
 ```

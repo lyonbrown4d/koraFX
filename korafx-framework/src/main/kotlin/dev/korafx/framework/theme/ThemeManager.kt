@@ -15,189 +15,54 @@ import java.nio.file.Files
 
 object BuiltInThemes {
     private val desktopTypography = TypographyTokens(
-        fontFamily = "\"Segoe UI\", \"Microsoft YaHei UI\", sans-serif",
+        fontFamily = "\"Roboto\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif",
         baseSize = 14,
         headlineSize = 28,
     )
 
-    val Light = KoraTheme(
-        id = "light",
-        displayName = "Light",
+    val MaterialLight = KoraTheme(
+        id = "material-light",
+        displayName = "Material Light",
         tokens = ThemeTokens(
             colors = ColorTokens(
-                primary = "#246BFD",
-                success = "#16A34A",
-                warning = "#D97706",
-                danger = "#DC2626",
-                info = "#2563EB",
-                surface = "#F6F7FB",
+                primary = "#6750A4",
+                success = "#2E7D32",
+                warning = "#F57C00",
+                danger = "#B3261E",
+                info = "#006EA6",
+                surface = "#FFFBFE",
                 surfaceMuted = "#FFFFFF",
-                textPrimary = "#111827",
-                textSecondary = "#4B5563",
-                border = "#D9E0EE",
-            ),
-            typography = desktopTypography,
-            radius = 14,
-        ),
-    )
-
-    val Dark = KoraTheme(
-        id = "dark",
-        displayName = "Dark",
-        tokens = ThemeTokens(
-            colors = ColorTokens(
-                primary = "#7AA2FF",
-                success = "#8DD694",
-                warning = "#F7C970",
-                danger = "#FF8A8A",
-                info = "#8CB4FF",
-                surface = "#161B25",
-                surfaceMuted = "#202735",
-                textPrimary = "#F3F6FB",
-                textSecondary = "#AAB6CC",
-                border = "#2F394D",
-            ),
-            typography = desktopTypography,
-            radius = 14,
-        ),
-    )
-
-    val Slate = KoraTheme(
-        id = "slate",
-        displayName = "Slate",
-        tokens = ThemeTokens(
-            colors = ColorTokens(
-                primary = "#475569",
-                success = "#15803D",
-                warning = "#B45309",
-                danger = "#B91C1C",
-                info = "#2563EB",
-                surface = "#F1F5F9",
-                surfaceMuted = "#FFFFFF",
-                textPrimary = "#0F172A",
-                textSecondary = "#475569",
-                border = "#CBD5E1",
-            ),
-            typography = desktopTypography,
-            radius = 10,
-        ),
-    )
-
-    val Nord = KoraTheme(
-        id = "nord",
-        displayName = "Nord",
-        tokens = ThemeTokens(
-            colors = ColorTokens(
-                primary = "#5E81AC",
-                success = "#A3BE8C",
-                warning = "#EBCB8B",
-                danger = "#BF616A",
-                info = "#81A1C1",
-                surface = "#ECEFF4",
-                surfaceMuted = "#FFFFFF",
-                textPrimary = "#2E3440",
-                textSecondary = "#4C566A",
-                border = "#D8DEE9",
+                textPrimary = "#1C1B1F",
+                textSecondary = "#49454F",
+                border = "#CAC4D0",
             ),
             typography = desktopTypography,
             radius = 12,
         ),
     )
 
-    val SolarizedLight = KoraTheme(
-        id = "solarized-light",
-        displayName = "Solarized Light",
+    val MaterialDark = KoraTheme(
+        id = "material-dark",
+        displayName = "Material Dark",
         tokens = ThemeTokens(
             colors = ColorTokens(
-                primary = "#268BD2",
-                success = "#859900",
-                warning = "#B58900",
-                danger = "#DC322F",
-                info = "#2AA198",
-                surface = "#FDF6E3",
-                surfaceMuted = "#EEE8D5",
-                textPrimary = "#073642",
-                textSecondary = "#657B83",
-                border = "#D6CCB5",
-            ),
-            typography = desktopTypography,
-            radius = 8,
-        ),
-    )
-
-    val GraphiteDark = KoraTheme(
-        id = "graphite-dark",
-        displayName = "Graphite Dark",
-        tokens = ThemeTokens(
-            colors = ColorTokens(
-                primary = "#A78BFA",
-                success = "#86EFAC",
-                warning = "#FACC15",
-                danger = "#F87171",
-                info = "#93C5FD",
-                surface = "#111318",
-                surfaceMuted = "#1A1D24",
-                textPrimary = "#F8FAFC",
-                textSecondary = "#B6C2D1",
-                border = "#343A46",
+                primary = "#D0BCFF",
+                success = "#81C784",
+                warning = "#FFD54F",
+                danger = "#F2B8B5",
+                info = "#8FD9FF",
+                surface = "#1C1B1F",
+                surfaceMuted = "#2B2930",
+                textPrimary = "#E6E1E5",
+                textSecondary = "#CAC4D0",
+                border = "#49454F",
             ),
             typography = desktopTypography,
             radius = 12,
         ),
     )
 
-    val Forest = KoraTheme(
-        id = "forest",
-        displayName = "Forest",
-        tokens = ThemeTokens(
-            colors = ColorTokens(
-                primary = "#15803D",
-                success = "#15803D",
-                warning = "#B7791F",
-                danger = "#B91C1C",
-                info = "#2563EB",
-                surface = "#F0F8F1",
-                surfaceMuted = "#FFFFFF",
-                textPrimary = "#102417",
-                textSecondary = "#486451",
-                border = "#C8DDCC",
-            ),
-            typography = desktopTypography,
-            radius = 14,
-        ),
-    )
-
-    val Rose = KoraTheme(
-        id = "rose",
-        displayName = "Rose",
-        tokens = ThemeTokens(
-            colors = ColorTokens(
-                primary = "#E11D48",
-                success = "#16A34A",
-                warning = "#C2410C",
-                danger = "#BE123C",
-                info = "#2563EB",
-                surface = "#FFF1F2",
-                surfaceMuted = "#FFFFFF",
-                textPrimary = "#3F0B16",
-                textSecondary = "#7F4A55",
-                border = "#F7C8D0",
-            ),
-            typography = desktopTypography,
-            radius = 18,
-        ),
-    )
-
-    val all: List<KoraTheme> = listOf(
-        Light,
-        Dark,
-        Slate,
-        Nord,
-        SolarizedLight,
-        GraphiteDark,
-        Forest,
-        Rose,
-    )
+    val all: List<KoraTheme> = listOf(MaterialLight, MaterialDark)
 
     val byId: Map<String, KoraTheme> = all.associateBy(KoraTheme::id)
 
@@ -214,7 +79,7 @@ object ThemeStyleClass {
 }
 
 class ThemeManager(
-    initialTheme: KoraTheme = BuiltInThemes.Light,
+    initialTheme: KoraTheme = BuiltInThemes.MaterialLight,
     val availableThemes: List<KoraTheme> = BuiltInThemes.all,
 ) {
     private val themeState = MutableStateFlow(initialTheme)
@@ -249,10 +114,13 @@ class ThemeManager(
     }
 
     fun toggle() {
-        themeState.value = when (themeState.value.id) {
-            BuiltInThemes.Dark.id -> BuiltInThemes.Light
-            else -> BuiltInThemes.Dark
+        if (availableThemes.size < 2) {
+            return
         }
+
+        val first = availableThemes[0]
+        val second = availableThemes[1]
+        themeState.value = if (themeState.value.id == first.id) second else first
     }
 }
 

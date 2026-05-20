@@ -6,17 +6,19 @@ import kotlin.test.assertContains
 class ThemeStylesheetFactoryTest {
     @Test
     fun `stylesheet contains token values`() {
-        val css = ThemeStylesheetFactory.render(BuiltInThemes.Light)
+        val material = BuiltInThemes.MaterialLight
+        val css = ThemeStylesheetFactory.render(material)
+        val states = material.tokens.states
 
         assertContains(css, ".root.${ThemeStyleClass.Root}")
-        assertContains(css, "-fx-background-color: #F6F7FB;")
-        assertContains(css, "-fx-font-family: \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif;")
+        assertContains(css, "-fx-background-color: #FFFBFE;")
+        assertContains(css, "-fx-font-family: \"Roboto\", \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif;")
         assertContains(css, "-fx-font-size: 14px;")
-        assertContains(css, "-fx-background-radius: 14px;")
-        assertContains(css, "-fx-background-radius: 18px;")
+        assertContains(css, "-fx-background-radius: 12px;")
+        assertContains(css, "-fx-background-radius: 16px;")
         assertContains(css, "-fx-padding: 10 16 10 16;")
-        assertContains(css, "-fx-background-color: derive(#246BFD, -8%);")
-        assertContains(css, "-fx-background-color: derive(#FFFFFF, -4%);")
+        assertContains(css, "-fx-background-color: ${states.controlHover};")
+        assertContains(css, "-fx-background-color: ${states.surfaceHover};")
         assertContains(css, "-fx-opacity: 0.56;")
         assertContains(css, "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.06), 10, 0.10, 0, 2);")
         assertContains(css, "-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.14), 14, 0.12, 0, 4);")
@@ -73,15 +75,15 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".modal-backdrop")
         assertContains(css, ".snackbar")
         assertContains(css, ".toast-success")
-        assertContains(css, "-fx-border-color: #16A34A;")
-        assertContains(css, "-fx-border-color: #DC2626;")
+        assertContains(css, "-fx-border-color: ${material.tokens.colors.success};")
+        assertContains(css, "-fx-border-color: ${material.tokens.colors.danger};")
         assertContains(css, ".feedback-state")
         assertContains(css, ".loading-state-indicator")
     }
 
     @Test
     fun `stylesheet covers common JavaFX control skins`() {
-        val css = ThemeStylesheetFactory.render(BuiltInThemes.Light)
+        val css = ThemeStylesheetFactory.render(BuiltInThemes.MaterialLight)
 
         assertContains(css, ".combo-box-base")
         assertContains(css, ".combo-box-base .text-field")

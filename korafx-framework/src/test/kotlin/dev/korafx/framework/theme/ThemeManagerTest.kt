@@ -27,8 +27,8 @@ class ThemeManagerTest {
             assertTrue(theme.tokens.states.disabledOpacity in 0.0..1.0)
             assertTrue(theme.tokens.elevation.card.isNotBlank())
         }
-        assertSame(BuiltInThemes.Light, BuiltInThemes.requireById("light"))
-        assertSame(BuiltInThemes.GraphiteDark, BuiltInThemes.findById("graphite-dark"))
+        assertSame(BuiltInThemes.MaterialLight, BuiltInThemes.requireById("material-light"))
+        assertSame(BuiltInThemes.MaterialDark, BuiltInThemes.findById("material-dark"))
         assertFailsWith<IllegalStateException> {
             BuiltInThemes.requireById("missing")
         }
@@ -38,53 +38,53 @@ class ThemeManagerTest {
     fun `theme manager exposes and updates current theme`() {
         val manager = ThemeManager()
 
-        assertEquals(BuiltInThemes.Light, manager.currentTheme())
-        assertEquals(BuiltInThemes.Light, manager.theme.value)
+        assertEquals(BuiltInThemes.MaterialLight, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialLight, manager.theme.value)
 
-        manager.setTheme(BuiltInThemes.Dark)
+        manager.setTheme(BuiltInThemes.MaterialDark)
 
-        assertEquals(BuiltInThemes.Dark, manager.currentTheme())
-        assertEquals(BuiltInThemes.Dark, manager.theme.value)
+        assertEquals(BuiltInThemes.MaterialDark, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialDark, manager.theme.value)
     }
 
     @Test
     fun `theme manager sets theme by available id`() {
         val manager = ThemeManager()
 
-        manager.setTheme("nord")
+        manager.setTheme("material-dark")
 
-        assertEquals(BuiltInThemes.Nord, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialDark, manager.currentTheme())
     }
 
     @Test
     fun `theme manager cycles through available themes`() {
         val manager = ThemeManager(
-            initialTheme = BuiltInThemes.Light,
-            availableThemes = listOf(BuiltInThemes.Light, BuiltInThemes.Nord, BuiltInThemes.GraphiteDark),
+            initialTheme = BuiltInThemes.MaterialLight,
+            availableThemes = listOf(BuiltInThemes.MaterialLight, BuiltInThemes.MaterialDark),
         )
 
         manager.nextTheme()
-        assertEquals(BuiltInThemes.Nord, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialDark, manager.currentTheme())
 
         manager.nextTheme()
-        assertEquals(BuiltInThemes.GraphiteDark, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialLight, manager.currentTheme())
 
         manager.nextTheme()
-        assertEquals(BuiltInThemes.Light, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialDark, manager.currentTheme())
 
         manager.previousTheme()
-        assertEquals(BuiltInThemes.GraphiteDark, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialLight, manager.currentTheme())
     }
 
     @Test
-    fun `theme manager toggles between built in light and dark themes`() {
+    fun `theme manager toggles between Material light and dark themes`() {
         val manager = ThemeManager()
 
         manager.toggle()
-        assertEquals(BuiltInThemes.Dark, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialDark, manager.currentTheme())
 
         manager.toggle()
-        assertEquals(BuiltInThemes.Light, manager.currentTheme())
+        assertEquals(BuiltInThemes.MaterialLight, manager.currentTheme())
     }
 
     @Test
@@ -96,10 +96,10 @@ class ThemeManagerTest {
             RadiusTokens(small = 4, medium = -1, large = 12)
         }
         assertFailsWith<IllegalArgumentException> {
-            StateColorTokens.from(BuiltInThemes.Light.tokens.colors).copy(disabledOpacity = 1.4)
+            StateColorTokens.from(BuiltInThemes.MaterialLight.tokens.colors).copy(disabledOpacity = 1.4)
         }
         assertFailsWith<IllegalArgumentException> {
-            BuiltInThemes.Light.tokens.copy(radius = -1)
+            BuiltInThemes.MaterialLight.tokens.copy(radius = -1)
         }
     }
 }

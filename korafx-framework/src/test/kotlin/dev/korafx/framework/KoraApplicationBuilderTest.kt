@@ -25,8 +25,8 @@ class KoraApplicationBuilderTest {
                 modules(module)
             }
             theme {
-                presets(listOf(BuiltInThemes.Nord, BuiltInThemes.Dark))
-                default(BuiltInThemes.Nord)
+                presets(listOf(BuiltInThemes.MaterialLight))
+                default(BuiltInThemes.MaterialLight)
                 persistSelection = true
             }
             navigation {
@@ -50,7 +50,7 @@ class KoraApplicationBuilderTest {
         assertEquals(1280.0, spec.window.width)
         assertEquals(820.0, spec.window.height)
         assertEquals(listOf(module), spec.modules)
-        assertEquals(BuiltInThemes.Nord, spec.theme.defaultTheme)
+        assertEquals(BuiltInThemes.MaterialLight, spec.theme.defaultTheme)
         assertTrue(spec.theme.persistSelection)
         assertSame(TestRoute.Home, spec.navigation.initialRoute)
         assertEquals(TestRoute.entries.toList(), spec.navigation.routes)

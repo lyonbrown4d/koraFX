@@ -57,7 +57,7 @@ fun main(args: Array<String>) = koraApplication(args) {
 
     theme {
         presets(BuiltInThemes.all)
-        default(BuiltInThemes.Nord)
+        default(BuiltInThemes.MaterialLight)
         persistSelection = true
     }
 

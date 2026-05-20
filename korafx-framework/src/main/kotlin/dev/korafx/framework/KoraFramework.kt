@@ -165,7 +165,7 @@ class KoraKoinBuilder {
 
 class KoraThemeBuilder {
     private var presets: List<KoraTheme> = BuiltInThemes.all
-    private var defaultTheme: KoraTheme = BuiltInThemes.Light
+    private var defaultTheme: KoraTheme = BuiltInThemes.MaterialLight
     var persistSelection: Boolean = false
     var preferencesNode: String = "dev.korafx"
     var preferencesKey: String = "theme"
