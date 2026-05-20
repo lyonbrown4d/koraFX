@@ -8,7 +8,7 @@ implementation("io.github.daiyuang:korafx-framework")
 implementation("io.github.daiyuang:korafx-components")
 ```
 
-Runtime code is intentionally split into three primary publishable modules: `korafx-dsl`, `korafx-framework`, and `korafx-components`.
+Runtime code is intentionally split into four primary publishable modules: `korafx-dsl`, `korafx-navigation`, `korafx-framework`, and `korafx-components`.
 `korafx-components` exposes Ikonli JavaFX core for icon-ready components, but applications should choose their own icon pack dependency.
 `korafx-devtools` is an optional debug-only module and should not be required by production applications.
 
@@ -19,7 +19,7 @@ Runtime code is intentionally split into three primary publishable modules: `kor
 - DSL builders from `korafx-dsl`
 - State primitives from `dev.korafx.dsl.state`
 - MVVM primitives from `dev.korafx.framework.mvvm`
-- Navigation from `dev.korafx.framework.navigation`
+- Navigation from `dev.korafx.navigation` (exported by framework for convenience)
 - Theme services from `dev.korafx.framework.theme`
 - Koin core as the default DI runtime
 - Coroutines JavaFX integration
@@ -38,7 +38,7 @@ Main API:
 - `install(plugin)`
 - `ViewModel<S, A, E>`
 - `ViewState`, `UiAction`, `UiEvent`
-- `Route`, `Navigator<R>`, `NavigationState<R>`
+- `Route`, `Navigator<R>`, `NavigationState<R>` (from `dev.korafx.navigation`)
 - `ThemeManager`, `SceneThemeController`, `BuiltInThemes`
 
 Example:

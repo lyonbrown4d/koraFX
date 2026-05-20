@@ -17,6 +17,7 @@ The default stack is:
 ```text
 korafx-bom            Maven BOM for aligning KoraFX module versions
 korafx-dsl            Low-level JavaFX DSL and Flow state binding primitives
+korafx-navigation     Route primitives and navigator API (`Route`, `Navigator`, `NavigationState`)
 korafx-framework      Default framework stack: MVVM, navigation, theme, Koin
 korafx-components     Optional workbench components and higher-level JavaFX surfaces
 korafx-devtools       Optional runtime inspector for KoraFX applications

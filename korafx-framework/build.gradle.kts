@@ -14,6 +14,7 @@ javafx {
 
 dependencies {
     api(project(":korafx-dsl"))
+    api(project(":korafx-navigation"))
     api(platform(libs.koin.bom))
     api(libs.koin.core)
     api(libs.kotlinx.coroutines.core)

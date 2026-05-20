@@ -7,6 +7,7 @@ extensions.configure<JavaPlatformExtension>("javaPlatform") {
 dependencies {
     constraints {
         api(project(":korafx-dsl"))
+        api(project(":korafx-navigation"))
         api(project(":korafx-framework"))
         api(project(":korafx-components"))
         api(project(":korafx-devtools"))

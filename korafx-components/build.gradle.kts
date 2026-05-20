@@ -14,7 +14,7 @@ javafx {
 
 dependencies {
     api(project(":korafx-dsl"))
-    api(project(":korafx-framework"))
+    api(project(":korafx-navigation"))
     api(libs.ikonli.javafx)
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlin.test.junit5)

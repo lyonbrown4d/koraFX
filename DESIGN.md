@@ -2,10 +2,11 @@
 
 KoraFX is now a Kotlin-first JavaFX framework, not only a thin utility collection.
 
-The framework stays direct and small by exposing three primary runtime modules plus one optional development module:
+The framework stays direct and small by exposing four primary runtime modules plus one optional development module:
 
 ```text
 korafx-dsl
+korafx-navigation
 korafx-framework
 korafx-components
 korafx-devtools
@@ -37,7 +38,7 @@ Default application framework module.
 Responsibilities:
 
 - MVVM primitives under `dev.korafx.framework.mvvm`.
-- Navigation primitives under `dev.korafx.framework.navigation`.
+- Navigation primitives under `dev.korafx.navigation`.
 - Theme services under `dev.korafx.framework.theme`.
 - Koin-backed application composition through `koraApplication { installKoin { ... } }`.
 - JavaFX coroutine integration.

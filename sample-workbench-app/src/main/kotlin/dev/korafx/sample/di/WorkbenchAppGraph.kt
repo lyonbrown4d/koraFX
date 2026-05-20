@@ -3,7 +3,7 @@ package dev.korafx.sample.di
 import dev.korafx.components.CommandPaletteCommand
 import dev.korafx.components.CommandPaletteHost
 import dev.korafx.framework.KoraApplication
-import dev.korafx.framework.navigation.Navigator
+import dev.korafx.navigation.Navigator
 import dev.korafx.framework.theme.ThemeManager
 import dev.korafx.sample.data.InMemoryWorkbenchCatalog
 import dev.korafx.sample.data.WorkbenchCatalog

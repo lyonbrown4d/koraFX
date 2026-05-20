@@ -1,8 +1,8 @@
 package dev.korafx.framework
 
-import dev.korafx.framework.navigation.Navigator
-import dev.korafx.framework.navigation.PageInstancePolicy
-import dev.korafx.framework.navigation.Route
+import dev.korafx.navigation.Navigator
+import dev.korafx.navigation.PageInstancePolicy
+import dev.korafx.navigation.Route
 import dev.korafx.framework.theme.BuiltInThemes
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.SceneThemeController

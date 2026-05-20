@@ -1,4 +1,4 @@
-package dev.korafx.framework.navigation
+package dev.korafx.navigation
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

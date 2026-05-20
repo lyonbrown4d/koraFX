@@ -8,9 +8,9 @@ import dev.korafx.dsl.onAction
 import dev.korafx.dsl.sidebar
 import dev.korafx.dsl.styleClass
 import dev.korafx.dsl.vbox
-import dev.korafx.framework.navigation.Navigator
-import dev.korafx.framework.navigation.PageInstancePolicy
-import dev.korafx.framework.navigation.Route
+import dev.korafx.navigation.Navigator
+import dev.korafx.navigation.PageInstancePolicy
+import dev.korafx.navigation.Route
 import dev.korafx.dsl.state.collectLatestIn
 import javafx.application.Platform
 import javafx.scene.Node

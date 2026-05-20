@@ -1,6 +1,6 @@
 package dev.korafx.sample.navigation
 
-import dev.korafx.framework.navigation.Route
+import dev.korafx.navigation.Route
 
 sealed class WorkbenchRoute(
     override val id: String,

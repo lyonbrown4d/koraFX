@@ -12,8 +12,8 @@ import dev.korafx.dsl.onAction
 import dev.korafx.dsl.padding
 import dev.korafx.dsl.styleClass
 import dev.korafx.framework.KoraApplication
-import dev.korafx.framework.navigation.Navigator
-import dev.korafx.framework.navigation.PageInstancePolicy
+import dev.korafx.navigation.Navigator
+import dev.korafx.navigation.PageInstancePolicy
 import dev.korafx.framework.theme.ThemeStyleClass
 import javafx.scene.Node
 import javafx.scene.Parent

@@ -18,6 +18,7 @@ dependencyResolutionManagement {
 include(
     ":korafx-bom",
     ":korafx-dsl",
+    ":korafx-navigation",
     ":korafx-framework",
     ":korafx-components",
     ":korafx-devtools",

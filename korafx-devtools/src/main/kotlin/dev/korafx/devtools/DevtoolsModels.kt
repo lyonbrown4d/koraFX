@@ -1,6 +1,6 @@
 package dev.korafx.devtools
 
-import dev.korafx.framework.navigation.Route
+import dev.korafx.navigation.Route
 import javafx.scene.Node
 import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
 import java.util.Locale

@@ -5,6 +5,7 @@ private val publishableModules =
     setOf(
         "korafx-bom",
         "korafx-framework",
+        "korafx-navigation",
         "korafx-dsl",
         "korafx-components",
         "korafx-devtools",
@@ -40,6 +41,7 @@ fun Project.publishedArtifactId(): String =
     when (name) {
         "korafx-bom" -> "korafx-bom"
         "korafx-framework" -> "korafx-framework"
+        "korafx-navigation" -> "korafx-navigation"
         "korafx-dsl" -> "korafx-dsl"
         "korafx-components" -> "korafx-components"
         "korafx-devtools" -> "korafx-devtools"
@@ -49,6 +51,7 @@ fun Project.publishedArtifactId(): String =
 fun Project.publishedDescription(): String =
     when (name) {
         "korafx-bom" -> "Bill of materials for aligning KoraFX module versions."
+        "korafx-navigation" -> "Navigation primitives for KoraFX route-based JavaFX applications."
         "korafx-dsl" -> "Kotlin-first JavaFX DSL and Flow state binding primitives."
         "korafx-framework" -> "Kotlin-first JavaFX application framework with Koin, MVVM, navigation and theme services."
         "korafx-components" -> "Reusable JavaFX workbench components for KoraFX applications."

@@ -1,4 +1,4 @@
-package dev.korafx.framework.navigation
+package dev.korafx.navigation
 
 import dev.korafx.dsl.state.MutableStateStore
 import kotlinx.coroutines.flow.StateFlow

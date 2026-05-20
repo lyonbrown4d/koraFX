@@ -1,9 +1,9 @@
 package dev.korafx.components
 
 import dev.korafx.dsl.RenderState
-import dev.korafx.framework.navigation.Navigator
-import dev.korafx.framework.navigation.PageInstancePolicy
-import dev.korafx.framework.navigation.Route
+import dev.korafx.navigation.Navigator
+import dev.korafx.navigation.PageInstancePolicy
+import dev.korafx.navigation.Route
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.VBox
