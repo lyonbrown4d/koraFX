@@ -76,9 +76,15 @@ internal fun describeNode(
 }
 
 internal fun safePseudoClassNames(states: Iterable<PseudoClass?>): List<String> =
-    states
-        .mapNotNull { pseudoClass -> pseudoClass?.pseudoClassName?.takeIf(String::isNotBlank) }
-        .sorted()
+    buildList {
+        for (state in states) {
+            val pseudoClass = state ?: continue
+            val name = runCatching { pseudoClass.pseudoClassName }.getOrNull()?.trim()
+            if (!name.isNullOrBlank()) {
+                add(name)
+            }
+        }
+    }.sorted()
 
 private fun safeCssProperties(node: Node): List<String> =
     node.cssMetaData
