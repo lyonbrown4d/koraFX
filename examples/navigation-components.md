@@ -79,6 +79,232 @@ val root = workbenchLayout {
 }
 ```
 
+## RouterHost With Layouts
+
+Use `routerHost` when routes should share reusable layout shells. Shells can be nested, and pages render into the nearest layout outlet.
+
+```kotlin
+data object ProjectRoute : PathRoute {
+    override val id = "project"
+    override val title = "Project"
+    override val path = "/projects/:projectId/:tab?"
+}
+
+enum class AppLayout {
+    Workbench,
+    Project,
+}
+
+val root = routerHost(scope, navigator) {
+    layout(AppLayout.Workbench) {
+        shellWithOutlets { outlets ->
+            workspaceLayout {
+                topBar {
+                    toolbar {
+                        label("KoraFX")
+                    }
+                }
+                navigation {
+                    navigationRail(scope, navigator)
+                }
+                content(outlets.primary)
+                details(outlets.outlet("details"))
+            }
+        }
+
+        route(AppRoute.Overview) {
+            overviewPage()
+        }
+
+        routeLazy(AppRoute.Settings) {
+            val screen = SettingsScreen(settingsRepository)
+            { _ -> screen.build() }
+        }
+
+        layout(AppLayout.Project) {
+            shell { outlet ->
+                borderLayout {
+                    top(projectToolbar())
+                    center(outlet)
+                }
+            }
+
+            routeView(ProjectRoute) {
+                primaryWithLocation { context ->
+                    projectPage(context.params["projectId"].orEmpty())
+                }
+                outlet("details") { route ->
+                    projectDetails(route.title)
+                }
+            }
+        }
+    }
+}
+```
+
+## Path Routes History And Guards
+
+```kotlin
+data object ProjectRoute : PathRoute {
+    override val id = "project"
+    override val title = "Project"
+    override val path = "/projects/:projectId/:tab?"
+    override val meta = routeMeta("requiresAuth" to true)
+}
+
+data object LoginRoute : PathRoute {
+    override val id = "login"
+    override val title = "Login"
+    override val path = "/login"
+}
+
+val navigator = Navigator.fromPath(
+    initialPath = preferences.lastRoutePath ?: "/",
+    routes = listOf(AppRoute.Overview, ProjectRoute, LoginRoute),
+    fallbackRoute = AppRoute.Overview,
+    pageInstancePolicy = PageInstancePolicy.KEEP_ALIVE,
+)
+
+navigator.beforeEach { context ->
+    if (context.to.meta.boolean("requiresAuth") && !session.isAuthenticated) {
+        NavigationDecision.Redirect(path = "/login")
+    } else {
+        NavigationDecision.Allow
+    }
+}
+
+navigator.beforeLeave(ProjectRoute) { context ->
+    if (projectEditor.hasUnsavedChanges(context.from.requiredParam("projectId"))) {
+        NavigationDecision.Block("Project has unsaved changes.")
+    } else {
+        NavigationDecision.Allow
+    }
+}
+
+navigator.beforeEnter(ProjectRoute) { context ->
+    if (projectRepository.exists(context.to.requiredParam("projectId"))) {
+        NavigationDecision.Allow
+    } else {
+        NavigationDecision.Redirect(path = "/")
+    }
+}
+
+navigator.navigatePath("/projects/42/files?mode=review#diff")
+navigator.navigatePath(
+    ProjectRoute.location(
+        params = mapOf("projectId" to 42, "tab" to "files"),
+        query = mapOf("mode" to "review"),
+        hash = "diff",
+    ),
+)
+navigator.back()
+navigator.forward()
+```
+
+Use route-aware buttons and links when a control should navigate and maintain active state automatically:
+
+```kotlin
+hbox(spacing = 8.0) {
+    add(routeButton(scope, navigator, AppRoute.Overview))
+    add(pathButton(scope, navigator, "/projects/42/files?mode=review", text = "Project files"))
+    add(routeLink(scope, navigator, LoginRoute))
+    add(pathLink(scope, navigator, navigator.currentLocation.withQuery("tab" to "history"), text = "History"))
+}
+```
+
+Derive path strings from the current location when only query or hash changes:
+
+```kotlin
+val nextPath = navigator.currentLocation
+    .withQuery("filter" to "open", "page" to 1)
+
+scope.launch {
+    navigator.navigatePathAsync(nextPath)
+}
+```
+
+Use async navigation when guards need suspend work:
+
+```kotlin
+navigator.beforeEachAsync { context ->
+    if (context.to.meta.boolean("requiresAuth") && !sessionStore.isAuthenticated()) {
+        NavigationDecision.Redirect(path = "/login")
+    } else {
+        NavigationDecision.Allow
+    }
+}
+
+scope.launch {
+    navigator.navigatePathAsync("/projects/42")
+}
+```
+
+Typed result keys are useful for selector/detail flows where a route returns a value to the caller:
+
+```kotlin
+val selectedProjectKey = navigationResultKey<String>("selected-project")
+
+scope.launch {
+    navigator.navigatePathAsync("/projects")
+    val projectId = navigator.awaitResult(selectedProjectKey)
+    navigator.navigatePathAsync(ProjectRoute.location(params = mapOf("projectId" to projectId)))
+}
+
+// Inside the project picker page:
+navigator.setResult(selectedProjectKey, selectedProject.id)
+```
+
+## Route Data Host
+
+```kotlin
+val dataController = RouteDataController()
+
+val content = routeDataHost(
+    scope = scope,
+    navigator = navigator,
+    controller = dataController,
+    cache = true,
+    load = { context ->
+        repository.loadProject(context.params["projectId"].orEmpty())
+    },
+) { context, project ->
+    projectPage(project, selectedTab = context.params["tab"])
+}
+
+dataController.revalidate()
+```
+
+## Route Restoration
+
+Use explicit restoration helpers for desktop state that belongs to a specific route location. The state is keyed by `NavigationLocation.fullPath`, so `/projects/42/files` and `/projects/43/files` restore independently.
+
+```kotlin
+routeView(ProjectRoute) {
+    primaryWithLocation { context ->
+        scrollPane(
+            init = {
+                routeScrollRestoration(scope, navigator, key = "project-files")
+            },
+        ) {
+            vbox(spacing = 8.0) {
+                listView(
+                    items = projectFiles,
+                    init = {
+                        routeSelectionRestoration(
+                            scope = scope,
+                            navigator = navigator,
+                            key = "selected-file",
+                            keyOf = { file -> file.path },
+                        )
+                        routeFocusRestoration(scope, navigator, key = "file-list-focus")
+                    },
+                )
+            }
+        }
+    }
+}
+```
+
 ## AppShell With Toasts
 
 ```kotlin

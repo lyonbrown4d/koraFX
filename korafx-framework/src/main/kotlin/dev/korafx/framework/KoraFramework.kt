@@ -36,17 +36,27 @@ internal data class KoraWindowSpec(
 internal fun <R : Route> koraFrameworkModule(
     initialRoute: R,
     routes: List<R>,
+    initialPath: String? = null,
     pageInstancePolicy: PageInstancePolicy = PageInstancePolicy.RECREATE,
     themeManager: ThemeManager = ThemeManager(),
 ): Module =
     module {
         single { themeManager }
         single {
-            Navigator(
-                initialRoute = initialRoute,
-                routes = routes,
-                pageInstancePolicy = pageInstancePolicy,
-            )
+            if (initialPath.isNullOrBlank()) {
+                Navigator(
+                    initialRoute = initialRoute,
+                    routes = routes,
+                    pageInstancePolicy = pageInstancePolicy,
+                )
+            } else {
+                Navigator.fromPath(
+                    initialPath = initialPath,
+                    routes = routes,
+                    fallbackRoute = initialRoute,
+                    pageInstancePolicy = pageInstancePolicy,
+                )
+            }
         }
         single { SceneThemeController(get()) }
     }
@@ -198,7 +208,11 @@ class KoraThemeBuilder {
 
 class KoraNavigationBuilder {
     var initialRoute: Route? = null
+    var initialPath: String? = null
     var pageInstancePolicy: PageInstancePolicy = PageInstancePolicy.RECREATE
+    var persistLocation: Boolean = false
+    var preferencesNode: String = "dev.korafx"
+    var preferencesKey: String = "navigation.location"
     private val routes = mutableListOf<Route>()
 
     fun routes(routes: Iterable<Route>) {
@@ -216,8 +230,12 @@ class KoraNavigationBuilder {
 
         return KoraNavigationSpec(
             initialRoute = initial,
+            initialPath = initialPath,
             routes = routeList,
             pageInstancePolicy = pageInstancePolicy,
+            persistLocation = persistLocation,
+            preferencesNode = preferencesNode,
+            preferencesKey = preferencesKey,
         )
     }
 }
@@ -275,6 +293,14 @@ class KoraApplication internal constructor(
             persistenceScope.launch {
                 themeManager.theme.collectLatest { theme ->
                     preferences.put(spec.theme.preferencesKey, theme.id)
+                }
+            }
+        }
+        if (spec.navigation.persistLocation) {
+            val preferences = Preferences.userRoot().node(spec.navigation.preferencesNode)
+            persistenceScope.launch {
+                navigator.state.collectLatest { navigation ->
+                    preferences.put(spec.navigation.preferencesKey, navigation.currentLocation.fullPath)
                 }
             }
         }
@@ -347,9 +373,20 @@ internal data class KoraThemeSpec(
 
 internal data class KoraNavigationSpec(
     val initialRoute: Route,
+    val initialPath: String?,
     val routes: List<Route>,
     val pageInstancePolicy: PageInstancePolicy,
-)
+    val persistLocation: Boolean,
+    val preferencesNode: String,
+    val preferencesKey: String,
+) {
+    fun resolveInitialPath(): String? =
+        if (persistLocation) {
+            Preferences.userRoot().node(preferencesNode).get(preferencesKey, initialPath)
+        } else {
+            initialPath
+        }
+}
 
 private data object KoraRootRoute : Route {
     override val id: String = "root"
@@ -367,6 +404,7 @@ class KoraFxApplication : Application() {
         val frameworkModule = koraFrameworkModule(
             initialRoute = spec.navigation.initialRoute,
             routes = spec.navigation.routes,
+            initialPath = spec.navigation.resolveInitialPath(),
             pageInstancePolicy = spec.navigation.pageInstancePolicy,
             themeManager = themeManager,
         )

@@ -31,6 +31,7 @@ fun main(args: Array<String>) = koraApplication(args) {
   navigation {
     initialRoute = WorkbenchRoute.Overview
     routes(WorkbenchRoute.all)
+    persistLocation = true
   }
 
   devtools {

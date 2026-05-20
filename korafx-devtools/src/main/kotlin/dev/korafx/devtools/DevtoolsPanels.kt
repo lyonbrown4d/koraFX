@@ -10,9 +10,11 @@ import dev.korafx.dsl.listView
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.paddingAll
 import dev.korafx.dsl.textArea
+import dev.korafx.dsl.textField
 import dev.korafx.dsl.treeItem
 import dev.korafx.dsl.treeView
 import dev.korafx.framework.KoraApplication
+import dev.korafx.navigation.PathRoute
 import javafx.beans.value.ChangeListener
 import javafx.collections.FXCollections
 import javafx.geometry.Orientation
@@ -144,11 +146,15 @@ internal class DevtoolsPanels(
         val routeList = listView<RouteRow> {
             render { item ->
                 if (item.active) {
-                    "-> ${item.route.title} (${item.route.id})"
+                    "-> ${item.route.title} (${item.route.id}) ${item.path}"
                 } else {
-                    "${item.route.title} (${item.route.id})"
+                    "${item.route.title} (${item.route.id}) ${item.path}"
                 }
             }
+        }
+        val pathField = textField {
+            promptText = "/path?query=value#hash"
+            prefColumnCount = 24
         }
         val stateArea = textArea {
             isEditable = false
@@ -159,13 +165,33 @@ internal class DevtoolsPanels(
             val state = app.navigator.state.value
             routeList.items = FXCollections.observableArrayList(
                 state.routes.map { route ->
-                    RouteRow(route, route.id == state.currentRoute.id)
+                    RouteRow(
+                        route = route,
+                        path = route.pathLabel(),
+                        active = route.id == state.currentRoute.id,
+                    )
                 },
             )
+            if (!pathField.isFocused) {
+                pathField.text = state.currentLocation.fullPath
+            }
             stateArea.text = buildString {
                 appendLine("${messages.currentRoute} = ${state.currentRoute.title} (${state.currentRoute.id})")
+                appendLine("${messages.currentLocation} = ${state.currentLocation.fullPath}")
+                appendLine("${messages.routePath} = ${state.currentLocation.path}")
+                if (state.currentLocation.params.isNotEmpty()) {
+                    appendLine("params = ${state.currentLocation.params}")
+                }
+                if (state.currentLocation.query.values.isNotEmpty()) {
+                    appendLine("query = ${state.currentLocation.query.values}")
+                }
+                state.currentLocation.hash?.let { hash ->
+                    appendLine("hash = $hash")
+                }
                 appendLine("${messages.pageInstancePolicy} = ${state.pageInstancePolicy}")
                 appendLine("${messages.routes} = ${state.routes.size}")
+                appendLine("${messages.backStack} = ${state.backStack.map { it.fullPath }}")
+                appendLine("${messages.forwardStack} = ${state.forwardStack.map { it.fullPath }}")
             }
         }
 
@@ -181,11 +207,38 @@ internal class DevtoolsPanels(
         return borderPane {
             top {
                 toolbar(messages.registeredRoutes) {
+                    add(pathField)
+                    button(messages.navigatePath) {
+                        setKoraIcon(BootstrapIcons.SIGNPOST_SPLIT)
+                        onAction {
+                            app.uiScope.launch {
+                                app.navigator.navigatePathAsync(pathField.text)
+                            }
+                        }
+                    }
                     button(messages.navigate) {
                         setKoraIcon(BootstrapIcons.ARROW_RIGHT_CIRCLE)
                         onAction {
                             routeList.selectionModel.selectedItem?.route?.let { route ->
-                                app.navigator.navigate(route.id)
+                                app.uiScope.launch {
+                                    app.navigator.navigateAsync(route.id)
+                                }
+                            }
+                        }
+                    }
+                    button(messages.back) {
+                        setKoraIcon(BootstrapIcons.ARROW_LEFT_CIRCLE)
+                        onAction {
+                            app.uiScope.launch {
+                                app.navigator.backAsync()
+                            }
+                        }
+                    }
+                    button(messages.forward) {
+                        setKoraIcon(BootstrapIcons.ARROW_RIGHT_CIRCLE)
+                        onAction {
+                            app.uiScope.launch {
+                                app.navigator.forwardAsync()
                             }
                         }
                     }
@@ -201,6 +254,9 @@ internal class DevtoolsPanels(
             bottom(stateArea)
         }
     }
+
+    private fun dev.korafx.navigation.Route.pathLabel(): String =
+        (this as? PathRoute)?.path ?: id
 
     private fun createThemePanel(): Node {
         var updating = false

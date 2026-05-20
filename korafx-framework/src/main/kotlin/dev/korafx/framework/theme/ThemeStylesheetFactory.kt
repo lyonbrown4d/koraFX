@@ -375,7 +375,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         fx("opacity", states.disabledOpacity.toString())
     }
 
-    rule(".button.ghost-button", ".button.nav-button", ".toggle-button") {
+    rule(".button.ghost-button", ".button.nav-button", ".button.route-button", ".toggle-button") {
         ghostControl(context)
     }
 
@@ -385,22 +385,36 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         fx("pref-width", "34px")
     }
 
-    rule(".button.ghost-button:hover", ".button.nav-button:hover", ".toggle-button:hover") {
+    rule(".button.ghost-button:hover", ".button.nav-button:hover", ".button.route-button:hover", ".toggle-button:hover") {
         fx("background-color", states.surfaceHover)
     }
 
-    rule(".button.nav-button") {
+    rule(".button.nav-button", ".button.route-button") {
         fx("alignment", "center-left")
+    }
+
+    rule(".button.nav-button") {
         fx("max-width", "Infinity")
     }
 
-    rule(".button.nav-button-active", ".button.nav-button-active:hover", ".toggle-button:selected") {
+    rule(
+        ".button.nav-button-active",
+        ".button.nav-button-active:hover",
+        ".button.route-button-active",
+        ".button.route-button-active:hover",
+        ".toggle-button:selected",
+    ) {
         fx("background-color", states.selected)
         fx("text-fill", states.selectedText)
         fx("border-color", "transparent")
     }
 
-    rule(".menu-button .label", ".split-menu-button .label", ".button.nav-button-active .label") {
+    rule(
+        ".menu-button .label",
+        ".split-menu-button .label",
+        ".button.nav-button-active .label",
+        ".button.route-button-active .label",
+    ) {
         fx("text-fill", states.selectedText)
     }
 
@@ -415,6 +429,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
     rule(
         ".button.ghost-button .ikonli-font-icon",
         ".button.nav-button .ikonli-font-icon",
+        ".button.route-button .ikonli-font-icon",
         ".toggle-button .ikonli-font-icon",
     ) {
         fx("icon-color", colors.textPrimary)
@@ -422,6 +437,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
 
     rule(
         ".button.nav-button-active .ikonli-font-icon",
+        ".button.route-button-active .ikonli-font-icon",
         ".toggle-button:selected .ikonli-font-icon",
     ) {
         fx("icon-color", states.selectedText)
@@ -1043,6 +1059,11 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
 
     rule(".hyperlink:hover") {
         fx("text-fill", states.focus)
+    }
+
+    rule(".hyperlink.route-link-active", ".hyperlink.route-link-active:hover") {
+        fx("text-fill", states.focus)
+        fx("underline", "true")
     }
 
     rule(".hyperlink:armed", ".hyperlink:visited") {

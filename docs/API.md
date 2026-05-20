@@ -32,13 +32,18 @@ Main API:
 - `window { title / width / height / size(...) }`
 - `installKoin { modules(...) }`
 - `theme { presets(...); default(...); persistSelection = true }`
-- `navigation { initialRoute = ...; routes(...) }`
+- `navigation { initialRoute = ...; initialPath = ...; routes(...); persistLocation = true }`
 - `content { ... }`
 - `lifecycle { close<T>(); cancel<T>(); onStop { ... } }`
 - `install(plugin)`
 - `ViewModel<S, A, E>`
 - `ViewState`, `UiAction`, `UiEvent`
-- `Route`, `Navigator<R>`, `NavigationState<R>` (from `dev.korafx.navigation`)
+- `Route`, `PathRoute`, `RouteMeta`, `NavigationLocation<R>`, `Navigator<R>`, `NavigationState<R>` (from `dev.korafx.navigation`)
+- `Navigator.fromPath(...)` for deep-link or persisted path startup
+- `Navigator.navigatePath(...)`, `replacePath(...)`, `back()`, `forward()`, `beforeEach(...)`, `beforeEnter(...)`, `beforeLeave(...)`
+- `Navigator.navigatePathAsync(...)`, `replacePathAsync(...)`, `backAsync()`, `forwardAsync()`, `beforeEachAsync(...)`, `beforeEnterAsync(...)`, `beforeLeaveAsync(...)`
+- `Navigator.saveState(...)`, `restoredState<T>(...)`, `setResult(...)`, `results<T>(...)`, `awaitResult(...)`, `navigationResultKey<T>(...)`
+- `NavigationLocation.withQuery(...)`, `withoutQuery(...)`, `withHash(...)`, `withoutHash()`
 - `ThemeManager`, `SceneThemeController`, `BuiltInThemes`
 
 Example:
@@ -63,7 +68,9 @@ fun main(args: Array<String>) = koraApplication(args) {
 
     navigation {
         initialRoute = WorkbenchRoute.Overview
+        initialPath = "/"
         routes(WorkbenchRoute.all)
+        persistLocation = true
     }
 
     devtools {
@@ -131,7 +138,7 @@ Main API:
 - Workspaces: `tabWorkspace`, `TabWorkspace`, `TabWorkspaceBuilder`
 - Activity: `activityTimeline`, `ActivityTimeline`, `ActivityTimelineBuilder`
 - Commands: `CommandPaletteHost`, `CommandPaletteCommand`, `commandPalette`, `CommandPalette`
-- Navigation: `navigationRail`, `routeHost`, `routeStateHost`
+- Navigation: `navigationRail`, `routeButton`, `pathButton`, `routeLink`, `pathLink`, `routeHost`, `routerHost`, `routeDataHost`, `routeStateHost`, `RouterModule`, `RouteDataController`, `routeLazy`, `routeScrollRestoration`, `routeSelectionRestoration`, `routeFocusRestoration`
 - Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
 - Surfaces: `card`, `section`, `actionBar`
 - Icons: `koraIcon`, `iconButton`, `setKoraIcon`, `clearKoraIcon`
@@ -208,6 +215,7 @@ Initial panels:
 - Scene Graph: inspect the live JavaFX node tree.
 - Inspector: view selected node properties, bounds, pseudo classes, and CSS metadata.
 - Navigation: view registered routes and jump to a route.
+- Navigation also shows the current full path, params/query/hash, back/forward stacks, and can navigate by route path.
 - Theme: view theme tokens and switch the active theme at runtime.
 - Pick Node: press `Ctrl+Shift+C` or the `Pick Node` button, then click an application node to select and highlight it.
 - DevTools opens as a resizable bottom dock by default. Use `LEFT`, `RIGHT`, `BOTTOM`, or `WINDOW`, or switch placement from the DevTools header at runtime.
