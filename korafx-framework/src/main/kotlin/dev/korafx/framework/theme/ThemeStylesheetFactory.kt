@@ -767,6 +767,10 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         padding(spacing.sm, spacing.xl)
     }
 
+    rule(".tab-pane .tab:hover") {
+        fx("background-color", states.surfaceHover)
+    }
+
     rule(".tab-pane .tab:selected") {
         fx("background-color", states.selected)
     }
@@ -779,8 +783,30 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("border-color", states.focus)
     }
 
+    rule(".tab-pane .tab:focused .tab-label", ".tab-pane .tab:selected .tab-close-button") {
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".tab-pane .tab:disabled") {
+        fx("opacity", states.disabledOpacity.toString())
+    }
+
+    rule(".tab-pane .tab:selected:disabled .tab-label") {
+        fx("text-fill", "derive(${states.selectedText}, -20%)")
+    }
+
     rule(".tab-pane .tab-close-button") {
-        fx("background-color", colors.textSecondary)
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("text-fill", colors.textSecondary)
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+        fx("padding", "0")
+    }
+
+    rule(".tab-pane .tab-close-button:hover") {
+        fx("background-color", states.surfaceHover)
+        fx("text-fill", colors.textPrimary)
     }
 
     rule(".tab-workspace") {
@@ -828,12 +854,50 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("padding", "0 1 0 1")
     }
 
+    rule(".split-pane-divider:hover") {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".split-pane:focused > .split-pane-divider") {
+        fx("background-color", states.focus)
+    }
+
     rule(".titled-pane > .title", ".titled-pane > .content") {
         surface(colors.surfaceMuted, colors.border, context.radius)
     }
 
+    rule(".titled-pane:hover > .title") {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".titled-pane:focused > .title", ".titled-pane:focused > .title > .text") {
+        fx("border-color", states.focus)
+        fx("fill", states.focus)
+    }
+
     rule(".titled-pane > .title > .text") {
         fx("fill", colors.textPrimary)
+    }
+
+    rule(".titled-pane:expanded > .title") {
+        fx("background-color", states.selected)
+    }
+
+    rule(".titled-pane:expanded > .title > .text", ".accordion > .titled-pane:expanded > .title > .text") {
+        fx("fill", states.selectedText)
+    }
+
+    rule(".titled-pane > .title > .arrow-button") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+    }
+
+    rule(".titled-pane > .title > .arrow-button > .arrow") {
+        fx("background-color", colors.textSecondary)
+    }
+
+    rule(".titled-pane:expanded > .title > .arrow-button > .arrow") {
+        fx("background-color", states.selectedText)
     }
 
     rule(".titled-pane > .content") {
@@ -847,6 +911,19 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
 
     rule(".accordion > .titled-pane > .title") {
         fx("background-color", colors.surfaceMuted)
+    }
+
+    rule(".accordion > .titled-pane") {
+        fx("border-color", "transparent")
+    }
+
+    rule(".accordion > .titled-pane:expanded > .title") {
+        fx("background-color", states.selected)
+        fx("border-color", states.focus)
+    }
+
+    rule(".accordion > .titled-pane:expanded > .content") {
+        surface(colors.surface, colors.border, context.radius)
     }
 
     rule(".slider .track") {
@@ -915,6 +992,22 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
 
     rule(".scroll-bar .thumb:hover") {
         fx("background-color", colors.textSecondary)
+    }
+
+    rule(".scroll-bar .thumb:pressed") {
+        fx("background-color", states.selected)
+    }
+
+    rule(".scroll-bar .increment-button", ".scroll-bar .decrement-button") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
+        fx("padding", "0")
+    }
+
+    rule(".scroll-bar .increment-button:hover", ".scroll-bar .decrement-button:hover") {
+        fx("background-color", states.surfaceHover)
     }
 
     rule(".hyperlink") {
