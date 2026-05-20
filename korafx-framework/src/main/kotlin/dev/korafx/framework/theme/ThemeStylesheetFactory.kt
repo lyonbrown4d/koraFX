@@ -204,6 +204,10 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
         fx("background-color", states.selected)
         fx("background-insets", "0")
     }
+
+    rule(".menu-item:disabled", ".check-menu-item:disabled", ".radio-menu-item:disabled") {
+        fx("opacity", states.disabledOpacity.toString())
+    }
 }
 
 private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
@@ -309,6 +313,19 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
 
     rule(".menu-bar > .container > .menu-button:hover", ".menu-bar > .container > .menu-button:showing") {
         fx("background-color", states.surfaceHover)
+    }
+
+    rule(".menu-bar > .container > .menu-button:focused") {
+        fx("background-color", states.surfaceHover)
+        fx("border-color", states.focus)
+    }
+
+    rule(".menu-bar > .container > .menu-button:focused > .label", ".menu-bar > .container > .menu-button:showing > .label") {
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".menu-bar > .container > .menu-button:disabled") {
+        fx("opacity", states.disabledOpacity.toString())
     }
 
     rule(".menu-bar > .container > .menu-button > .label") {
@@ -961,6 +978,14 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     rule(".pagination .pagination-control .page-number") {
         fx("background-radius", "${context.radius}px")
         fx("border-radius", "${context.radius}px")
+    }
+
+    rule(".pagination .pagination-control .button:hover", ".pagination .pagination-control .page-number:hover") {
+        fx("background-color", states.surfaceHover)
+    }
+
+    rule(".pagination .pagination-control .button:pressed") {
+        fx("background-color", states.controlPressed)
     }
 
     rule(".pagination .pagination-control .page-number:selected") {
