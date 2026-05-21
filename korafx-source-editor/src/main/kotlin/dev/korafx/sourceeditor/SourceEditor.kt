@@ -27,6 +27,9 @@ class SourceEditor internal constructor(
     language: String?,
     readOnly: Boolean,
     placeholder: String?,
+    showLineNumbers: Boolean,
+    showSearch: Boolean,
+    wrapText: Boolean,
     diagnostics: Iterable<SourceDiagnostic>,
     onTextChange: ((String) -> Unit)?,
 ) : VBox(10.0) {
@@ -37,6 +40,9 @@ class SourceEditor internal constructor(
         language = language,
         readOnly = readOnly,
         placeholder = placeholder,
+        showLineNumbers = showLineNumbers,
+        showSearch = showSearch,
+        wrapText = wrapText,
         onTextChange = onTextChange,
     )
     val diagnosticsPane: VBox = VBox(6.0)
@@ -50,6 +56,7 @@ class SourceEditor internal constructor(
         get() = editor.isDirty
 
     private val currentDiagnostics = mutableListOf<SourceDiagnostic>()
+    private var diagnosticSelectionHandler: ((SourceDiagnostic) -> Unit)? = null
 
     init {
         styleClass("source-editor")
@@ -113,6 +120,40 @@ class SourceEditor internal constructor(
         editor.tabSize(size)
     }
 
+    fun setLineNumbersVisible(visible: Boolean) {
+        editor.setLineNumbersVisible(visible)
+    }
+
+    fun setWrapText(enabled: Boolean) {
+        editor.setWrapText(enabled)
+    }
+
+    fun showSearch(query: String = "") {
+        editor.showSearchBar(query)
+    }
+
+    fun hideSearch() {
+        editor.hideSearchBar()
+    }
+
+    fun goTo(
+        line: Int,
+        column: Int = 1,
+    ): CodeEditorPosition =
+        editor.goTo(line, column)
+
+    fun selectLine(line: Int): CodeEditorPosition =
+        editor.selectLine(line)
+
+    fun onDiagnosticSelected(handler: (SourceDiagnostic) -> Unit) {
+        diagnosticSelectionHandler = handler
+    }
+
+    fun jumpToDiagnostic(diagnostic: SourceDiagnostic): CodeEditorPosition =
+        editor.goTo(diagnostic.line, diagnostic.column).also {
+            diagnosticSelectionHandler?.invoke(diagnostic)
+        }
+
     fun addAction(node: Node): Node =
         node.also {
             it.styleClass("source-editor-action")
@@ -173,6 +214,9 @@ class SourceEditor internal constructor(
         HBox(8.0).apply {
             styleClasses("source-editor-diagnostic", diagnostic.tone.styleClass)
             alignment = Pos.TOP_LEFT
+            setOnMouseClicked {
+                jumpToDiagnostic(diagnostic)
+            }
             children += Label("${diagnostic.line}:${diagnostic.column}").apply {
                 styleClass("source-editor-diagnostic-location")
             }
@@ -234,6 +278,28 @@ class SourceEditorBuilder internal constructor(
         sourceEditor.setDiagnostics(diagnostics)
     }
 
+    fun onDiagnosticSelected(handler: (SourceDiagnostic) -> Unit) {
+        sourceEditor.onDiagnosticSelected(handler)
+    }
+
+    fun lineNumbers(visible: Boolean = true) {
+        sourceEditor.setLineNumbersVisible(visible)
+    }
+
+    fun wrapText(enabled: Boolean = true) {
+        sourceEditor.setWrapText(enabled)
+    }
+
+    fun showSearch(query: String = "") {
+        sourceEditor.showSearch(query)
+    }
+
+    fun goTo(
+        line: Int,
+        column: Int = 1,
+    ): CodeEditorPosition =
+        sourceEditor.goTo(line, column)
+
     fun diagnostic(
         line: Int,
         column: Int,
@@ -284,6 +350,28 @@ class QueryEditorBuilder internal constructor(
         delegate.diagnostics(diagnostics)
     }
 
+    fun onDiagnosticSelected(handler: (SourceDiagnostic) -> Unit) {
+        delegate.onDiagnosticSelected(handler)
+    }
+
+    fun lineNumbers(visible: Boolean = true) {
+        delegate.lineNumbers(visible)
+    }
+
+    fun wrapText(enabled: Boolean = true) {
+        delegate.wrapText(enabled)
+    }
+
+    fun showSearch(query: String = "") {
+        delegate.showSearch(query)
+    }
+
+    fun goTo(
+        line: Int,
+        column: Int = 1,
+    ): CodeEditorPosition =
+        delegate.goTo(line, column)
+
     fun result(
         title: String = "Result",
         node: Node,
@@ -301,6 +389,9 @@ fun sourceEditor(
     language: String? = null,
     readOnly: Boolean = false,
     placeholder: String? = null,
+    showLineNumbers: Boolean = true,
+    showSearch: Boolean = false,
+    wrapText: Boolean = false,
     diagnostics: Iterable<SourceDiagnostic> = emptyList(),
     onTextChange: ((String) -> Unit)? = null,
     init: SourceEditor.() -> Unit = {},
@@ -312,6 +403,9 @@ fun sourceEditor(
         language = language,
         readOnly = readOnly,
         placeholder = placeholder,
+        showLineNumbers = showLineNumbers,
+        showSearch = showSearch,
+        wrapText = wrapText,
         diagnostics = diagnostics,
         onTextChange = onTextChange,
     ).apply(init).apply {
@@ -322,6 +416,9 @@ fun queryEditor(
     title: String? = "Query.sql",
     text: String = "",
     placeholder: String? = "Write SQL...",
+    showLineNumbers: Boolean = true,
+    showSearch: Boolean = false,
+    wrapText: Boolean = false,
     diagnostics: Iterable<SourceDiagnostic> = emptyList(),
     onRun: ((String) -> Unit)? = null,
     onStop: (() -> Unit)? = null,
@@ -334,6 +431,9 @@ fun queryEditor(
         language = "sql",
         readOnly = false,
         placeholder = placeholder,
+        showLineNumbers = showLineNumbers,
+        showSearch = showSearch,
+        wrapText = wrapText,
         diagnostics = diagnostics,
         onTextChange = null,
     ).apply(init).apply {
@@ -357,6 +457,9 @@ fun NodeContainerBuilder.sourceEditor(
     language: String? = null,
     readOnly: Boolean = false,
     placeholder: String? = null,
+    showLineNumbers: Boolean = true,
+    showSearch: Boolean = false,
+    wrapText: Boolean = false,
     diagnostics: Iterable<SourceDiagnostic> = emptyList(),
     onTextChange: ((String) -> Unit)? = null,
     init: SourceEditor.() -> Unit = {},
@@ -369,6 +472,9 @@ fun NodeContainerBuilder.sourceEditor(
             language = language,
             readOnly = readOnly,
             placeholder = placeholder,
+            showLineNumbers = showLineNumbers,
+            showSearch = showSearch,
+            wrapText = wrapText,
             diagnostics = diagnostics,
             onTextChange = onTextChange,
             init = init,
@@ -380,6 +486,9 @@ fun NodeContainerBuilder.queryEditor(
     title: String? = "Query.sql",
     text: String = "",
     placeholder: String? = "Write SQL...",
+    showLineNumbers: Boolean = true,
+    showSearch: Boolean = false,
+    wrapText: Boolean = false,
     diagnostics: Iterable<SourceDiagnostic> = emptyList(),
     onRun: ((String) -> Unit)? = null,
     onStop: (() -> Unit)? = null,
@@ -391,6 +500,9 @@ fun NodeContainerBuilder.queryEditor(
             title = title,
             text = text,
             placeholder = placeholder,
+            showLineNumbers = showLineNumbers,
+            showSearch = showSearch,
+            wrapText = wrapText,
             diagnostics = diagnostics,
             onRun = onRun,
             onStop = onStop,

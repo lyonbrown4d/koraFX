@@ -3,6 +3,7 @@ package dev.korafx.datagrid
 import dev.korafx.dsl.NodeContainerBuilder
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.styleClass
+import javafx.collections.ListChangeListener
 import javafx.scene.Node
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -27,11 +28,13 @@ class DataGrid<T> internal constructor(
     val tableView: TableView<T> = editableTable()
     val footer: HBox = HBox(8.0)
     val footerLabel: Label = Label()
+    val selectionSummaryLabel: Label = Label()
 
     private val emptyPlaceholder = Label("No rows")
     private val loadingPlaceholder = Label("Loading...")
     private val sourceItems = mutableListOf<T>()
     private val toolbarNodes = mutableListOf<Node>()
+    private val batchActions = mutableListOf<DataGridBatchAction<T>>()
 
     private var loading = false
     private var searchTextOf: (T) -> String = { it.toString() }
@@ -42,6 +45,7 @@ class DataGrid<T> internal constructor(
     private var rowActionHandler: ((T) -> Unit)? = null
     private var rowClickCount: Int = 2
     private var rowMouseButton: MouseButton = MouseButton.PRIMARY
+    private var selectionSummaryFormatter: ((DataGridSelectionSummary<T>) -> String?)? = null
 
     init {
         styleClass("data-grid")
@@ -81,6 +85,13 @@ class DataGrid<T> internal constructor(
             isManaged = false
             children += footerLabel.apply {
                 styleClass("data-grid-footer-label")
+                isVisible = false
+                isManaged = false
+            }
+            children += selectionSummaryLabel.apply {
+                styleClass("data-grid-selection-summary")
+                isVisible = false
+                isManaged = false
             }
         }
 
@@ -89,6 +100,11 @@ class DataGrid<T> internal constructor(
         children += footer
 
         installRowFactory()
+        tableView.selectionModel.selectedItems.addListener(
+            ListChangeListener {
+                updateSelectionState()
+            },
+        )
         setItems(items)
     }
 
@@ -96,6 +112,7 @@ class DataGrid<T> internal constructor(
         sourceItems.clear()
         sourceItems += items
         applyFilter()
+        updateSelectionState()
     }
 
     fun setSearchVisible(visible: Boolean) {
@@ -142,6 +159,7 @@ class DataGrid<T> internal constructor(
             applyFilter()
         }
         updatePlaceholder()
+        updateSelectionState()
     }
 
     fun setEmptyText(text: String) {
@@ -153,7 +171,16 @@ class DataGrid<T> internal constructor(
         footerLabel.text = text.orEmpty()
         val visible = !text.isNullOrBlank()
         footer.isVisible = visible
-        footer.isManaged = visible
+        footerLabel.isVisible = visible
+        footerLabel.isManaged = visible
+        refreshFooterVisibility()
+    }
+
+    fun setSelectionSummary(
+        formatter: ((DataGridSelectionSummary<T>) -> String?)?,
+    ) {
+        selectionSummaryFormatter = formatter
+        updateSelectionState()
     }
 
     fun addToolbarNode(node: Node): Node =
@@ -163,6 +190,28 @@ class DataGrid<T> internal constructor(
             toolbar.children += this
             refreshToolbarVisibility()
         }
+
+    fun addBatchAction(
+        text: String,
+        requireSelection: Boolean = true,
+        init: Button.() -> Unit = {},
+        handler: (List<T>) -> Unit,
+    ): Button =
+        Button(text).apply {
+            styleClass("data-grid-toolbar-action")
+            styleClass("data-grid-toolbar-batch-action")
+            init()
+            onAction {
+                handler(selectedItems())
+            }
+        }.also { button ->
+            batchActions += DataGridBatchAction(button, requireSelection)
+            addToolbarNode(button)
+            updateSelectionState()
+        }
+
+    fun selectedItems(): List<T> =
+        tableView.selectionModel.selectedItems.toList()
 
     fun rowAction(
         clickCount: Int = 2,
@@ -202,6 +251,7 @@ class DataGrid<T> internal constructor(
             }
         tableView.items.setAll(visibleItems)
         updatePlaceholder()
+        updateSelectionState()
     }
 
     private fun updatePlaceholder() {
@@ -248,7 +298,49 @@ class DataGrid<T> internal constructor(
         toolbar.isVisible = visible
         toolbar.isManaged = visible
     }
+
+    private fun updateSelectionState() {
+        val selected = selectedItems()
+        val summaryText =
+            selectionSummaryFormatter?.invoke(
+                DataGridSelectionSummary(
+                    selectedItems = selected,
+                    visibleRowCount = tableView.items.size,
+                    totalRowCount = sourceItems.size,
+                    loading = loading,
+                ),
+            )
+        val summaryVisible = !summaryText.isNullOrBlank()
+        selectionSummaryLabel.text = summaryText.orEmpty()
+        selectionSummaryLabel.isVisible = summaryVisible
+        selectionSummaryLabel.isManaged = summaryVisible
+
+        batchActions.forEach { action ->
+            action.button.isDisable = action.requireSelection && selected.isEmpty()
+        }
+        refreshFooterVisibility()
+    }
+
+    private fun refreshFooterVisibility() {
+        val visible = footerLabel.isManaged || selectionSummaryLabel.isManaged
+        footer.isVisible = visible
+        footer.isManaged = visible
+    }
 }
+
+data class DataGridSelectionSummary<T>(
+    val selectedItems: List<T>,
+    val visibleRowCount: Int,
+    val totalRowCount: Int,
+    val loading: Boolean,
+) {
+    val selectedCount: Int = selectedItems.size
+}
+
+private data class DataGridBatchAction<T>(
+    val button: Button,
+    val requireSelection: Boolean,
+)
 
 class DataGridBuilder<T> internal constructor(
     private val grid: DataGrid<T>,
@@ -298,7 +390,20 @@ class DataGridBuilder<T> internal constructor(
         grid.setFooterText(text)
     }
 
-    fun toolbar(content: DataGridToolbarBuilder.() -> Unit) {
+    fun selectionSummary(
+        formatter: (DataGridSelectionSummary<T>) -> String? = { summary ->
+            val rowLabel = if (summary.visibleRowCount == 1) "row" else "rows"
+            if (summary.selectedCount == 0) {
+                "${summary.visibleRowCount} $rowLabel"
+            } else {
+                "${summary.selectedCount} selected of ${summary.visibleRowCount} $rowLabel"
+            }
+        },
+    ) {
+        grid.setSelectionSummary(formatter)
+    }
+
+    fun toolbar(content: DataGridToolbarBuilder<T>.() -> Unit) {
         DataGridToolbarBuilder(grid).content()
     }
 
@@ -311,6 +416,14 @@ class DataGridBuilder<T> internal constructor(
         handler: () -> Unit,
     ): Button =
         DataGridToolbarBuilder(grid).action(text, init, handler)
+
+    fun toolbarBatchAction(
+        text: String,
+        requireSelection: Boolean = true,
+        init: Button.() -> Unit = {},
+        handler: (List<T>) -> Unit,
+    ): Button =
+        grid.addBatchAction(text, requireSelection, init, handler)
 
     fun selectionMode(mode: SelectionMode) {
         tableBuilder.selectionMode(mode)
@@ -375,8 +488,8 @@ class DataGridBuilder<T> internal constructor(
         tableBuilder.actionColumn(title, text, init, handler)
 }
 
-class DataGridToolbarBuilder internal constructor(
-    private val grid: DataGrid<*>,
+class DataGridToolbarBuilder<T> internal constructor(
+    private val grid: DataGrid<T>,
 ) {
     fun node(node: Node): Node =
         grid.addToolbarNode(node)
@@ -395,6 +508,14 @@ class DataGridToolbarBuilder internal constructor(
         }.also {
             grid.addToolbarNode(it)
         }
+
+    fun batchAction(
+        text: String,
+        requireSelection: Boolean = true,
+        init: Button.() -> Unit = {},
+        handler: (List<T>) -> Unit,
+    ): Button =
+        grid.addBatchAction(text, requireSelection, init, handler)
 
     fun spacer(): Region =
         Region().apply {

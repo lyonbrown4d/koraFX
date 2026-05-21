@@ -16,6 +16,7 @@ class SourceEditorTest {
     fun `source editor renders actions diagnostics and result slot`() {
         FxTestSupport.runOnFxThread {
             var formatted = false
+            var selectedDiagnostic: SourceDiagnostic? = null
             val editor = sourceEditor(
                 title = "Main.kt",
                 text = "fun main() {}",
@@ -26,6 +27,9 @@ class SourceEditorTest {
             ) {
                 action("Format") {
                     formatted = true
+                }
+                onDiagnosticSelected { diagnostic ->
+                    selectedDiagnostic = diagnostic
                 }
                 result("Output", Label("Build succeeded"))
             }
@@ -41,6 +45,10 @@ class SourceEditorTest {
             assertTrue("source-editor-diagnostic" in diagnostic.styleClass)
             assertEquals("1:5", assertIs<Label>(diagnostic.children.first()).text)
             assertEquals("Unused function", assertIs<Label>(diagnostic.children[1]).text)
+            editor.jumpToDiagnostic(SourceDiagnostic(1, 5, "Unused function", ComponentTone.WARNING))
+            assertEquals(1, editor.editor.currentLine)
+            assertEquals(5, editor.editor.currentColumn)
+            assertEquals("Unused function", selectedDiagnostic?.message)
 
             assertTrue(editor.resultPane.isVisible)
             assertEquals("Output", editor.resultHeader.text)
@@ -99,13 +107,18 @@ class SourceEditorTest {
                     title = "Config",
                     text = "key=value",
                     readOnly = true,
+                    showSearch = true,
+                    wrapText = true,
                 ) {
                     diagnostic(1, 1, "Read-only preview", ComponentTone.INFO)
+                    showSearch("key")
                 }
             }
             val editor = assertIs<SourceEditor>(root.children.single())
 
             assertFalse(editor.editor.textArea.isEditable)
+            assertTrue(editor.editor.searchBar.isVisible)
+            assertTrue(editor.editor.textArea.isWrapText)
             assertEquals("key=value", editor.editor.textArea.text)
             assertEquals("Read-only preview", assertIs<Label>(
                 assertIs<HBox>(editor.diagnosticsList.children.single()).children[1],

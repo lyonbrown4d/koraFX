@@ -3,6 +3,7 @@ package dev.korafx.datagrid
 import dev.korafx.dsl.panel
 import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.control.SelectionMode
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableRow
 import kotlin.test.Test
@@ -99,6 +100,79 @@ class DataGridTest {
 
             assertTrue(grid.tableView.items.isEmpty())
             assertEquals("Fetching rows...", assertIs<Label>(grid.tableView.placeholder).text)
+        }
+    }
+
+    @Test
+    fun `data grid reports selection summary`() {
+        FxTestSupport.runOnFxThread {
+            val rows = listOf(
+                Row("DSL", "Core", "Ready"),
+                Row("Theme", "Design", "Review"),
+                Row("Components", "Product", "Draft"),
+            )
+            val grid = dataGrid(rows) {
+                selectionMode(SelectionMode.MULTIPLE)
+                search(textOf = { it.owner })
+                selectionSummary()
+                readOnlyTextColumn("Name") { it.name }
+            }
+
+            assertEquals("3 rows", grid.selectionSummaryLabel.text)
+            assertTrue(grid.footer.isVisible)
+
+            grid.tableView.selectionModel.selectIndices(0, 2)
+
+            assertEquals("2 selected of 3 rows", grid.selectionSummaryLabel.text)
+
+            grid.setSearchText("Design")
+
+            assertEquals("1 row", grid.selectionSummaryLabel.text)
+        }
+    }
+
+    @Test
+    fun `data grid keeps footer hidden without footer content`() {
+        FxTestSupport.runOnFxThread {
+            val rows = listOf(Row("DSL", "Core", "Ready"))
+            val grid = dataGrid(rows, showSearch = false) {
+                readOnlyTextColumn("Name") { it.name }
+            }
+
+            assertFalse(grid.footer.isVisible)
+            assertFalse(grid.footer.isManaged)
+            assertFalse(grid.footerLabel.isVisible)
+            assertFalse(grid.selectionSummaryLabel.isVisible)
+        }
+    }
+
+    @Test
+    fun `data grid toolbar batch action receives selected rows`() {
+        FxTestSupport.runOnFxThread {
+            val rows = listOf(
+                Row("DSL", "Core", "Ready"),
+                Row("Theme", "Design", "Review"),
+            )
+            val captured = mutableListOf<Row>()
+            lateinit var action: Button
+            val grid = dataGrid(rows) {
+                selectionMode(SelectionMode.MULTIPLE)
+                action = toolbarBatchAction("Archive") { selectedRows ->
+                    captured += selectedRows
+                }
+                readOnlyTextColumn("Name") { it.name }
+            }
+
+            assertTrue(action.isDisable)
+
+            grid.tableView.selectionModel.select(1)
+
+            assertFalse(action.isDisable)
+
+            action.fire()
+
+            assertEquals(listOf(rows[1]), captured)
+            assertTrue("data-grid-toolbar-batch-action" in action.styleClass)
         }
     }
 

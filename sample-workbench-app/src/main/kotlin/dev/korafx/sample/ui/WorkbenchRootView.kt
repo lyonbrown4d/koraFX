@@ -14,6 +14,7 @@ import dev.korafx.components.chip
 import dev.korafx.commandpalette.commandPalette
 import dev.korafx.datagrid.dataGrid
 import dev.korafx.components.emptyState
+import dev.korafx.components.heroBanner
 import dev.korafx.sourceeditor.codeEditor
 import dev.korafx.sourceeditor.queryEditor
 import dev.korafx.sourceeditor.sourceEditor
@@ -86,7 +87,9 @@ import dev.korafx.framework.theme.ThemeStyleClass
 import javafx.geometry.HPos
 import javafx.geometry.Pos
 import javafx.scene.control.Label
+import javafx.scene.control.SelectionMode
 import javafx.scene.control.TextField
+import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.paint.Color
 import kotlinx.coroutines.launch
@@ -448,6 +451,319 @@ class WorkbenchRootView(
                     }
 
                     section(
+                      title = "Component Gallery",
+                      description = "A paged showcase keeps each custom component independent, like a desktop component banner deck.",
+                    ) {
+                      heroBanner(
+                        title = "KoraFX Component Gallery",
+                        subtitle = "Flip through focused component pages instead of scanning one oversized demo route.",
+                        eyebrow = "Showcase / Hero Banner",
+                        icon = WorkbenchIcons.Samples,
+                        actions = {
+                          ghostButton("Open Commands") {
+                            setKoraIcon(WorkbenchIcons.Commands)
+                            onAction {
+                              commandPaletteHost.show()
+                            }
+                          }
+                        },
+                      ) {
+                        hbox(spacing = 8.0) {
+                          badge("Paged", ComponentTone.PRIMARY, icon = WorkbenchIcons.Route)
+                          badge("Independent", ComponentTone.SUCCESS, icon = WorkbenchIcons.Stable)
+                          badge("Theme-covered", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
+                        }
+                        hbox(spacing = 12.0) {
+                          metricCard("Advanced modules", "6", "Published as focused artifacts", ComponentTone.PRIMARY, init = {
+                            maxWidth = Double.MAX_VALUE
+                            HBox.setHgrow(this, Priority.ALWAYS)
+                          })
+                          metricCard("Showcase pages", "6", "One component family per page", ComponentTone.INFO, init = {
+                            maxWidth = Double.MAX_VALUE
+                            HBox.setHgrow(this, Priority.ALWAYS)
+                          })
+                          metricCard("Sample pattern", "MVVM", "Koin + Navigator + DSL", ComponentTone.SUCCESS, init = {
+                            maxWidth = Double.MAX_VALUE
+                            HBox.setHgrow(this, Priority.ALWAYS)
+                          })
+                        }
+                      }
+
+                      add(
+                        pagination(
+                          pageCount = 6,
+                          init = {
+                            maxWidth = Double.MAX_VALUE
+                            prefHeight = 620.0
+                            styleClass += "component-gallery-pagination"
+                          },
+                        ) { pageIndex ->
+                          panel {
+                            when (pageIndex) {
+                              0 -> {
+                                pageHeader(
+                                  title = "Surface Kit",
+                                  subtitle = "Base workbench surfaces stay small: card, section, actionBar, badge, chip and metricCard.",
+                                  eyebrow = "Page 1 / Base Components",
+                                  icon = WorkbenchIcons.Stable,
+                                )
+                                gridPane(
+                                  hgap = 12.0,
+                                  vgap = 10.0,
+                                ) {
+                                  column(prefWidth = 120.0, alignment = HPos.RIGHT)
+                                  column(grow = Priority.ALWAYS, fillWidth = true)
+
+                                  label(0, 0, "Project")
+                                  textField(1, 0, "KoraFX") {
+                                    maxWidth = Double.MAX_VALUE
+                                  }
+                                  label(0, 1, "Mode")
+                                  checkBox(1, 1, "Kotlin-first JavaFX DSL") {
+                                    isSelected = true
+                                  }
+                                }
+                                actionBar {
+                                  ghostButton("Secondary") {
+                                    onAction {
+                                      feedbackLabel.text = "State: Secondary action from gallery."
+                                    }
+                                  }
+                                  button("Primary") {
+                                    onAction {
+                                      feedbackLabel.text = "State: Primary action from gallery."
+                                    }
+                                  }
+                                }
+                                hbox(spacing = 8.0) {
+                                  badge("Stable", ComponentTone.SUCCESS, icon = WorkbenchIcons.Stable)
+                                  badge("Theme", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
+                                  chip("DSL", ComponentTone.PRIMARY, selected = true, icon = WorkbenchIcons.Dsl)
+                                  chip("Samples", ComponentTone.NEUTRAL, icon = WorkbenchIcons.Samples)
+                                }
+                              }
+
+                              1 -> {
+                                pageHeader(
+                                  title = "Source Editor",
+                                  subtitle = "CodeEditor now demonstrates line numbers, search, diagnostics and cursor navigation.",
+                                  eyebrow = "Page 2 / korafx-source-editor",
+                                  icon = WorkbenchIcons.Editor,
+                                )
+                                sourceEditor(
+                                  title = "RepositoryConfig.kt",
+                                  text = "data class RepositoryConfig(\n    val branch: String,\n    val remote: String,\n)",
+                                  language = "kotlin",
+                                  readOnly = true,
+                                  showSearch = true,
+                                  diagnostics = listOf(
+                                    SourceDiagnostic(2, 9, "Click diagnostics to jump to a source position.", ComponentTone.INFO),
+                                  ),
+                                  init = {
+                                    prefHeight = 420.0
+                                  },
+                                ) {
+                                  showSearch("RepositoryConfig")
+                                  onDiagnosticSelected { diagnostic ->
+                                    feedbackLabel.text = "State: Gallery jumped to ${diagnostic.line}:${diagnostic.column}."
+                                  }
+                                  action("Open File") {
+                                    feedbackLabel.text = "State: Source editor gallery action."
+                                  }
+                                }
+                              }
+
+                              2 -> {
+                                pageHeader(
+                                  title = "Workspace Shell",
+                                  subtitle = "WorkspaceLayout composes navigation, tab workspace, inspector and status surfaces.",
+                                  eyebrow = "Page 3 / korafx-workspace",
+                                  icon = WorkbenchIcons.Workspace,
+                                )
+                                workspaceLayout(
+                                  init = {
+                                    prefHeight = 430.0
+                                    maxWidth = Double.MAX_VALUE
+                                  },
+                                ) {
+                                  topBar {
+                                    hbox(spacing = 10.0) {
+                                      label("Git / Database Workspace") {
+                                        styleClasses(ThemeStyleClass.Headline)
+                                      }
+                                      badge("WorkspaceLayout", ComponentTone.INFO)
+                                    }
+                                  }
+                                  navigation {
+                                    resourceExplorer(
+                                      items = explorerResources,
+                                      childrenOf = { it.children },
+                                      textOf = { it.name },
+                                      init = {
+                                        prefWidth = 240.0
+                                        maxHeight = Double.MAX_VALUE
+                                      },
+                                    ) {
+                                      search(prompt = "Search repository or database...")
+                                      breadcrumb(separator = " > ")
+                                      rowAction { resource ->
+                                        openResourceTab(resource)
+                                      }
+                                    }
+                                  }
+                                  content {
+                                    tabWorkspace(
+                                      emptyText = "Open a repository file or database object...",
+                                      init = {
+                                        workspaceTabs = this
+                                      },
+                                    ) {
+                                      tab("welcome", "Welcome", closable = false, select = true) {
+                                        card(spacing = 8.0, padding = 12.0) {
+                                          label("TabWorkspace") {
+                                            styleClasses(ThemeStyleClass.Headline)
+                                          }
+                                          label("Double-click an explorer item to open a reusable source preview tab.")
+                                        }
+                                      }
+                                    }
+                                  }
+                                  details {
+                                    inspectorPanel(
+                                      title = "Repository",
+                                      subtitle = "Selection details for Git and database resources.",
+                                    ) {
+                                      badge("Connected", ComponentTone.SUCCESS, icon = WorkbenchIcons.Connected)
+                                      property("Branch", "main")
+                                      property("Connection", "local")
+                                    }
+                                  }
+                                  status {
+                                    statusBar {
+                                      statusItem("Ready", ComponentTone.SUCCESS, icon = WorkbenchIcons.Connected)
+                                      spacer()
+                                      statusItem("Gallery workspace", ComponentTone.INFO)
+                                    }
+                                  }
+                                }
+                              }
+
+                              3 -> {
+                                pageHeader(
+                                  title = "Data Grid",
+                                  subtitle = "DataGrid is now isolated from base components and can evolve into editable database-style grids.",
+                                  eyebrow = "Page 4 / korafx-data-grid",
+                                  icon = WorkbenchIcons.Database,
+                                )
+                                dataGrid(
+                                  items = editableModules,
+                                  searchPrompt = "Search modules...",
+                                  init = {
+                                    prefHeight = 420.0
+                                    maxWidth = Double.MAX_VALUE
+                                  },
+                                ) {
+                                  search(textOf = { "${it.name} ${it.owner} ${it.status}" })
+                                  selectionMode(SelectionMode.MULTIPLE)
+                                  selectionSummary()
+                                  dirtyRows { it.status == "Draft" }
+                                  footer("${editableModules.size} modules - draft rows are marked")
+                                  toolbar {
+                                    action("Refresh") {
+                                      feedbackLabel.text = "State: Data grid gallery refresh."
+                                    }
+                                    batchAction("Archive selected") { rows ->
+                                      feedbackLabel.text = "State: Prepared ${rows.size} module rows for archive."
+                                    }
+                                  }
+                                  constrainedResize()
+                                  editableTextColumn("Module", valueOf = { it.name }) { row, value ->
+                                    row.name = value
+                                    feedbackLabel.text = "State: Gallery renamed module to $value."
+                                  }
+                                  editableTextColumn("Owner", valueOf = { it.owner }) { row, value ->
+                                    row.owner = value
+                                    feedbackLabel.text = "State: ${row.name} owner changed to $value."
+                                  }
+                                  readOnlyTextColumn("Status") { it.status }
+                                }
+                              }
+
+                              4 -> {
+                                pageHeader(
+                                  title = "Activity And Tree",
+                                  subtitle = "Timeline, TreeView and feedback states cover history, navigation trees and empty/loading/error surfaces.",
+                                  eyebrow = "Page 5 / Runtime Surfaces",
+                                  icon = WorkbenchIcons.Samples,
+                                )
+                                activityTimeline(
+                                  events = activityEvents,
+                                  emptyText = "No activity yet",
+                                ) {
+                                  groupBy { it.group }
+                                  timeOf { it.time }
+                                  titleOf { it.title }
+                                  messageOf { it.message }
+                                  toneOf { it.tone }
+                                  action("Open") { event ->
+                                    feedbackLabel.text = "State: Open activity ${event.title}."
+                                  }
+                                }
+                                emptyState(
+                                  title = "Feedback components",
+                                  message = "emptyState, loadingState and errorState are plain JavaFX nodes.",
+                                  actionText = "Mark Reviewed",
+                                  onAction = {
+                                    feedbackLabel.text = "State: Feedback component action from gallery."
+                                  },
+                                ) {
+                                  prefHeight = 140.0
+                                }
+                              }
+
+                              else -> {
+                                pageHeader(
+                                  title = "Command Palette",
+                                  subtitle = "CommandPalette is a dedicated module for keyboard-first application actions.",
+                                  eyebrow = "Page 6 / korafx-command-palette",
+                                  icon = WorkbenchIcons.Commands,
+                                )
+                                alertBanner(
+                                  title = "Try the command overlay",
+                                  message = "The sample registers commands through Koin-backed app services and renders the palette as an overlay.",
+                                  tone = ComponentTone.INFO,
+                                  actionText = "Open Commands",
+                                  onAction = {
+                                  commandPaletteHost.show()
+                                  },
+                                )
+                                card {
+                                  label("Registered commands") {
+                                    styleClasses(ThemeStyleClass.Headline)
+                                  }
+                                  label("Toggle theme, navigate routes, and trigger sample feedback from one command surface.")
+                                  actionBar(alignEnd = false) {
+                                    button("Open Commands") {
+                                      setKoraIcon(WorkbenchIcons.Commands)
+                                      onAction {
+                                        commandPaletteHost.show()
+                                      }
+                                    }
+                                    ghostButton("Go To Theme") {
+                                      onAction {
+                                        viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Theme.path))
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                      )
+                    }
+
+                    section(
                       title = "Surface Components",
                       description = "section, card and actionBar are lightweight containers built on top of the DSL.",
                     ) {
@@ -496,13 +812,14 @@ class WorkbenchRootView(
 
                     section(
                       title = "Editor Components",
-                      description = "CodeEditor stays lightweight; SourceEditor and QueryEditor add actions, diagnostics and result slots.",
+                      description = "CodeEditor adds line numbers, find, cursor status and dirty tracking; SourceEditor and QueryEditor add actions, diagnostics and result slots.",
                     ) {
                       codeEditor(
                         title = "Kotlin Scratch",
                         text = "fun main() {\n    println(\"KoraFX\")\n}",
                         language = "kotlin",
                         placeholder = "Start typing...",
+                        showSearch = true,
                         onTextChange = { text ->
                           feedbackLabel.text = "State: Editor changed, ${text.length} chars."
                         },
@@ -521,12 +838,17 @@ class WorkbenchRootView(
                           prefHeight = 260.0
                         },
                       ) {
+                        showSearch("RepositoryConfig")
+                        onDiagnosticSelected { diagnostic ->
+                          feedbackLabel.text = "State: Jumped to ${diagnostic.line}:${diagnostic.column}."
+                        }
                         action("Open File") {
                           feedbackLabel.text = "State: Open source file requested."
                         }
                       }
                       queryEditor(
                         text = "select id, name, owner from modules;",
+                        showSearch = true,
                         onRun = { sql ->
                           feedbackLabel.text = "State: Run query with ${sql.length} chars."
                         },
@@ -595,6 +917,7 @@ class WorkbenchRootView(
                             },
                           ) {
                             search(prompt = "Search repository or database...")
+                            breadcrumb(separator = " > ")
                             onSelect { resource ->
                               if (resource != null) {
                                 feedbackLabel.text = "State: Selected resource ${resource.name}."
@@ -733,12 +1056,17 @@ class WorkbenchRootView(
                         },
                       ) {
                         search(textOf = { "${it.name} ${it.owner} ${it.status}" })
+                        selectionMode(SelectionMode.MULTIPLE)
+                        selectionSummary()
                         dirtyRows { it.status == "Draft" }
                         emptyState("No modules match the current filter")
                         footer("${editableModules.size} modules - draft rows are marked")
                         toolbar {
                           action("Refresh") {
                             feedbackLabel.text = "State: Data grid refresh requested."
+                          }
+                          batchAction("Archive selected") { rows ->
+                            feedbackLabel.text = "State: Prepared ${rows.size} module rows for archive."
                           }
                         }
                         constrainedResize()

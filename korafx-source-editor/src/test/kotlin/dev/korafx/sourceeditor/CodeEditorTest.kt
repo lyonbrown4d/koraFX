@@ -27,10 +27,16 @@ class CodeEditorTest {
 
             assertTrue("code-editor" in editor.styleClass)
             assertTrue("code-editor-area" in editor.textArea.styleClass)
+            assertTrue("code-editor-frame" in editor.editorFrame.styleClass)
+            assertTrue("code-editor-line-numbers" in editor.lineNumberGutter.styleClass)
             assertEquals("fun main() {\n}", editor.textArea.text)
+            assertEquals(2, editor.lineNumberGutter.children.size)
             assertTrue(labels.any { it.text == "Document" && "code-editor-title" in it.styleClass })
             assertTrue(labels.any { it.text == "kotlin" && "badge" in it.styleClass })
             assertTrue(labels.any { it.text.startsWith("Ln 1, Col 1") })
+            assertEquals(1, editor.currentLine)
+            assertEquals(1, editor.currentColumn)
+            assertEquals(2, editor.lineCount)
             assertFalse(editor.isDirty)
         }
     }
@@ -79,6 +85,48 @@ class CodeEditorTest {
 
             assertEquals("KoraFX", editor.textArea.text)
             assertEquals("Start typing...", editor.textArea.promptText)
+        }
+    }
+
+    @Test
+    fun `code editor supports search and navigation`() {
+        FxTestSupport.runOnFxThread {
+            val editor = codeEditor(
+                text = "fun main() {\n    println(\"KoraFX\")\n}",
+                showSearch = true,
+            )
+
+            val match = editor.find("println", startAt = 0)
+
+            assertEquals(17, match)
+            assertEquals("println", editor.textArea.selectedText)
+            assertEquals("Match at 2:5", editor.searchResultLabel.text)
+
+            val position = editor.goTo(2, 5)
+
+            assertEquals(CodeEditorPosition(line = 2, column = 5, offset = 17), position)
+            assertEquals(2, editor.currentLine)
+            assertEquals(5, editor.currentColumn)
+        }
+    }
+
+    @Test
+    fun `code editor can toggle line numbers and wrapping`() {
+        FxTestSupport.runOnFxThread {
+            val editor = codeEditor(
+                text = "alpha\nbeta",
+                showLineNumbers = false,
+                wrapText = true,
+            )
+
+            assertFalse(editor.lineNumberGutter.isVisible)
+            assertTrue(editor.textArea.isWrapText)
+
+            editor.setLineNumbersVisible(true)
+            editor.setWrapText(false)
+
+            assertTrue(editor.lineNumberGutter.isVisible)
+            assertFalse(editor.textArea.isWrapText)
         }
     }
 }

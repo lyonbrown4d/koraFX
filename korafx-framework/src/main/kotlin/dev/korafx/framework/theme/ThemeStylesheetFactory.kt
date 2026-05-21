@@ -1369,6 +1369,13 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("border-color", states.focus)
     }
 
+    rule(".resource-explorer-breadcrumb") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "700")
+        padding(0, spacing.xs, spacing.xs, spacing.xs)
+    }
+
     rule(".resource-explorer-tree") {
         fx("background-color", "transparent")
         fx("border-color", "transparent")
@@ -1448,6 +1455,10 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.sm, spacing.lg)
     }
 
+    rule(".data-grid-toolbar-batch-action") {
+        fx("border-color", colors.border)
+    }
+
     rule(".data-grid-table") {
         fx("background-color", colors.surface)
         fx("border-color", colors.border)
@@ -1468,8 +1479,12 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.sm, 0, 0, 0)
     }
 
-    rule(".data-grid-footer-label", ".data-grid-empty", ".data-grid-loading") {
+    rule(".data-grid-footer-label", ".data-grid-selection-summary", ".data-grid-empty", ".data-grid-loading") {
         fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".data-grid-selection-summary") {
+        fx("font-weight", "700")
     }
 
     rule(".inspector-panel") {
@@ -1819,6 +1834,31 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.sm, spacing.md)
     }
 
+    rule(".code-editor-search") {
+        fx("background-color", colors.surface)
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".code-editor-search-label", ".code-editor-search-result") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+    }
+
+    rule(".code-editor-search-field") {
+        surface(colors.surfaceMuted, colors.border, context.smallRadius)
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("font-size", "${typography.baseSize}px")
+        fx("text-fill", colors.textPrimary)
+        fx("highlight-fill", states.selected)
+        fx("highlight-text-fill", states.selectedText)
+    }
+
+    rule(".code-editor-search-button") {
+        ghostControl(context)
+        padding(spacing.xs, spacing.md)
+    }
+
     rule(".code-editor-toolbar") {
         fx("border-color", "transparent transparent ${colors.border} transparent")
         fx("background-radius", "${context.radii.large}px ${context.radii.large}px 0 0")
@@ -1844,6 +1884,29 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("border-color", "transparent")
         fx("background-radius", "0")
         fx("border-radius", "0")
+    }
+
+    rule(".code-editor-frame") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".code-editor-line-numbers") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", "transparent ${colors.border} transparent transparent")
+        padding(spacing.sm, spacing.sm)
+    }
+
+    rule(".code-editor-line-number") {
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("font-size", "${typography.baseSize}px")
+        fx("text-fill", colors.textSecondary)
+        fx("alignment", "center-right")
+        fx("min-width", "32px")
+    }
+
+    rule(".code-editor-line-number-active") {
+        fx("text-fill", colors.primary)
+        fx("font-weight", "800")
     }
 
     rule(".code-editor-area .content") {
@@ -1980,6 +2043,42 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     }
 
     rule(".page-header-subtitle") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".hero-banner") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.lg)
+    }
+
+    rule(".hero-banner-header", ".hero-banner-actions", ".hero-banner-content") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".hero-banner-icon") {
+        fx("background-color", "derive(${colors.primary}, 88%)")
+        radius(context.radii.large)
+        padding(spacing.md)
+    }
+
+    rule(".hero-banner-icon-glyph") {
+        fx("icon-color", colors.primary)
+    }
+
+    rule(".hero-banner-eyebrow") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "800")
+    }
+
+    rule(".hero-banner-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-size", "${typography.headlineSize + 2}px")
+        fx("font-weight", "900")
+    }
+
+    rule(".hero-banner-subtitle") {
         fx("text-fill", colors.textSecondary)
     }
 

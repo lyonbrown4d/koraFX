@@ -107,6 +107,80 @@ class ResourceExplorerTest {
     }
 
     @Test
+    fun `resource explorer exposes selected path and breadcrumb text`() {
+        FxTestSupport.runOnFxThread {
+            val explorer =
+                resourceExplorer(
+                    items = resources,
+                    childrenOf = { it.children },
+                    textOf = { it.name },
+                ) {
+                    breadcrumb(separator = " > ")
+                }
+            val sourceFile = resources[0].children[0].children[0]
+
+            assertTrue(explorer.selectPath(listOf(resources[0], resources[0].children[0], sourceFile)))
+
+            assertTrue(explorer.breadcrumbLabel.isVisible)
+            assertTrue(explorer.breadcrumbLabel.isManaged)
+            assertEquals(sourceFile, explorer.selectedItem())
+            assertEquals(listOf(resources[0], resources[0].children[0], sourceFile), explorer.selectedPath())
+            assertEquals("repository > src > Main.kt", explorer.selectedPathText())
+            assertEquals("repository > src > Main.kt", explorer.breadcrumbLabel.text)
+        }
+    }
+
+    @Test
+    fun `resource explorer can collapse and expand tree selections`() {
+        FxTestSupport.runOnFxThread {
+            val explorer =
+                resourceExplorer(
+                    items = resources,
+                    childrenOf = { it.children },
+                    textOf = { it.name },
+                )
+            val repository = explorer.treeView.root.children.first()
+
+            explorer.expandAll()
+
+            assertTrue(repository.isExpanded)
+            assertTrue(repository.children.first().isExpanded)
+
+            explorer.collapseAll()
+
+            assertFalse(repository.isExpanded)
+            assertFalse(repository.children.first().isExpanded)
+            assertTrue(explorer.treeView.root.isExpanded)
+
+            explorer.treeView.selectionModel.select(repository)
+            explorer.expandSelected()
+
+            assertTrue(repository.isExpanded)
+            assertTrue(repository.children.first().isExpanded)
+
+            explorer.collapseSelected()
+
+            assertFalse(repository.isExpanded)
+            assertFalse(repository.children.first().isExpanded)
+        }
+    }
+
+    @Test
+    fun `resource explorer select path reports missing paths`() {
+        FxTestSupport.runOnFxThread {
+            val explorer =
+                resourceExplorer(
+                    items = resources,
+                    childrenOf = { it.children },
+                    textOf = { it.name },
+                )
+
+            assertFalse(explorer.selectPath(listOf(resources[0], resources[1])))
+            assertEquals(emptyList(), explorer.selectedPath())
+        }
+    }
+
+    @Test
     fun `resource explorer can be added from node container builder`() {
         FxTestSupport.runOnFxThread {
             val root =

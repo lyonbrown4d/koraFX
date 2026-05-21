@@ -206,7 +206,7 @@ Main API:
 - Layout: `borderLayout`
 - Activity: `activityTimeline`, `ActivityTimeline`, `ActivityTimelineBuilder`
 - Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
-- Surfaces: `card`, `section`, `actionBar`, `breadcrumb`, `pageHeader`, `statusBar`, `statusItem`
+- Surfaces: `card`, `section`, `actionBar`, `breadcrumb`, `pageHeader`, `heroBanner`, `statusBar`, `statusItem`
 - Icons: `koraIcon`, `iconButton`, `setKoraIcon`, `clearKoraIcon`
 - Semantic display: `badge`, `chip`, `metricCard`, `alertBanner`, `ComponentTone`
 
@@ -277,6 +277,9 @@ Main API:
 - `ResourceExplorer`
 - `ResourceExplorerBuilder`
 - `ResourceContextMenuBuilder`
+- `ResourceExplorer.breadcrumb(...)`, `hideBreadcrumb()`
+- `ResourceExplorer.selectedItem()`, `selectedPath()`, `selectedPathText(...)`, `selectPath(...)`
+- `ResourceExplorer.expandSelected()`, `collapseSelected()`, `collapseAll()`
 
 Guidelines:
 
@@ -292,7 +295,12 @@ Main API:
 - `dev.korafx.datagrid.dataGrid`
 - `dev.korafx.datagrid.editableTable`
 - `DataGrid`
+- `DataGridSelectionSummary`
 - `DataGridBuilder`
+- `DataGridBuilder.selectionSummary(...)`
+- `DataGridBuilder.toolbarBatchAction(...)`
+- `DataGridToolbarBuilder.batchAction(...)`
+- `DataGrid.selectedItems()`
 - `EditableTableBuilder`
 
 Guidelines:
@@ -310,12 +318,32 @@ Main API:
 - `dev.korafx.sourceeditor.sourceEditor`
 - `dev.korafx.sourceeditor.queryEditor`
 - `CodeEditor`
+- `CodeEditorPosition`
 - `SourceEditor`
 - `SourceDiagnostic`
+- `CodeEditor.goTo(line, column)`, `selectLine(line)`, `find(...)`, `findNext(...)`, `findPrevious(...)`
+- `CodeEditor.showSearchBar(...)`, `hideSearchBar()`, `setLineNumbersVisible(...)`, `setWrapText(...)`
+- `SourceEditor.jumpToDiagnostic(...)`, `onDiagnosticSelected { ... }`
+
+Example:
+
+```kotlin
+sourceEditor(
+    title = "Main.kt",
+    text = sourceText,
+    language = "kotlin",
+    showSearch = true,
+) {
+    diagnostic(3, 12, "Unused value", ComponentTone.WARNING)
+    onDiagnosticSelected { diagnostic ->
+        println("Jumped to ${diagnostic.line}:${diagnostic.column}")
+    }
+}
+```
 
 Guidelines:
 
-- Use this module for source previews, simple text/code editing, SQL query panels, diagnostics, and editor result slots.
+- Use this module for source previews, simple text/code editing, SQL query panels, diagnostics, find/navigation, and editor result slots.
 - Keep heavyweight editor evolution here instead of adding editor-specific APIs to `korafx-components`.
 
 ## korafx-workspace

@@ -15,6 +15,9 @@ object WorkbenchIcons {
     val Warning: BootstrapIcons = BootstrapIcons.INFO_CIRCLE
     val Home: BootstrapIcons = BootstrapIcons.HOUSE
     val Route: BootstrapIcons = BootstrapIcons.SIGNPOST_SPLIT
+    val Editor: BootstrapIcons = BootstrapIcons.FILE_CODE
+    val Workspace: BootstrapIcons = BootstrapIcons.LAYOUT_SPLIT
+    val Database: BootstrapIcons = BootstrapIcons.TABLE
 
     fun route(route: WorkbenchRoute): BootstrapIcons =
         when (route) {

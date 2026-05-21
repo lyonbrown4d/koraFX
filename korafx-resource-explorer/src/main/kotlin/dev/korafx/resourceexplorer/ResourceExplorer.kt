@@ -4,6 +4,7 @@ import dev.korafx.dsl.NodeContainerBuilder
 import dev.korafx.dsl.styleClass
 import javafx.scene.Node
 import javafx.scene.control.ContextMenu
+import javafx.scene.control.Label
 import javafx.scene.control.MenuItem
 import javafx.scene.control.SeparatorMenuItem
 import javafx.scene.control.TextField
@@ -22,6 +23,7 @@ class ResourceExplorer<T> internal constructor(
     searchPrompt: String,
 ) : VBox(8.0) {
     val searchField: TextField = TextField()
+    val breadcrumbLabel: Label = Label()
     val treeView: TreeView<T> = TreeView()
 
     private val rootItem = TreeItem<T>().apply {
@@ -33,6 +35,7 @@ class ResourceExplorer<T> internal constructor(
     private var rowActionHandler: ((T) -> Unit)? = null
     private var rowClickCount: Int = 2
     private var rowMouseButton: MouseButton = MouseButton.PRIMARY
+    private var breadcrumbSeparator: String = " / "
 
     init {
         styleClass("resource-explorer")
@@ -50,6 +53,13 @@ class ResourceExplorer<T> internal constructor(
             }
         }
 
+        children += breadcrumbLabel.apply {
+            styleClass("resource-explorer-breadcrumb")
+            isVisible = false
+            isManaged = false
+            maxWidth = Double.MAX_VALUE
+        }
+
         children += treeView.apply {
             styleClass("resource-explorer-tree")
             root = rootItem
@@ -60,6 +70,9 @@ class ResourceExplorer<T> internal constructor(
         }
 
         installCellFactory()
+        treeView.selectionModel.selectedItemProperty().addListener { _, _, _ ->
+            updateBreadcrumb()
+        }
         rebuildTree()
     }
 
@@ -94,8 +107,49 @@ class ResourceExplorer<T> internal constructor(
         searchField.text = text
     }
 
+    fun setBreadcrumbVisible(visible: Boolean) {
+        breadcrumbLabel.isVisible = visible
+        breadcrumbLabel.isManaged = visible
+        updateBreadcrumb()
+    }
+
+    fun setBreadcrumbSeparator(separator: String) {
+        breadcrumbSeparator = separator
+        updateBreadcrumb()
+    }
+
+    fun selectedItem(): T? =
+        treeView.selectionModel.selectedItem?.value
+
+    fun selectedPath(): List<T> =
+        pathOf(treeView.selectionModel.selectedItem)
+
+    fun selectedPathText(separator: String = breadcrumbSeparator): String =
+        selectedPath().joinToString(separator) { textOf(it) }
+
+    fun selectPath(path: Iterable<T>): Boolean {
+        val target = findTreeItem(path.toList()) ?: return false
+        expandAncestors(target)
+        treeView.selectionModel.select(target)
+        treeView.scrollTo(treeView.getRow(target))
+        return true
+    }
+
     fun expandAll() {
         rootItem.expandRecursively()
+    }
+
+    fun collapseAll() {
+        rootItem.children.forEach { it.collapseRecursively() }
+        rootItem.isExpanded = true
+    }
+
+    fun expandSelected() {
+        treeView.selectionModel.selectedItem?.expandRecursively()
+    }
+
+    fun collapseSelected() {
+        treeView.selectionModel.selectedItem?.collapseRecursively()
     }
 
     fun onSelect(handler: (T?) -> Unit) {
@@ -165,6 +219,7 @@ class ResourceExplorer<T> internal constructor(
         val query = searchField.text.orEmpty().trim()
         rootItem.children.setAll(roots.mapNotNull { buildTreeItem(it, query) })
         rootItem.isExpanded = true
+        updateBreadcrumb()
     }
 
     private fun buildTreeItem(
@@ -188,6 +243,45 @@ class ResourceExplorer<T> internal constructor(
     private fun TreeItem<T>.expandRecursively() {
         isExpanded = true
         children.forEach { it.expandRecursively() }
+    }
+
+    private fun TreeItem<T>.collapseRecursively() {
+        children.forEach { it.collapseRecursively() }
+        isExpanded = false
+    }
+
+    private fun updateBreadcrumb() {
+        breadcrumbLabel.text = selectedPathText()
+    }
+
+    private fun pathOf(item: TreeItem<T>?): List<T> {
+        if (item == null || item === rootItem) {
+            return emptyList()
+        }
+
+        val path = mutableListOf<T>()
+        var current: TreeItem<T>? = item
+        while (current != null && current !== rootItem) {
+            current.value?.let(path::add)
+            current = current.parent
+        }
+        return path.asReversed()
+    }
+
+    private fun findTreeItem(path: List<T>): TreeItem<T>? {
+        var current = rootItem
+        for (pathItem in path) {
+            current = current.children.firstOrNull { it.value == pathItem } ?: return null
+        }
+        return current
+    }
+
+    private fun expandAncestors(item: TreeItem<T>) {
+        var current = item.parent
+        while (current != null) {
+            current.isExpanded = true
+            current = current.parent
+        }
     }
 }
 
@@ -220,6 +314,18 @@ class ResourceExplorerBuilder<T> internal constructor(
 
     fun hideSearch() {
         explorer.setSearchVisible(false)
+    }
+
+    fun breadcrumb(
+        separator: String = " / ",
+        visible: Boolean = true,
+    ) {
+        explorer.setBreadcrumbSeparator(separator)
+        explorer.setBreadcrumbVisible(visible)
+    }
+
+    fun hideBreadcrumb() {
+        explorer.setBreadcrumbVisible(false)
     }
 
     fun onSelect(handler: (T?) -> Unit) {
