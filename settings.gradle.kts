@@ -22,6 +22,7 @@ include(
     ":korafx-framework",
     ":korafx-components",
     ":korafx-devtools",
+    ":korafx-macos",
     ":examples:dsl-basic-app",
     ":examples:mvvm-counter-app",
     ":examples:navigation-theme-app",

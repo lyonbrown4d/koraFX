@@ -3,6 +3,7 @@ package dev.korafx.sample.ui
 import dev.korafx.components.actionBar
 import dev.korafx.components.activityTimeline
 import dev.korafx.components.alertBanner
+import dev.korafx.components.appToolbar
 import dev.korafx.components.ComponentTone
 import dev.korafx.components.badge
 import dev.korafx.components.borderLayout
@@ -73,7 +74,6 @@ import dev.korafx.dsl.tableView
 import dev.korafx.dsl.tabPane
 import dev.korafx.dsl.toggleButton
 import dev.korafx.dsl.treeView
-import dev.korafx.dsl.toolbar
 import dev.korafx.dsl.vbox
 import dev.korafx.dsl.workbenchLayout
 import dev.korafx.sample.di.WorkbenchAppGraph
@@ -144,43 +144,44 @@ class WorkbenchRootView(
           }
 
           topBar {
-            toolbar {
-              label("KoraFX") {
-                styleClasses(ThemeStyleClass.Headline)
-              }
-              spacer()
-              comboBox<KoraTheme>(
-                items = themeManager.availableThemes,
-                init = {
-                  prefWidth = 180.0
-                },
-              ) {
-                render { it.displayName }
-                onSelect { theme ->
-                  if (theme != null) {
-                    viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+            appToolbar(
+              title = "KoraFX",
+              subtitle = "Framework workbench sample",
+              icon = WorkbenchIcons.Stable,
+              actions = {
+                comboBox<KoraTheme>(
+                  items = themeManager.availableThemes,
+                  init = {
+                    prefWidth = 180.0
+                  },
+                ) {
+                  render { it.displayName }
+                  onSelect { theme ->
+                    if (theme != null) {
+                      viewModel.dispatch(WorkbenchAction.SelectTheme(theme.id))
+                    }
+                  }
+                }.bindSelectedItem(uiScope, themeManager.theme)
+                ghostButton("Next Theme") {
+                  setKoraIcon(WorkbenchIcons.NextTheme)
+                  onAction {
+                    viewModel.dispatch(WorkbenchAction.NextTheme)
                   }
                 }
-              }.bindSelectedItem(uiScope, themeManager.theme)
-              ghostButton("Next Theme") {
-                setKoraIcon(WorkbenchIcons.NextTheme)
-                onAction {
-                  viewModel.dispatch(WorkbenchAction.NextTheme)
+                ghostButton("Toggle Theme") {
+                  setKoraIcon(WorkbenchIcons.Theme)
+                  onAction {
+                    viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                  }
                 }
-              }
-              ghostButton("Toggle Theme") {
-                setKoraIcon(WorkbenchIcons.Theme)
-                onAction {
-                  viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                ghostButton("Commands") {
+                  setKoraIcon(WorkbenchIcons.Commands)
+                  onAction {
+                    commandPaletteHost.show()
+                  }
                 }
-              }
-              ghostButton("Commands") {
-                setKoraIcon(WorkbenchIcons.Commands)
-                onAction {
-                  commandPaletteHost.show()
-                }
-              }
-            }
+              },
+            )
           }
 
           navigation {

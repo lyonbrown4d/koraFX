@@ -1237,6 +1237,89 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("effect", elevation.dropdown)
     }
 
+    rule(".kora-window-frame") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".kora-window-frame.kora-window-transparent") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".kora-window-frame.kora-window-rounded") {
+        radius(context.radii.large)
+    }
+
+    rule(".kora-window-titlebar") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(0, spacing.sm)
+    }
+
+    rule(".kora-window-title-stack", ".kora-window-titlebar-content", ".kora-window-controls") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".kora-window-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-size", "${typography.baseSize}px")
+        fx("font-weight", "800")
+    }
+
+    rule(".kora-window-subtitle") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 2}px")
+    }
+
+    rule(".button.kora-window-button") {
+        fx("background-color", "transparent")
+        fx("text-fill", colors.textSecondary)
+        fx("border-color", "transparent")
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "800")
+        radius(context.smallRadius)
+        padding(spacing.xs, spacing.sm)
+    }
+
+    rule(".button.kora-window-button:hover") {
+        fx("background-color", states.surfaceHover)
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".button.kora-window-button:pressed") {
+        fx("background-color", states.controlPressed)
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".button.kora-window-close-button:hover") {
+        fx("background-color", colors.danger)
+        fx("text-fill", "white")
+    }
+
+    rule(".app-toolbar") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(spacing.md, spacing.xl)
+    }
+
+    rule(".toolbar-group", ".app-toolbar-navigation", ".app-toolbar-content", ".app-toolbar-actions") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".app-toolbar-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-size", "${typography.baseSize + 3}px")
+        fx("font-weight", "900")
+    }
+
+    rule(".app-toolbar-title .ikonli-font-icon") {
+        fx("icon-color", colors.primary)
+    }
+
+    rule(".app-toolbar-subtitle") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+    }
+
     rule(".korafx-devtools-dock-host") {
         fx("background-color", colors.surface)
     }

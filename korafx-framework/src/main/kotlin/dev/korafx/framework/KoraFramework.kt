@@ -8,10 +8,13 @@ import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.SceneThemeController
 import dev.korafx.framework.theme.ThemeManager
 import javafx.application.Application
+import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.layout.Pane
+import javafx.scene.paint.Color
 import javafx.stage.Stage
+import javafx.stage.StageStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,11 +30,53 @@ import org.koin.dsl.module
 import java.util.concurrent.atomic.AtomicReference
 import java.util.prefs.Preferences
 
-internal data class KoraWindowSpec(
+data class KoraWindowSpec(
     val title: String = "KoraFX",
     val width: Double = 1120.0,
     val height: Double = 720.0,
+    val minWidth: Double = 360.0,
+    val minHeight: Double = 240.0,
+    val resizable: Boolean = true,
+    val titleBar: KoraWindowTitleBarSpec = KoraWindowTitleBarSpec(),
 )
+
+data class KoraWindowTitleBarSpec(
+    val enabled: Boolean = false,
+    val title: String? = null,
+    val subtitle: String? = null,
+    val height: Double = 42.0,
+    val showMinimize: Boolean = true,
+    val showMaximize: Boolean = true,
+    val showClose: Boolean = true,
+    val showTitle: Boolean = true,
+    val chromeMode: KoraWindowChromeMode = KoraWindowChromeMode.AUTO,
+    val controlSide: KoraWindowControlSide = KoraWindowControlSide.AUTO,
+    val dragToMove: Boolean = true,
+    val doubleClickMaximize: Boolean = true,
+    val resizeEdges: Boolean = true,
+    val resizeBorderWidth: Double = 6.0,
+    val cornerRadius: Double = 0.0,
+    val transparentBackground: Boolean = false,
+    val dragOpacity: Double = 1.0,
+    val nativeOptions: Map<String, Any> = emptyMap(),
+    val contentFactory: (KoraApplication.() -> Node)? = null,
+) {
+    inline fun <reified T : Any> nativeOption(key: String): T? =
+        nativeOptions[key] as? T
+}
+
+enum class KoraWindowChromeMode {
+    AUTO,
+    CUSTOM,
+    NATIVE_OVERLAY,
+    NATIVE,
+}
+
+enum class KoraWindowControlSide {
+    AUTO,
+    LEFT,
+    RIGHT,
+}
 
 internal fun <R : Route> koraFrameworkModule(
     initialRoute: R,
@@ -131,15 +176,22 @@ class KoraApplicationBuilder {
 }
 
 interface KoraApplicationPlugin {
+    fun modules(app: KoraApplication): List<Module> = emptyList()
+
     fun onStart(app: KoraApplication) = Unit
 
     fun onStop(app: KoraApplication) = Unit
 }
 
 class KoraWindowBuilder {
+    private val titleBarBuilder = KoraWindowTitleBarBuilder()
+
     var title: String = "KoraFX"
     var width: Double = 1120.0
     var height: Double = 720.0
+    var minWidth: Double = 360.0
+    var minHeight: Double = 240.0
+    var resizable: Boolean = true
 
     fun size(
         width: Double,
@@ -149,12 +201,111 @@ class KoraWindowBuilder {
         this.height = height
     }
 
-    internal fun build(): KoraWindowSpec =
-        KoraWindowSpec(
+    fun minSize(
+        width: Double,
+        height: Double,
+    ) {
+        minWidth = width
+        minHeight = height
+    }
+
+    fun titleBar(configure: KoraWindowTitleBarBuilder.() -> Unit = {}) {
+        titleBarBuilder.enabled = true
+        titleBarBuilder.configure()
+    }
+
+    internal fun build(): KoraWindowSpec {
+        require(width > 0.0 && height > 0.0) {
+            "KoraFX window size must be positive."
+        }
+        require(minWidth > 0.0 && minHeight > 0.0) {
+            "KoraFX minimum window size must be positive."
+        }
+
+        return KoraWindowSpec(
             title = title,
             width = width,
             height = height,
+            minWidth = minWidth,
+            minHeight = minHeight,
+            resizable = resizable,
+            titleBar = titleBarBuilder.build(),
         )
+    }
+}
+
+class KoraWindowTitleBarBuilder {
+    var enabled: Boolean = false
+    var title: String? = null
+    var subtitle: String? = null
+    var height: Double = 42.0
+    var showMinimize: Boolean = true
+    var showMaximize: Boolean = true
+    var showClose: Boolean = true
+    var showTitle: Boolean = true
+    var chromeMode: KoraWindowChromeMode = KoraWindowChromeMode.AUTO
+    var controlSide: KoraWindowControlSide = KoraWindowControlSide.AUTO
+    var dragToMove: Boolean = true
+    var doubleClickMaximize: Boolean = true
+    var resizeEdges: Boolean = true
+    var resizeBorderWidth: Double = 6.0
+    var cornerRadius: Double = 0.0
+    var transparentBackground: Boolean = false
+    var dragOpacity: Double = 1.0
+    private val nativeOptions = linkedMapOf<String, Any>()
+    private var contentFactory: (KoraApplication.() -> Node)? = null
+
+    fun content(factory: KoraApplication.() -> Node) {
+        contentFactory = factory
+    }
+
+    fun nativeOption(
+        key: String,
+        value: Any,
+    ) {
+        require(key.isNotBlank()) {
+            "KoraFX native title bar option key cannot be blank."
+        }
+
+        nativeOptions[key] = value
+    }
+
+    internal fun build(): KoraWindowTitleBarSpec {
+        require(height > 0.0) {
+            "KoraFX title bar height must be positive."
+        }
+        require(resizeBorderWidth >= 0.0) {
+            "KoraFX resize border width must be non-negative."
+        }
+        require(cornerRadius >= 0.0) {
+            "KoraFX title bar corner radius must be non-negative."
+        }
+        require(dragOpacity in 0.0..1.0) {
+            "KoraFX drag opacity must be between 0.0 and 1.0."
+        }
+
+        return KoraWindowTitleBarSpec(
+            enabled = enabled,
+            title = title,
+            subtitle = subtitle,
+            height = height,
+            showMinimize = showMinimize,
+            showMaximize = showMaximize,
+            showClose = showClose,
+            showTitle = showTitle,
+            chromeMode = chromeMode,
+            controlSide = controlSide,
+            dragToMove = dragToMove,
+            doubleClickMaximize = doubleClickMaximize,
+            resizeEdges = resizeEdges,
+            resizeBorderWidth = resizeBorderWidth,
+            cornerRadius = cornerRadius,
+            transparentBackground = transparentBackground,
+            dragOpacity = dragOpacity,
+            nativeOptions = nativeOptions.toMap(),
+            contentFactory = contentFactory,
+        )
+    }
 }
 
 class KoraKoinBuilder {
@@ -271,6 +422,8 @@ class KoraApplication internal constructor(
     val themeController: SceneThemeController,
 ) : AutoCloseable {
     private val persistenceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val activePlugins = mutableListOf<KoraApplicationPlugin>()
+    private val pluginModules = linkedMapOf<KoraApplicationPlugin, List<Module>>()
     private var sceneValue: Scene? = null
 
     val uiScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.JavaFx)
@@ -281,7 +434,26 @@ class KoraApplication internal constructor(
     val scene: Scene
         get() = sceneValue ?: error("Scene is not attached yet.")
 
+    val window: KoraWindowSpec
+        get() = spec.window
+
     inline fun <reified T : Any> get(): T = koin.get()
+
+    fun loadModules(modules: Iterable<Module>) {
+        koin.loadModules(modules.toList())
+    }
+
+    fun loadModules(vararg modules: Module) {
+        loadModules(modules.asIterable())
+    }
+
+    fun unloadModules(modules: Iterable<Module>) {
+        koin.unloadModules(modules.toList())
+    }
+
+    fun unloadModules(vararg modules: Module) {
+        unloadModules(modules.asIterable())
+    }
 
     internal fun attach(scene: Scene) {
         sceneValue = scene
@@ -306,8 +478,15 @@ class KoraApplication internal constructor(
         }
         spec.plugins.forEach { plugin ->
             runCatching {
+                val modules = plugin.modules(this)
+                if (modules.isNotEmpty()) {
+                    loadModules(modules)
+                    pluginModules[plugin] = modules
+                }
                 plugin.onStart(this)
+                activePlugins += plugin
             }.onFailure { error ->
+                pluginModules.remove(plugin)?.let(::unloadModules)
                 System.err.println("KoraFX plugin start failed: ${error.message}")
                 error.printStackTrace()
             }
@@ -315,12 +494,22 @@ class KoraApplication internal constructor(
     }
 
     override fun close() {
-        spec.plugins.asReversed().forEach { plugin ->
+        activePlugins.asReversed().forEach { plugin ->
             runCatching {
                 plugin.onStop(this)
             }.onFailure { error ->
                 System.err.println("KoraFX plugin stop failed: ${error.message}")
                 error.printStackTrace()
+            }
+        }
+        activePlugins.asReversed().forEach { plugin ->
+            pluginModules.remove(plugin)?.let { modules ->
+                runCatching {
+                    unloadModules(modules)
+                }.onFailure { error ->
+                    System.err.println("KoraFX plugin module unload failed: ${error.message}")
+                    error.printStackTrace()
+                }
             }
         }
         spec.stopHandlers.asReversed().forEach { handler ->
@@ -400,6 +589,16 @@ class KoraFxApplication : Application() {
 
     override fun start(stage: Stage) {
         val spec = pendingApplication.get() ?: error("No KoraFX application configuration found.")
+        val customChrome = spec.window.usesCustomChrome()
+        if (customChrome) {
+            stage.initStyle(
+                if (spec.window.titleBar.transparentBackground || spec.window.titleBar.cornerRadius > 0.0) {
+                    StageStyle.TRANSPARENT
+                } else {
+                    StageStyle.UNDECORATED
+                },
+            )
+        }
         val themeManager = spec.theme.createManager()
         val frameworkModule = koraFrameworkModule(
             initialRoute = spec.navigation.initialRoute,
@@ -422,13 +621,31 @@ class KoraFxApplication : Application() {
         )
         app = koraApp
 
-        val root = spec.contentFactory?.invoke(koraApp) ?: Pane()
+        stage.title = spec.window.title
+        stage.isResizable = spec.window.resizable
+        stage.minWidth = spec.window.minWidth
+        stage.minHeight = spec.window.minHeight
+
+        val contentRoot = spec.contentFactory?.invoke(koraApp) ?: Pane()
+        val root =
+            if (customChrome) {
+                KoraWindowChrome.wrap(
+                    app = koraApp,
+                    stage = stage,
+                    content = contentRoot,
+                    spec = spec.window,
+                )
+            } else {
+                contentRoot
+            }
         val scene = Scene(root, spec.window.width, spec.window.height)
+        if (customChrome && (spec.window.titleBar.transparentBackground || spec.window.titleBar.cornerRadius > 0.0)) {
+            scene.fill = Color.TRANSPARENT
+        }
         koraApp.attach(scene)
         koraApp.themeController.bind(scene)
         koraApp.start()
 
-        stage.title = spec.window.title
         stage.scene = scene
         stage.show()
     }
@@ -438,3 +655,15 @@ class KoraFxApplication : Application() {
         app = null
     }
 }
+
+internal fun KoraWindowSpec.usesCustomChrome(): Boolean =
+    titleBar.enabled &&
+        when (titleBar.chromeMode) {
+            KoraWindowChromeMode.CUSTOM -> true
+            KoraWindowChromeMode.NATIVE -> false
+            KoraWindowChromeMode.NATIVE_OVERLAY -> !isMacOs()
+            KoraWindowChromeMode.AUTO -> !isMacOs()
+        }
+
+private fun isMacOs(): Boolean =
+    System.getProperty("os.name").contains("mac", ignoreCase = true)

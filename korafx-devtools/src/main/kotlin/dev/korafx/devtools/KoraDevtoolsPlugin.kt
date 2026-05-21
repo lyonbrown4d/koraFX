@@ -2,35 +2,33 @@ package dev.korafx.devtools
 
 import dev.korafx.framework.KoraApplication
 import dev.korafx.framework.KoraApplicationPlugin
-import org.koin.core.KoinApplication
-import org.koin.dsl.koinApplication
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
 internal class KoraDevtoolsPlugin(
     private val spec: KoraDevtoolsSpec,
 ) : KoraApplicationPlugin {
-    private var koinApplication: KoinApplication? = null
+    override fun modules(app: KoraApplication): List<Module> =
+        if (spec.enabled) {
+            listOf(devtoolsModule(app, spec))
+        } else {
+            emptyList()
+        }
 
     override fun onStart(app: KoraApplication) {
         if (!spec.enabled) {
             return
         }
 
-        koinApplication = koinApplication {
-            modules(devtoolsModule(app, spec))
-        }.also { graph ->
-            graph.koin.get<KoraDevtoolsController>().install()
-        }
+        app.get<KoraDevtoolsController>().install()
     }
 
     override fun onStop(app: KoraApplication) {
-        koinApplication?.let { graph ->
-            runCatching {
-                graph.koin.get<KoraDevtoolsController>().dispose()
-            }
-            graph.close()
+        if (!spec.enabled) {
+            return
         }
-        koinApplication = null
+
+        app.get<KoraDevtoolsController>().dispose()
     }
 }
 

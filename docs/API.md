@@ -11,6 +11,7 @@ implementation("io.github.daiyuang:korafx-components")
 Runtime code is intentionally split into four primary publishable modules: `korafx-dsl`, `korafx-navigation`, `korafx-framework`, and `korafx-components`.
 `korafx-components` exposes Ikonli JavaFX core for icon-ready components, but applications should choose their own icon pack dependency.
 `korafx-devtools` is an optional debug-only module and should not be required by production applications.
+`korafx-macos` is an optional platform module for macOS native titlebar integration.
 
 ## korafx-framework
 
@@ -29,13 +30,17 @@ Main API:
 - `koraApplication { ... }`
 - `KoraApplication`
 - `KoraApplicationBuilder`
-- `window { title / width / height / size(...) }`
+- `KoraWindowChromeMode`
+- `KoraWindowControlSide`
+- `window { title / width / height / size(...) / minSize(...) / resizable / titleBar { ... } }`
 - `installKoin { modules(...) }`
 - `theme { presets(...); default(...); persistSelection = true }`
 - `navigation { initialRoute = ...; initialPath = ...; routes(...); persistLocation = true }`
 - `content { ... }`
 - `lifecycle { close<T>(); cancel<T>(); onStop { ... } }`
 - `install(plugin)`
+- `KoraApplicationPlugin.modules(app)` for plugin-owned Koin modules
+- `KoraApplication.loadModules(...)`, `unloadModules(...)`
 - `ViewModel<S, A, E>`
 - `ViewState`, `UiAction`, `UiEvent`
 - `Route`, `PathRoute`, `RouteMeta`, `NavigationLocation<R>`, `Navigator<R>`, `NavigationState<R>` (from `dev.korafx.navigation`)
@@ -54,6 +59,24 @@ fun main(args: Array<String>) = koraApplication(args) {
         title = "KoraFX Workbench"
         width = 1280.0
         height = 820.0
+        minSize(860.0, 560.0)
+        titleBar {
+            subtitle = "Framework + Components"
+            chromeMode = KoraWindowChromeMode.NATIVE_OVERLAY
+            controlSide = KoraWindowControlSide.AUTO
+            cornerRadius = 14.0
+            transparentBackground = true
+            dragOpacity = 0.92
+            macos {
+                preserveTrafficLights = true
+                fullSizeContentView = true
+                transparentTitlebar = true
+                trafficLightInset(14.0, 12.0)
+            }
+            content {
+                statusItem("Custom titlebar slot", ComponentTone.INFO)
+            }
+        }
     }
 
     installKoin {
@@ -94,8 +117,13 @@ Guidelines:
 - Use `Navigator` as the single source of route state.
 - Use `ThemeManager` as the single source of theme state.
 - Use `KoraApplication.uiScope` for JavaFX UI bindings; the framework cancels it during shutdown.
+- Use `window { titleBar { ... } }` for cross-platform window chrome; `KoraWindowChromeMode.AUTO` preserves native macOS traffic lights and uses custom chrome on Windows/Linux.
+- Use `KoraWindowChromeMode.CUSTOM` to force self-drawn controls on every OS, `NATIVE` to keep the platform titlebar, or `NATIVE_OVERLAY` for optional platform modules such as `korafx-macos`.
+- In pure JavaFX, Electron-style macOS traffic-light overlay with scene content inside the native titlebar requires native NSWindow integration. Add `korafx-macos` and `installMacosChrome()` before using `titleBar { macos { ... } }`.
+- Use `cornerRadius`, `transparentBackground`, and `dragOpacity` when the application wants rounded transparent chrome or a translucent drag feedback.
 - Keep screen state in ViewModels and render it through `stateText`, `stateList`, `stateVisible`, and related DSL bindings.
 - Register closeable app services with `lifecycle { close<T>() }` instead of writing raw shutdown handlers when possible.
+- Let optional plugins return their own Koin modules from `KoraApplicationPlugin.modules(app)` when they need app-scoped services.
 - Keep command palette commands in application/component modules for now; do not put command registration in the framework entry.
 - Use `install(plugin)` for optional framework add-ons; core framework should not directly depend on optional modules.
 
@@ -128,7 +156,7 @@ Guidelines:
 
 Main API:
 
-- Shell: `appShell`
+- Shell: `appShell`, `appToolbar`, `toolbarGroup`
 - Overlays: `ModalHost`, `modalHost`, `ModalAction`
 - Layout: `borderLayout`, `workspaceLayout`, `WorkspaceLayout`
 - Resource browsing: `resourceExplorer`, `ResourceExplorer`, `ResourceExplorerBuilder`
@@ -221,7 +249,46 @@ Initial panels:
 - DevTools opens as a resizable bottom dock by default. Use `LEFT`, `RIGHT`, `BOTTOM`, or `WINDOW`, or switch placement from the DevTools header at runtime.
 - Node picking is in-process. DevTools hit-tests the application scene by screen coordinates and renders highlights in an application overlay, so docked and window placements share the same picker behavior.
 - The DevTools surface is implemented as an internal KoraFX subapp using `workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
+- DevTools plugin services are loaded into the host `KoraApplication` Koin graph and unloaded during application shutdown.
 - Built-in text supports `SYSTEM`, `ENGLISH`, and `CHINESE`.
+
+## korafx-macos
+
+`korafx-macos` is an optional platform module for macOS native window chrome. The current JVM API is stable, while the Objective-C++/JNI bridge can be filled in behind `KoraMacosNativeBridge`.
+
+Main API:
+
+- `installMacosChrome()`
+- `titleBar { macos { ... } }`
+- `KoraMacosChromeSpec`
+- `KoraMacosChromeBuilder`
+
+Example:
+
+```kotlin
+dependencies {
+    implementation("io.github.daiyuang:korafx-macos")
+}
+
+fun main(args: Array<String>) = koraApplication(args) {
+    installMacosChrome {
+        preserveTrafficLights = true
+    }
+
+    window {
+        titleBar {
+            chromeMode = KoraWindowChromeMode.NATIVE_OVERLAY
+            macos {
+                fullSizeContentView = true
+                transparentTitlebar = true
+                trafficLightInset(14.0, 12.0)
+            }
+        }
+    }
+}
+```
+
+On non-macOS platforms, `NATIVE_OVERLAY` falls back to the framework custom chrome path.
 
 ## Naming Checklist
 

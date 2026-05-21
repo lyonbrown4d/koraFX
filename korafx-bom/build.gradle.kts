@@ -11,5 +11,6 @@ dependencies {
         api(project(":korafx-framework"))
         api(project(":korafx-components"))
         api(project(":korafx-devtools"))
+        api(project(":korafx-macos"))
     }
 }

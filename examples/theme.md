@@ -97,7 +97,7 @@ You can omit `spacing`, `radii`, `states`, and `elevation`; defaults are derived
 ### Components covered by built-in theme stylesheet
 
 The built-in theme currently styles the following DSL and component class groups:
-- core surfaces: `panel`, `card`, `form`, `status-bar`, `app-shell`, `modal-card`, etc.
+- core surfaces: `panel`, `card`, `form`, `status-bar`, `app-toolbar`, `kora-window-titlebar`, `app-shell`, `modal-card`, etc.
 - controls and groups: `nav-rail`, `action-bar`, `toast`, `feedback`, `submit-bar`, `route-state-host`
 - component labels and helper texts: `headline`, `muted`, `section-title`, `form-label`, `validation-message`
 

@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":korafx-framework"))
     implementation(project(":korafx-components"))
     implementation(project(":korafx-devtools"))
+    implementation(project(":korafx-macos"))
     implementation(libs.ikonli.bootstrapicons.pack)
 }
 

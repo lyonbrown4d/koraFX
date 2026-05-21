@@ -22,6 +22,20 @@ class KoraApplicationBuilderTest {
             window {
                 title = "Workbench"
                 size(1280.0, 820.0)
+                minSize(720.0, 480.0)
+                resizable = true
+                titleBar {
+                    subtitle = "Sample"
+                    chromeMode = KoraWindowChromeMode.CUSTOM
+                    controlSide = KoraWindowControlSide.LEFT
+                    resizeBorderWidth = 8.0
+                    cornerRadius = 14.0
+                    transparentBackground = true
+                    dragOpacity = 0.9
+                    content {
+                        Pane()
+                    }
+                }
             }
             installKoin {
                 modules(module)
@@ -55,6 +69,18 @@ class KoraApplicationBuilderTest {
         assertEquals("Workbench", spec.window.title)
         assertEquals(1280.0, spec.window.width)
         assertEquals(820.0, spec.window.height)
+        assertEquals(720.0, spec.window.minWidth)
+        assertEquals(480.0, spec.window.minHeight)
+        assertTrue(spec.window.resizable)
+        assertTrue(spec.window.titleBar.enabled)
+        assertEquals("Sample", spec.window.titleBar.subtitle)
+        assertEquals(KoraWindowChromeMode.CUSTOM, spec.window.titleBar.chromeMode)
+        assertEquals(KoraWindowControlSide.LEFT, spec.window.titleBar.controlSide)
+        assertEquals(8.0, spec.window.titleBar.resizeBorderWidth)
+        assertEquals(14.0, spec.window.titleBar.cornerRadius)
+        assertTrue(spec.window.titleBar.transparentBackground)
+        assertEquals(0.9, spec.window.titleBar.dragOpacity)
+        assertNotNull(spec.window.titleBar.contentFactory)
         assertEquals(listOf(module), spec.modules)
         assertEquals(BuiltInThemes.MaterialLight, spec.theme.defaultTheme)
         assertTrue(spec.theme.persistSelection)
@@ -68,6 +94,25 @@ class KoraApplicationBuilderTest {
         assertNotNull(spec.contentFactory)
         assertEquals(1, spec.plugins.size)
         assertEquals(2, spec.stopHandlers.size)
+    }
+
+    @Test
+    fun `window chrome mode controls whether custom chrome is used`() {
+        val custom = KoraWindowSpec(
+            titleBar = KoraWindowTitleBarSpec(
+                enabled = true,
+                chromeMode = KoraWindowChromeMode.CUSTOM,
+            ),
+        )
+        val native = KoraWindowSpec(
+            titleBar = KoraWindowTitleBarSpec(
+                enabled = true,
+                chromeMode = KoraWindowChromeMode.NATIVE,
+            ),
+        )
+
+        assertTrue(custom.usesCustomChrome())
+        assertTrue(!native.usesCustomChrome())
     }
 
     @Test

@@ -312,20 +312,20 @@ val notifications = ToastHost()
 
 val root = appShell {
     topBar {
-        toolbar {
-            label("KoraFX") {
-                styleClasses("headline")
-            }
-            spacer()
-            ghostButton("Toggle Theme") {
-                onAction {
-                    notifications.show(
-                        message = "Theme switched.",
-                        tone = ToastTone.SUCCESS,
-                    )
+        appToolbar(
+            title = "KoraFX",
+            subtitle = "Workbench",
+            actions = {
+                ghostButton("Toggle Theme") {
+                    onAction {
+                        notifications.show(
+                            message = "Theme switched.",
+                            tone = ToastTone.SUCCESS,
+                        )
+                    }
                 }
-            }
-        }
+            },
+        )
     }
 
     navigation {
