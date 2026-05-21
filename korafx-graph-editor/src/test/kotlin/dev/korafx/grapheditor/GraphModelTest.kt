@@ -34,7 +34,7 @@ class GraphModelTest {
 
         graph.removeNode(source)
 
-        assertEquals(2, graph.nodes.size)
+        assertEquals(1, graph.nodes.size)
         assertEquals(0, graph.edges.size)
         assertNull(graph.edgeOf(link.id))
         assertNull(graph.nodeOf("source"))
@@ -58,7 +58,7 @@ class GraphModelTest {
         assertTrue(graph.deleteSelected())
         assertEquals(0, graph.edges.size)
         assertNull(graph.selectedEdge)
-        assertEquals(1, graph.nodes.size)
+        assertEquals(2, graph.nodes.size)
         assertFalse(graph.deleteSelected())
     }
 

@@ -31,3 +31,30 @@ val demo = graphEditorDemo() // ready-to-run three-node sample
 - Add nodes and connect nodes through handles or click-select chaining.
 - Move nodes by dragging, select nodes/edges, delete selected with Delete/Backspace.
 - Optional pan + zoom (Ctrl + mouse wheel, middle button drag).
+
+## Styling
+
+- Built-in style is loaded automatically from `dev/korafx/grapheditor/graph-editor.css`.
+- You can still overlay or replace styles from application-level CSS via JavaFX stylesheet APIs.
+
+```kotlin
+val editor = graphEditor()
+val theme = javaClass.getResource("/app/styles/graph-editor-theme.css")
+theme?.let { editor.stylesheets.add(it.toExternalForm()) }
+```
+
+## Style classes
+
+- `graph-editor`
+- `graph-editor-node`
+- `graph-editor-node-container`
+- `graph-editor-node-group`
+- `graph-editor-node-label`
+- `graph-editor-handle`
+- `graph-editor-handle-selected`
+- `graph-editor-node-selected`
+- `graph-editor-edge`
+- `graph-editor-edge-arrow`
+- `graph-editor-edge-label`
+- `graph-editor-edge-selected`
+- `graph-editor-connection-preview`

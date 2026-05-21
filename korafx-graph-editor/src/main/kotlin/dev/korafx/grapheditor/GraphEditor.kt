@@ -12,7 +12,6 @@ import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.Pane
-import javafx.scene.paint.Color
 import javafx.scene.shape.Circle
 import javafx.scene.shape.Line
 import javafx.scene.shape.Polygon
@@ -22,6 +21,7 @@ import kotlin.math.sqrt
 private const val HANDLE_RADIUS = 7.0
 private const val MIN_ZOOM = 0.2
 private const val MAX_ZOOM = 3.0
+private const val DEFAULT_STYLESHEET = "/dev/korafx/grapheditor/graph-editor.css"
 
 class GraphEditor internal constructor(
     initialGraph: Graph = Graph(),
@@ -97,15 +97,17 @@ class GraphEditor internal constructor(
         prefHeight = Double.MAX_VALUE
         maxWidth = Double.MAX_VALUE
         maxHeight = Double.MAX_VALUE
+        javaClass.getResource(DEFAULT_STYLESHEET)?.toExternalForm()?.let { stylesheet ->
+            stylesheets += stylesheet
+        }
 
         viewport.children.add(connectionPreview)
         viewport.isPickOnBounds = true
         children += viewport
 
         connectionPreview.isVisible = false
-        connectionPreview.stroke = Color.web("#2563eb")
-        connectionPreview.strokeWidth = 2.0
         connectionPreview.isMouseTransparent = true
+        connectionPreview.styleClass("graph-editor-connection-preview")
 
         graph.selectedNodeProperty.addListener(selectionNodeListener)
         graph.selectedEdgeProperty.addListener(selectionEdgeListener)
@@ -225,11 +227,8 @@ class GraphEditor internal constructor(
 
         val body = Rectangle().apply {
             styleClass("graph-editor-node")
-            fill = Color.web("#fbfdff")
-            stroke = Color.web("#2f5d88")
             arcWidth = 14.0
             arcHeight = 14.0
-            strokeWidth = 2.0
         }
 
         val text = Label(node.label).apply {
@@ -240,19 +239,16 @@ class GraphEditor internal constructor(
 
         val inHandle = Circle(HANDLE_RADIUS).apply {
             styleClass("graph-editor-handle")
-            fill = Color.web("#ffffff")
-            stroke = Color.web("#2f5d88")
         }
 
         val outHandle = Circle(HANDLE_RADIUS).apply {
             styleClass("graph-editor-handle")
-            fill = Color.web("#ffffff")
-            stroke = Color.web("#2f5d88")
         }
 
         val root = Group(body, text, inHandle, outHandle).apply {
             isPickOnBounds = true
             styleClass("graph-editor-node-container")
+            styleClass("graph-editor-node-group")
         }
 
         val visual = NodeVisual(node, root, body, text, inHandle, outHandle)
@@ -270,13 +266,10 @@ class GraphEditor internal constructor(
 
         val line = Line().apply {
             styleClass("graph-editor-edge")
-            stroke = Color.web("#2f5d88")
-            strokeWidth = 2.5
         }
 
         val arrow = Polygon().apply {
             styleClass("graph-editor-edge-arrow")
-            fill = Color.web("#2f5d88")
         }
 
         val label = edge.label?.let {
@@ -513,8 +506,10 @@ class GraphEditor internal constructor(
         edgeViews.values.forEach { visual ->
             if (graph.selectedEdge == visual.edge) {
                 visual.line.styleClass.add("graph-editor-edge-selected")
+                visual.arrow.styleClass.add("graph-editor-edge-selected")
             } else {
                 visual.line.styleClass.remove("graph-editor-edge-selected")
+                visual.arrow.styleClass.remove("graph-editor-edge-selected")
             }
         }
     }
