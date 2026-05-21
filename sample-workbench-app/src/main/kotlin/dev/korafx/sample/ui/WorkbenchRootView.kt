@@ -887,7 +887,8 @@ class WorkbenchRootView(
                           feedbackLabel.text = "State: Query stopped."
                         },
                         init = {
-                          prefHeight = 420.0
+                          prefHeight = 560.0
+                          maxWidth = Double.MAX_VALUE
                         },
                       ) {
                         diagnostics(
@@ -906,7 +907,7 @@ class WorkbenchRootView(
                             items = editableModules,
                             showSearch = false,
                             init = {
-                              prefHeight = 160.0
+                              prefHeight = 190.0
                               maxWidth = Double.MAX_VALUE
                             },
                           ) {

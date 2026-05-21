@@ -87,6 +87,7 @@ class SourceEditor internal constructor(
 
         diagnosticsPane.apply {
             styleClass("source-editor-diagnostics")
+            maxWidth = Double.MAX_VALUE
             isVisible = false
             isManaged = false
             children += diagnosticsHeader.apply {
@@ -94,11 +95,13 @@ class SourceEditor internal constructor(
             }
             children += diagnosticsList.apply {
                 styleClass("source-editor-diagnostics-list")
+                maxWidth = Double.MAX_VALUE
             }
         }
 
         resultPane.apply {
             styleClass("source-editor-result")
+            maxWidth = Double.MAX_VALUE
             isVisible = false
             isManaged = false
             children += resultHeader.apply {
@@ -106,6 +109,7 @@ class SourceEditor internal constructor(
             }
             children += resultContent.apply {
                 styleClass("source-editor-result-content")
+                maxWidth = Double.MAX_VALUE
             }
         }
 
@@ -229,15 +233,13 @@ class SourceEditor internal constructor(
         resultContent.children.clear()
         resultHeader.text = title
         if (node != null) {
-            node.styleClass("source-editor-result-node")
-            resultContent.children += node
+            resultContent.children += prepareResultNode(node)
         }
         refreshResultVisibility()
     }
 
     fun addResultNode(node: Node): Node =
-        node.apply {
-            styleClass("source-editor-result-node")
+        prepareResultNode(node).apply {
             resultContent.children += this
             refreshResultVisibility()
         }
@@ -282,6 +284,15 @@ class SourceEditor internal constructor(
         resultPane.isVisible = visible
         resultPane.isManaged = visible
     }
+
+    private fun prepareResultNode(node: Node): Node =
+        node.apply {
+            styleClass("source-editor-result-node")
+            if (this is Region) {
+                maxWidth = Double.MAX_VALUE
+                VBox.setVgrow(this, Priority.SOMETIMES)
+            }
+        }
 }
 
 class SourceEditorBuilder internal constructor(

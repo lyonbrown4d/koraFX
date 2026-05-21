@@ -5,6 +5,8 @@ import dev.korafx.dsl.panel
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.layout.HBox
+import javafx.scene.layout.Region
+import javafx.scene.layout.VBox
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -53,6 +55,23 @@ class SourceEditorTest {
             assertTrue(editor.resultPane.isVisible)
             assertEquals("Output", editor.resultHeader.text)
             assertEquals("Build succeeded", assertIs<Label>(editor.resultContent.children.single()).text)
+            assertEquals(Double.MAX_VALUE, editor.resultPane.maxWidth)
+            assertEquals(Double.MAX_VALUE, editor.resultContent.maxWidth)
+        }
+    }
+
+    @Test
+    fun `source editor result nodes fill the result slot`() {
+        FxTestSupport.runOnFxThread {
+            val result = Region()
+            val editor = sourceEditor(text = "select 1") {
+                result("Rows", result)
+            }
+
+            assertTrue("source-editor-result-node" in result.styleClass)
+            assertEquals(Double.MAX_VALUE, result.maxWidth)
+            assertEquals(javafx.scene.layout.Priority.SOMETIMES, VBox.getVgrow(result))
+            assertEquals(result, editor.resultContent.children.single())
         }
     }
 
