@@ -28,7 +28,13 @@ sealed class WorkbenchRoute(
             Demonstrated modules:
             - korafx-dsl
             - korafx-framework
+            - korafx-command-palette
             - korafx-components
+            - korafx-data-grid
+            - korafx-inspector-panel
+            - korafx-resource-explorer
+            - korafx-source-editor
+            - korafx-workspace
             """.trimIndent(),
     )
 

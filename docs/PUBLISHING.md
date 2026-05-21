@@ -50,7 +50,15 @@ With the BOM, omit repeated module versions:
 ```properties
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
 implementation("io.github.daiyuang:korafx-framework")
+implementation("io.github.daiyuang:korafx-navigation")
+implementation("io.github.daiyuang:korafx-command-palette")
 implementation("io.github.daiyuang:korafx-components")
+implementation("io.github.daiyuang:korafx-data-grid")
+implementation("io.github.daiyuang:korafx-inspector-panel")
+implementation("io.github.daiyuang:korafx-resource-explorer")
+implementation("io.github.daiyuang:korafx-source-editor")
+implementation("io.github.daiyuang:korafx-workspace")
+testImplementation("io.github.daiyuang:korafx-test")
 ```
 
 Local validation:

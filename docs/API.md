@@ -5,11 +5,20 @@ KoraFX is now oriented as a Kotlin-first JavaFX application framework. The defau
 ```kotlin
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
 implementation("io.github.daiyuang:korafx-framework")
+implementation("io.github.daiyuang:korafx-navigation") // optional direct navigation core + UI
+implementation("io.github.daiyuang:korafx-command-palette") // optional advanced command surfaces
 implementation("io.github.daiyuang:korafx-components")
+implementation("io.github.daiyuang:korafx-data-grid") // optional advanced table/grid surfaces
+implementation("io.github.daiyuang:korafx-inspector-panel") // optional advanced inspector/detail surfaces
+implementation("io.github.daiyuang:korafx-resource-explorer") // optional advanced resource tree surfaces
+implementation("io.github.daiyuang:korafx-source-editor") // optional advanced editor surfaces
+implementation("io.github.daiyuang:korafx-workspace") // optional advanced workspace/tab surfaces
+testImplementation("io.github.daiyuang:korafx-test") // optional TestFX-backed JavaFX testing utilities
 ```
 
-Runtime code is intentionally split into four primary publishable modules: `korafx-dsl`, `korafx-navigation`, `korafx-framework`, and `korafx-components`.
-`korafx-components` exposes Ikonli JavaFX core for icon-ready components, but applications should choose their own icon pack dependency.
+Runtime code is intentionally split into focused publishable modules: `korafx-dsl`, `korafx-navigation`, `korafx-framework`, `korafx-components`, and optional advanced modules such as `korafx-command-palette`, `korafx-data-grid`, `korafx-inspector-panel`, `korafx-resource-explorer`, `korafx-source-editor`, and `korafx-workspace`.
+`korafx-test` is a test-scope module for JavaFX component tests and TestFX integration.
+`korafx-navigation` and `korafx-components` expose Ikonli JavaFX core for icon-ready APIs, but applications should choose their own icon pack dependency.
 `korafx-devtools` is an optional debug-only module and should not be required by production applications.
 `korafx-macos` is an optional platform module for macOS native titlebar integration.
 
@@ -150,23 +159,52 @@ Guidelines:
 - Bind state at the component property layer; avoid reflection-driven UI binding.
 - Use `stateful(scope, state) { ... }` only for a local state-aware subtree.
 
+## korafx-navigation
+
+`korafx-navigation` owns both route state and navigation-specific UI. Use it directly for apps that need routing without the full framework, or through `korafx-framework` for the default application stack.
+
+Package layout:
+
+- `dev.korafx.navigation`: route contracts, navigator, path matching, guards, history, route data hosts, router outlets, and navigation UI.
+
+Main API:
+
+- Core: `Route`, `PathRoute`, `RouteMeta`, `RouteQuery`, `NavigationLocation<R>`, `NavigationState<R>`, `Navigator<R>`
+- Navigation actions: `navigate(...)`, `replace(...)`, `navigatePath(...)`, `replacePath(...)`, `back()`, `forward()`
+- Guards and data: `beforeEach(...)`, `beforeEnter(...)`, `beforeLeave(...)`, `routeDataHost`, `routeStateHost`, `RouteDataController`
+- UI: `navigationRail`, `routeButton`, `pathButton`, `routeLink`, `pathLink`, `routeHost`, `routerHost`, `RouterModule`, `routeLazy`
+- Restoration: `routeScrollRestoration`, `routeSelectionRestoration`, `routeFocusRestoration`
+
+Example:
+
+```kotlin
+navigationRail(
+    scope = uiScope,
+    navigator = navigator,
+    icon = { route -> routeIcons[route.id] },
+)
+```
+
+Guidelines:
+
+- Keep all route-aware UI in `korafx-navigation`, not `korafx-components`.
+- Use `Navigator` as the single source of route, path, history, route meta, and route-local restored state.
+- Keep application-level DI and lifecycle wiring in `korafx-framework`; navigation should stay reusable outside the framework entry.
+
 ## korafx-components
 
-`korafx-components` is the optional component layer for real desktop tools and workbench-style applications.
+`korafx-components` is the optional base component layer for real desktop tools and workbench-style applications.
+
+Package layout:
+
+- `dev.korafx.components`: small and medium reusable workbench components.
 
 Main API:
 
 - Shell: `appShell`, `appToolbar`, `toolbarGroup`
 - Overlays: `ModalHost`, `modalHost`, `ModalAction`
-- Layout: `borderLayout`, `workspaceLayout`, `WorkspaceLayout`
-- Resource browsing: `resourceExplorer`, `ResourceExplorer`, `ResourceExplorerBuilder`
-- Data grids: `dataGrid`, `DataGrid`, `DataGridBuilder`, `editableTable`, `EditableTableBuilder`
-- Details: `inspectorPanel`, `InspectorPanel`, `InspectorPanelBuilder`
-- Editor surfaces: `codeEditor`, `sourceEditor`, `queryEditor`, `SourceEditor`, `SourceDiagnostic`
-- Workspaces: `tabWorkspace`, `TabWorkspace`, `TabWorkspaceBuilder`
+- Layout: `borderLayout`
 - Activity: `activityTimeline`, `ActivityTimeline`, `ActivityTimelineBuilder`
-- Commands: `CommandPaletteHost`, `CommandPaletteCommand`, `commandPalette`, `CommandPalette`
-- Navigation: `navigationRail`, `routeButton`, `pathButton`, `routeLink`, `pathLink`, `routeHost`, `routerHost`, `routeDataHost`, `routeStateHost`, `RouterModule`, `RouteDataController`, `routeLazy`, `routeScrollRestoration`, `routeSelectionRestoration`, `routeFocusRestoration`
 - Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
 - Surfaces: `card`, `section`, `actionBar`, `breadcrumb`, `pageHeader`, `statusBar`, `statusItem`
 - Icons: `koraIcon`, `iconButton`, `setKoraIcon`, `clearKoraIcon`
@@ -184,20 +222,154 @@ chip(
     tone = ComponentTone.SUCCESS,
     icon = BootstrapIcons.CHECK_CIRCLE,
 )
-
-navigationRail(
-    scope = uiScope,
-    navigator = navigator,
-    icon = { route -> routeIcons[route.id] },
-)
 ```
 
 Guidelines:
 
 - Components are still JavaFX nodes and should remain composable.
-- Components may accept explicit framework services such as `CoroutineScope`, `Navigator`, `ThemeManager`, and command hosts.
+- Keep large advanced components in independent publishable modules instead of growing `korafx-components`.
+- Components may accept explicit framework services such as `CoroutineScope`, `ThemeManager`, and command hosts.
 - Components should have stable style classes so `korafx-framework` theme services can fully cover them.
 - Keep concrete Ikonli icon packs in application/sample modules; `korafx-components` should only require Ikonli JavaFX core.
+
+## korafx-command-palette
+
+`korafx-command-palette` is an advanced component module for keyboard-first command surfaces. It is published independently so applications can opt into command host and palette UI APIs only when needed.
+
+Main API:
+
+- `dev.korafx.commandpalette.CommandPaletteHost`
+- `dev.korafx.commandpalette.CommandPaletteCommand`
+- `dev.korafx.commandpalette.commandPalette`
+- `CommandPalette`
+- `CommandPaletteBuilder`
+
+Guidelines:
+
+- Use this module for global command menus, navigation launchers, quick actions, and keyboard-driven desktop tools.
+- Keep command discovery, shortcut metadata, scoped commands, and DI/module registration work here instead of adding command APIs to `korafx-components` or `korafx-framework`.
+
+## korafx-inspector-panel
+
+`korafx-inspector-panel` is an advanced component module for detail/property panels. It is published independently so applications can opt into inspector UI APIs only when needed.
+
+Main API:
+
+- `dev.korafx.inspector.inspectorPanel`
+- `InspectorPanel`
+- `InspectorPanelBuilder`
+- `InspectorSectionBuilder`
+- `InspectorMetadataBuilder`
+- `InspectorActionsBuilder`
+
+Guidelines:
+
+- Use this module for selected-resource details, property sheets, metadata panels, object inspectors, and side-detail panes.
+- Keep inspector-specific editing, validation, grouping, schema-driven rendering, and property adapters here instead of adding detail-panel APIs to `korafx-components`.
+
+## korafx-resource-explorer
+
+`korafx-resource-explorer` is an advanced component module for tree-heavy desktop tools. It is published independently so applications can opt into repository/schema/resource browsing APIs only when needed.
+
+Main API:
+
+- `dev.korafx.resourceexplorer.resourceExplorer`
+- `ResourceExplorer`
+- `ResourceExplorerBuilder`
+- `ResourceContextMenuBuilder`
+
+Guidelines:
+
+- Use this module for Git trees, file/project navigators, database schema browsers, and nested resource pickers.
+- Keep explorer-specific search, lazy loading, context menus, selection, drag/drop, and virtualization work here instead of adding tree APIs to `korafx-components`.
+
+## korafx-data-grid
+
+`korafx-data-grid` is an advanced component module for table-heavy desktop tools. It is published independently so applications can opt into grid/editing APIs only when needed.
+
+Main API:
+
+- `dev.korafx.datagrid.dataGrid`
+- `dev.korafx.datagrid.editableTable`
+- `DataGrid`
+- `DataGridBuilder`
+- `EditableTableBuilder`
+
+Guidelines:
+
+- Use this module for query results, admin tables, Git status lists, and editable tabular forms.
+- Keep grid-specific filtering, sorting, validation, selection, and virtualization work here instead of adding table APIs to `korafx-components`.
+
+## korafx-source-editor
+
+`korafx-source-editor` is an advanced component module. It is published independently so applications can opt into editor surfaces without pulling them into the base component artifact.
+
+Main API:
+
+- `dev.korafx.sourceeditor.codeEditor`
+- `dev.korafx.sourceeditor.sourceEditor`
+- `dev.korafx.sourceeditor.queryEditor`
+- `CodeEditor`
+- `SourceEditor`
+- `SourceDiagnostic`
+
+Guidelines:
+
+- Use this module for source previews, simple text/code editing, SQL query panels, diagnostics, and editor result slots.
+- Keep heavyweight editor evolution here instead of adding editor-specific APIs to `korafx-components`.
+
+## korafx-workspace
+
+`korafx-workspace` is an advanced component module for workbench-style applications. It is published independently so applications can opt into workspace shells and tabbed document surfaces only when needed.
+
+Main API:
+
+- `dev.korafx.workspace.workspaceLayout`
+- `dev.korafx.workspace.tabWorkspace`
+- `WorkspaceLayout`
+- `WorkspaceLayoutBuilder`
+- `TabWorkspace`
+- `TabWorkspaceBuilder`
+
+Guidelines:
+
+- Use this module for IDE-like layouts, Git/database workbenches, multi-document tools, and tabbed editors.
+- Keep workspace-specific docking, split panes, tab persistence, and document lifecycle work here instead of adding workbench APIs to `korafx-components`.
+
+## korafx-test
+
+`korafx-test` is a test-scope helper module for JavaFX component tests. It wraps the repeated JavaFX toolkit startup helpers and exposes TestFX JUnit 5 dependencies for robot-based UI tests.
+
+Main API:
+
+- `dev.korafx.test.FxTestSupport.start()`
+- `FxTestSupport.runOnFxThread { ... }`
+- `FxTestSupport.callOnFxThread { ... }`
+- `FxTestSupport.waitForFxCondition { ... }`
+- `FxTestSupport.showStage(root, width, height, title)`
+- `FxRobot.runOnFxThread { ... }`
+- `FxRobot.waitForFxCondition { ... }`
+- `Stage.setTestScene(root, width, height)`
+
+Example:
+
+```kotlin
+class SourceEditorTest {
+    @Test
+    fun `renders editor`() {
+        FxTestSupport.runOnFxThread {
+            val editor = sourceEditor(title = "Query.sql")
+            assertEquals("Query.sql", editor.editor.titleLabel.text)
+        }
+    }
+}
+```
+
+Guidelines:
+
+- Depend on `korafx-test` with `testImplementation`, never from production code.
+- Prefer normal DSL factories in component tests and mount only when Stage/Scene behavior matters.
+- Use TestFX `ApplicationExtension` and `FxRobot` for interaction tests that need real click, key, or focus behavior.
 
 ## korafx-devtools
 
@@ -248,7 +420,7 @@ Initial panels:
 - Pick Node: press `Ctrl+Shift+C` or the `Pick Node` button, then click an application node to select and highlight it.
 - DevTools opens as a resizable bottom dock by default. Use `LEFT`, `RIGHT`, `BOTTOM`, or `WINDOW`, or switch placement from the DevTools header at runtime.
 - Node picking is in-process. DevTools hit-tests the application scene by screen coordinates and renders highlights in an application overlay, so docked and window placements share the same picker behavior.
-- The DevTools surface is implemented as an internal KoraFX subapp using `workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
+- The DevTools surface is implemented as an internal KoraFX subapp using `dev.korafx.workspace.workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
 - DevTools plugin services are loaded into the host `KoraApplication` Koin graph and unloaded during application shutdown.
 - Built-in text supports `SYSTEM`, `ENGLISH`, and `CHINESE`.
 

@@ -1,4 +1,6 @@
-# Navigation And Components Examples
+# Navigation Examples
+
+Navigation core and route-aware UI live in `dev.korafx.navigation`.
 
 ## State Driven Sidebar
 
@@ -84,6 +86,8 @@ val root = workbenchLayout {
 Use `routerHost` when routes should share reusable layout shells. Shells can be nested, and pages render into the nearest layout outlet.
 
 ```kotlin
+import dev.korafx.workspace.workspaceLayout
+
 data object ProjectRoute : PathRoute {
     override val id = "project"
     override val title = "Project"
@@ -567,7 +571,11 @@ val summary = section(
 
 ## Code Editor
 
+Advanced editor APIs live in the independent `korafx-source-editor` artifact under `dev.korafx.sourceeditor`, so source editing can grow independently from the base component package.
+
 ```kotlin
+import dev.korafx.sourceeditor.codeEditor
+
 val editor = codeEditor(
     title = "Kotlin Scratch",
     text = "fun main() {\n    println(\"KoraFX\")\n}",
@@ -587,6 +595,11 @@ editor.markClean()
 ## Source And Query Editor
 
 ```kotlin
+import dev.korafx.datagrid.dataGrid
+import dev.korafx.sourceeditor.SourceDiagnostic
+import dev.korafx.sourceeditor.queryEditor
+import dev.korafx.sourceeditor.sourceEditor
+
 val source = sourceEditor(
     title = "RepositoryConfig.kt",
     text = "data class RepositoryConfig(val branch: String)",
@@ -637,6 +650,8 @@ val query = queryEditor(
 ## Tab Workspace
 
 ```kotlin
+import dev.korafx.workspace.tabWorkspace
+
 val workspace = tabWorkspace(
     emptyText = "Open a file or query...",
 ) {
@@ -713,6 +728,10 @@ val timeline = activityTimeline(
 ## Command Palette
 
 ```kotlin
+import dev.korafx.commandpalette.CommandPaletteCommand
+import dev.korafx.commandpalette.CommandPaletteHost
+import dev.korafx.commandpalette.commandPalette
+
 val paletteHost = CommandPaletteHost(
     listOf(
         CommandPaletteCommand(
@@ -757,7 +776,11 @@ val root = stackPane {
 
 ## Layout And Data Grid
 
+Data grid APIs live in the independent `korafx-data-grid` artifact under `dev.korafx.datagrid`.
+
 ```kotlin
+import dev.korafx.datagrid.dataGrid
+
 data class TaskRow(
     var title: String,
     var owner: String,
@@ -808,9 +831,11 @@ val layout = borderLayout {
 }
 ```
 
-For a full tool-style workbench, use `workspaceLayout` when the UI needs navigation, details, status, and overlay slots:
+For a full tool-style workbench, use `workspaceLayout` from the independent `korafx-workspace` artifact when the UI needs navigation, details, status, and overlay slots:
 
 ```kotlin
+import dev.korafx.workspace.workspaceLayout
+
 val workspace = workspaceLayout {
     topBar {
         label("Git / Database Workspace")
@@ -847,6 +872,8 @@ val workspace = workspaceLayout {
 ## Inspector Panel
 
 ```kotlin
+import dev.korafx.inspector.inspectorPanel
+
 val inspector = inspectorPanel(
     title = "users",
     subtitle = "public.users table",
@@ -871,7 +898,11 @@ val emptyInspector = inspectorPanel(emptyText = "Select a resource to inspect.")
 
 ## Resource Explorer
 
+Resource explorer APIs live in the independent `korafx-resource-explorer` artifact under `dev.korafx.resourceexplorer`.
+
 ```kotlin
+import dev.korafx.resourceexplorer.resourceExplorer
+
 data class Resource(
     val name: String,
     val children: List<Resource> = emptyList(),

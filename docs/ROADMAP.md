@@ -1,12 +1,14 @@
 # KoraFX Roadmap
 
-This roadmap tracks framework and component work for real desktop applications, especially Git source tools and database GUI tools. KoraFX now uses `korafx-framework` as the direct application entry, with `korafx-components` as the optional workbench/component layer.
+This roadmap tracks framework and component work for real desktop applications, especially Git source tools and database GUI tools. KoraFX now uses `korafx-framework` as the direct application entry, `korafx-navigation` for route-aware UI, `korafx-components` as the base workbench/component layer, and independently published modules for large advanced components.
 
 ## Principles
 
 - Components return normal JavaFX nodes and keep native JavaFX APIs accessible.
 - Components provide stable style classes so `korafx-framework` theme services can cover them consistently.
 - `korafx-framework` provides the default Koin-backed application model.
+- Route-aware UI belongs in `korafx-navigation`; generic surfaces belong in `korafx-components`.
+- Shared JavaFX test helpers and TestFX integration belong in `korafx-test`, not duplicated in every module.
 - Components accept explicit callbacks and state; framework services can be injected by the application layer.
 - DSL should remove repetitive JavaFX setup, not hide JavaFX concepts.
 - Each component should land with tests, theme selectors, documentation, and sample usage.
@@ -20,6 +22,8 @@ Status: implemented as the current component iteration.
 Target apps: Git source clients, database admin tools, internal desktop consoles.
 
 Goal: provide a reusable application workspace structure above `borderLayout`, with named slots for navigation, toolbar, content, details, status, and overlays.
+
+Module boundary: workspace APIs live in `korafx-workspace` under `dev.korafx.workspace`; keep `korafx-components` for smaller shared building blocks.
 
 First version:
 
@@ -41,6 +45,8 @@ Status: implemented as the current component iteration.
 Target apps: Git repository browser, database schema/table explorer, file/project navigator.
 
 Goal: provide a styled tree/list explorer with search, selection, row actions, and context menu hooks.
+
+Module boundary: resource explorer APIs live in `korafx-resource-explorer` under `dev.korafx.resourceexplorer`; keep `korafx-components` for smaller shared building blocks.
 
 First version:
 
@@ -65,6 +71,8 @@ Target apps: database table viewer, query result grid, Git file/status list, adm
 
 Goal: evolve beyond `editableTable` into a higher-level grid with filtering, sorting, row state, and bulk actions.
 
+Module boundary: data grid APIs live in `korafx-data-grid` under `dev.korafx.datagrid`; keep `korafx-components` for smaller shared building blocks.
+
 First version:
 
 - `dataGrid(items) { textColumn(...) editableTextColumn(...) actionColumn(...) }`
@@ -87,6 +95,8 @@ Target apps: Git commit/file inspector, database table/column detail panel, sett
 
 Goal: provide a consistent details panel for key/value properties, sections, actions, and metadata.
 
+Module boundary: inspector panel APIs live in `korafx-inspector-panel` under `dev.korafx.inspector`; keep `korafx-components` for smaller shared display primitives.
+
 First version:
 
 - `inspectorPanel(title, subtitle) { property("Branch", "...") section("Details") { ... } actions { ... } }`
@@ -107,6 +117,8 @@ Status: implemented as the current component iteration.
 Target apps: SQL query editor, Git diff/source viewer, configuration editors.
 
 Goal: extend `codeEditor` into a task-oriented editor surface with toolbar actions, status, diagnostics, and result/output slot.
+
+Module boundary: editor APIs live in `korafx-source-editor` under `dev.korafx.sourceeditor`; keep `korafx-components` for smaller shared building blocks.
 
 First version:
 
@@ -129,6 +141,8 @@ Status: implemented as the current component iteration.
 Target apps: multi-file Git tools, multi-query database clients, multi-document admin tools.
 
 Goal: provide a themed multi-tab workspace that manages close/dirty indicators and typed tab metadata while still returning JavaFX `TabPane`.
+
+Module boundary: tab workspace APIs live in `korafx-workspace` under `dev.korafx.workspace`.
 
 First version:
 
@@ -171,6 +185,8 @@ Status: implemented as the current component iteration.
 Target apps: complex desktop tools with many actions, Git commands, database actions, navigation shortcuts.
 
 Goal: provide a keyboard-friendly command picker that can be shown in an overlay and dispatch explicit commands.
+
+Module boundary: command palette APIs live in `korafx-command-palette` under `dev.korafx.commandpalette`; keep `korafx-components` and `korafx-framework` free of command registration concerns.
 
 First version:
 

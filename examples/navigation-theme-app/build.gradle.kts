@@ -15,6 +15,7 @@ javafx {
 
 dependencies {
     implementation(project(":korafx-framework"))
+    implementation(project(":korafx-navigation"))
     implementation(project(":korafx-components"))
 }
 

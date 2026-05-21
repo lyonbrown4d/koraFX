@@ -17,9 +17,16 @@ The default stack is:
 ```text
 korafx-bom            Maven BOM for aligning KoraFX module versions
 korafx-dsl            Low-level JavaFX DSL and Flow state binding primitives
-korafx-navigation     Route primitives and navigator API (`Route`, `Navigator`, `NavigationState`)
+korafx-navigation     Route primitives, navigator API, and route-aware UI
 korafx-framework      Default framework stack: MVVM, navigation, theme, Koin
-korafx-components     Optional workbench components and higher-level JavaFX surfaces
+korafx-command-palette Optional advanced command palette and command host surfaces
+korafx-components     Optional base workbench components and shared JavaFX surfaces
+korafx-data-grid      Optional advanced data grid and editable table surfaces
+korafx-inspector-panel Optional advanced inspector/property panel surfaces
+korafx-resource-explorer Optional advanced resource tree explorer surfaces
+korafx-source-editor  Optional advanced source/code/query editor surfaces
+korafx-workspace      Optional advanced workspace layout and tabbed workbench surfaces
+korafx-test           Optional TestFX-backed JavaFX testing utilities
 korafx-devtools       Optional runtime inspector for KoraFX applications
 examples/*            Small runnable examples
 sample-workbench-app  Runnable sample app
@@ -30,7 +37,15 @@ Application code should start from the direct dependency path:
 ```kotlin
 implementation(platform("io.github.daiyuang:korafx-bom:<version>"))
 implementation("io.github.daiyuang:korafx-framework")
+implementation("io.github.daiyuang:korafx-navigation") // optional when using navigation without framework
+implementation("io.github.daiyuang:korafx-command-palette") // only when command palette surfaces are needed
 implementation("io.github.daiyuang:korafx-components")
+implementation("io.github.daiyuang:korafx-data-grid") // only when table/grid surfaces are needed
+implementation("io.github.daiyuang:korafx-inspector-panel") // only when detail/inspector surfaces are needed
+implementation("io.github.daiyuang:korafx-resource-explorer") // only when tree/resource explorer surfaces are needed
+implementation("io.github.daiyuang:korafx-source-editor") // only when editor surfaces are needed
+implementation("io.github.daiyuang:korafx-workspace") // only when workspace/tab surfaces are needed
+testImplementation("io.github.daiyuang:korafx-test") // only for JavaFX UI/component tests
 implementation("io.github.daiyuang:korafx-devtools") // keep this in development builds when possible
 // Pick any Ikonli pack in the application when icons are needed.
 implementation("org.kordamp.ikonli:ikonli-bootstrapicons-pack:<ikonli-version>")
@@ -110,7 +125,7 @@ See [examples/README.md](examples/README.md) for the examples index, or jump dir
 - [DSL Examples](examples/dsl.md)
 - [Binding Examples](examples/bindings.md)
 - [MVVM Examples](examples/mvvm.md)
-- [Navigation And Components](examples/navigation-components.md)
+- [Navigation Examples](examples/navigation-components.md)
 - [Theme Examples](examples/theme.md)
 - [Sample Apps](examples/sample.md)
 
@@ -128,7 +143,9 @@ The current iteration order is:
 
 1. Make `korafx-framework` the default application entry.
 2. Keep `korafx-dsl` available for low-level builder-only usage.
-3. Keep `korafx-components` as the optional workbench/component layer.
+3. Keep route-aware UI in `korafx-navigation`.
+4. Keep `korafx-components` as the optional base workbench/component layer.
+5. Publish large advanced components as independent modules, starting with `korafx-command-palette`, `korafx-data-grid`, `korafx-inspector-panel`, `korafx-resource-explorer`, `korafx-source-editor`, and `korafx-workspace`.
 
 See [DESIGN.md](DESIGN.md) for the project boundary and non-goals.
 See [docs/ROADMAP.md](docs/ROADMAP.md) for the component iteration roadmap.

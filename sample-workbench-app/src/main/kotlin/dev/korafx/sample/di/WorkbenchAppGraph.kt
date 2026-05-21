@@ -1,7 +1,7 @@
 package dev.korafx.sample.di
 
-import dev.korafx.components.CommandPaletteCommand
-import dev.korafx.components.CommandPaletteHost
+import dev.korafx.commandpalette.CommandPaletteCommand
+import dev.korafx.commandpalette.CommandPaletteHost
 import dev.korafx.framework.KoraApplication
 import dev.korafx.navigation.Navigator
 import dev.korafx.framework.theme.ThemeManager

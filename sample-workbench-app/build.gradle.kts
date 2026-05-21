@@ -15,7 +15,14 @@ javafx {
 
 dependencies {
     implementation(project(":korafx-framework"))
+    implementation(project(":korafx-navigation"))
+    implementation(project(":korafx-command-palette"))
     implementation(project(":korafx-components"))
+    implementation(project(":korafx-data-grid"))
+    implementation(project(":korafx-inspector-panel"))
+    implementation(project(":korafx-resource-explorer"))
+    implementation(project(":korafx-source-editor"))
+    implementation(project(":korafx-workspace"))
     implementation(project(":korafx-devtools"))
     implementation(project(":korafx-macos"))
     implementation(libs.ikonli.bootstrapicons.pack)

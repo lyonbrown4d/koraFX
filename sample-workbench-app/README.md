@@ -6,7 +6,13 @@ The sample depends on the direct framework path:
 
 ```kotlin
 implementation(project(":korafx-framework"))
+implementation(project(":korafx-command-palette"))
 implementation(project(":korafx-components"))
+implementation(project(":korafx-data-grid"))
+implementation(project(":korafx-inspector-panel"))
+implementation(project(":korafx-resource-explorer"))
+implementation(project(":korafx-source-editor"))
+implementation(project(":korafx-workspace"))
 implementation(project(":korafx-devtools"))
 implementation(project(":korafx-macos"))
 implementation(libs.ikonli.bootstrapicons.pack)
@@ -21,6 +27,7 @@ implementation(libs.ikonli.bootstrapicons.pack)
 - `dev.korafx.sample.navigation`: `PathRoute` definitions consumed by `Navigator`.
 - `dev.korafx.sample.viewmodel`: StateFlow-backed MVVM state, actions, and events.
 - `dev.korafx.sample.ui`: JavaFX UI built with KoraFX DSL and component APIs.
+- Advanced reusable components are imported from focused modules such as `korafx-command-palette`, `korafx-data-grid`, `korafx-inspector-panel`, `korafx-resource-explorer`, `korafx-source-editor`, and `korafx-workspace`.
 
 ## DI Approach
 
@@ -41,5 +48,6 @@ The sample uses `korafx-framework` as the application layer:
 - Theme: token-driven built-in presets and `SceneThemeController`.
 - Window chrome: cross-platform title bar strategy, optional macOS native overlay hook, custom Windows/Linux chrome, user content slot, rounded corners, drag opacity, and resize support.
 - Components: app toolbar, workbench layout, border layout, breadcrumbs, page headers, status bars, resource explorer, tab workspace, source/query editors, data grid, inspector panel, activity timeline, command palette, Ikonli-ready controls, badges, chips, metrics, alerts, and feedback states.
+- Advanced component packaging: command palettes are isolated in `korafx-command-palette`, data grids are isolated in `korafx-data-grid`, inspector panels are isolated in `korafx-inspector-panel`, resource explorers are isolated in `korafx-resource-explorer`, editor surfaces are isolated in `korafx-source-editor`, workspace shells are isolated in `korafx-workspace`, and future large components should follow the same module boundary.
 - Icons: the app chooses `ikonli-bootstrapicons-pack`; the reusable KoraFX component module only depends on Ikonli JavaFX core.
 - DevTools: localized subapp shell, host Koin plugin modules, Ikonli icons, scene graph, node picker/highlighter, node inspector, navigation state, and theme token panels.

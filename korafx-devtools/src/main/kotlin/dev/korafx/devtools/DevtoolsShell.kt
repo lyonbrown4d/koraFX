@@ -2,10 +2,8 @@ package dev.korafx.devtools
 
 import dev.korafx.components.ComponentTone
 import dev.korafx.components.badge
-import dev.korafx.components.navigationRail
-import dev.korafx.components.routeHost
 import dev.korafx.components.setKoraIcon
-import dev.korafx.components.workspaceLayout
+import dev.korafx.workspace.workspaceLayout
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.label
 import dev.korafx.dsl.onAction
@@ -14,6 +12,8 @@ import dev.korafx.dsl.styleClass
 import dev.korafx.framework.KoraApplication
 import dev.korafx.navigation.Navigator
 import dev.korafx.navigation.PageInstancePolicy
+import dev.korafx.navigation.navigationRail
+import dev.korafx.navigation.routeHost
 import dev.korafx.framework.theme.ThemeStyleClass
 import javafx.scene.Node
 import javafx.scene.Parent

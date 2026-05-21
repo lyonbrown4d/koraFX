@@ -7,8 +7,6 @@ import dev.korafx.components.modalHost
 import dev.korafx.components.ModalAction
 import dev.korafx.components.ModalActionRole
 import dev.korafx.components.ModalHost
-import dev.korafx.components.navigationRail
-import dev.korafx.components.routeHost
 import dev.korafx.components.section
 import dev.korafx.components.toastHost
 import dev.korafx.components.ToastHost
@@ -24,6 +22,8 @@ import dev.korafx.dsl.vbox
 import dev.korafx.navigation.Navigator
 import dev.korafx.navigation.PageInstancePolicy
 import dev.korafx.navigation.Route
+import dev.korafx.navigation.navigationRail
+import dev.korafx.navigation.routeHost
 import dev.korafx.framework.theme.BuiltInThemes
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.SceneThemeController

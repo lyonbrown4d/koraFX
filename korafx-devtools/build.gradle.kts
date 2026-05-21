@@ -14,7 +14,9 @@ javafx {
 
 dependencies {
     api(project(":korafx-framework"))
+    implementation(project(":korafx-navigation"))
     implementation(project(":korafx-components"))
+    implementation(project(":korafx-workspace"))
     implementation(libs.ikonli.bootstrapicons.pack)
     testImplementation(libs.kotlin.test.junit5)
 }

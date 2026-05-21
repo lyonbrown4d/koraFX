@@ -25,7 +25,13 @@ class InMemoryWorkbenchCatalog : WorkbenchCatalog {
     override val moduleSummaries = listOf(
         ModuleSummary("korafx-dsl", "Kotlin-first JavaFX construction API"),
         ModuleSummary("korafx-framework", "Koin-backed MVVM, navigation and theme services"),
-        ModuleSummary("korafx-components", "Optional reusable JavaFX components"),
+        ModuleSummary("korafx-command-palette", "Independent advanced command palette and command host surfaces"),
+        ModuleSummary("korafx-components", "Optional base JavaFX workbench components"),
+        ModuleSummary("korafx-data-grid", "Independent advanced data grid and editable table surfaces"),
+        ModuleSummary("korafx-inspector-panel", "Independent advanced inspector and property panel surfaces"),
+        ModuleSummary("korafx-resource-explorer", "Independent advanced resource tree explorer surfaces"),
+        ModuleSummary("korafx-source-editor", "Independent advanced source/code/query editor surfaces"),
+        ModuleSummary("korafx-workspace", "Independent advanced workspace and tabbed workbench surfaces"),
     )
 
     override val editableModules = listOf(

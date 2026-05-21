@@ -13,7 +13,7 @@ import javafx.scene.layout.VBox
 import org.kordamp.ikonli.Ikon
 
 enum class ComponentTone(
-    internal val styleClass: String,
+    val styleClass: String,
 ) {
     NEUTRAL("tone-neutral"),
     PRIMARY("tone-primary"),
