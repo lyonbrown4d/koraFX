@@ -23,6 +23,8 @@ korafx-command-palette Optional advanced command palette and command host surfac
 korafx-components     Optional base workbench components and shared JavaFX surfaces
 korafx-data-grid      Optional advanced data grid and editable table surfaces
 korafx-inspector-panel Optional advanced inspector/property panel surfaces
+korafx-graph-editor   Lightweight JavaFX graph editor and directed edge model
+korafx-virtual-list   Virtualized async list and selection infrastructure
 korafx-resource-explorer Optional advanced resource tree explorer surfaces
 korafx-source-editor  Optional advanced source/code/query editor surfaces
 korafx-workspace      Optional advanced workspace layout and tabbed workbench surfaces
@@ -45,6 +47,8 @@ implementation("io.github.daiyuang:korafx-inspector-panel") // only when detail/
 implementation("io.github.daiyuang:korafx-resource-explorer") // only when tree/resource explorer surfaces are needed
 implementation("io.github.daiyuang:korafx-source-editor") // only when editor surfaces are needed
 implementation("io.github.daiyuang:korafx-workspace") // only when workspace/tab surfaces are needed
+implementation("io.github.daiyuang:korafx-virtual-list") // optional virtualized list component
+implementation("io.github.daiyuang:korafx-graph-editor") // optional graph editor surfaces
 testImplementation("io.github.daiyuang:korafx-test") // only for JavaFX UI/component tests
 implementation("io.github.daiyuang:korafx-devtools") // keep this in development builds when possible
 // Pick any Ikonli pack in the application when icons are needed.

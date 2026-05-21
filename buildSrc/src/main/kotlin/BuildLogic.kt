@@ -14,9 +14,11 @@ private val publishableModules =
         "korafx-resource-explorer",
         "korafx-source-editor",
         "korafx-workspace",
+        "korafx-graph-editor",
         "korafx-test",
         "korafx-devtools",
         "korafx-macos",
+        "korafx-virtual-list",
     )
 
 private val publishingPropertyKeys =
@@ -58,9 +60,11 @@ fun Project.publishedArtifactId(): String =
         "korafx-resource-explorer" -> "korafx-resource-explorer"
         "korafx-source-editor" -> "korafx-source-editor"
         "korafx-workspace" -> "korafx-workspace"
+        "korafx-graph-editor" -> "korafx-graph-editor"
         "korafx-test" -> "korafx-test"
         "korafx-devtools" -> "korafx-devtools"
         "korafx-macos" -> "korafx-macos"
+        "korafx-virtual-list" -> "korafx-virtual-list"
         else -> name
     }
 
@@ -77,9 +81,11 @@ fun Project.publishedDescription(): String =
         "korafx-resource-explorer" -> "Resource tree explorer surfaces for KoraFX applications."
         "korafx-source-editor" -> "Source, code and query editor surfaces for KoraFX applications."
         "korafx-workspace" -> "Workspace layout and tabbed workbench surfaces for KoraFX applications."
+        "korafx-graph-editor" -> "Direct graph editor surfaces for node/edge workflows in JavaFX."
         "korafx-test" -> "TestFX-backed JavaFX testing utilities for KoraFX modules and applications."
         "korafx-devtools" -> "Optional Chrome DevTools-inspired inspector for KoraFX applications."
         "korafx-macos" -> "Optional macOS native window chrome bridge for KoraFX applications."
+        "korafx-virtual-list" -> "Virtualized async list control and selection-focused model for large JavaFX datasets."
         else -> "KoraFX module for Kotlin-friendly JavaFX development."
     }
 
