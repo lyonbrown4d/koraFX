@@ -86,7 +86,7 @@ val root = workbenchLayout {
 Use `routerHost` when routes should share reusable layout shells. Shells can be nested, and pages render into the nearest layout outlet.
 
 ```kotlin
-import dev.korafx.workspace.workspaceLayout
+import dev.korafx.components.workspaceLayout
 
 data object ProjectRoute : PathRoute {
     override val id = "project"
@@ -650,7 +650,7 @@ val query = queryEditor(
 ## Tab Workspace
 
 ```kotlin
-import dev.korafx.workspace.tabWorkspace
+import dev.korafx.components.tabWorkspace
 
 val workspace = tabWorkspace(
     emptyText = "Open a file or query...",
@@ -831,10 +831,10 @@ val layout = borderLayout {
 }
 ```
 
-For a full tool-style workbench, use `workspaceLayout` from the independent `korafx-workspace` artifact when the UI needs navigation, details, status, and overlay slots:
+For a full tool-style workbench, use `workspaceLayout` from `korafx-components` when the UI needs navigation, details, status, and overlay slots:
 
 ```kotlin
-import dev.korafx.workspace.workspaceLayout
+import dev.korafx.components.workspaceLayout
 
 val workspace = workspaceLayout {
     topBar {

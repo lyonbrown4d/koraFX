@@ -1,22 +1,54 @@
-# 主题系统
+# 主题系统文档
 
-## 设计目标
+> 主题层是 KoraFX 的“外观协议”。组件只关心 token，不应关心颜色字面值。
 
-KoraFX 的主题系统需要保证：
+## 现状能力
 
-- JavaFX 标准控件行为一致（Button、TextField、Table 等）
-- 可预测的 token 继承关系
-- 多主题运行时切换与持久化
+- `ThemeManager` 作为单一主题源，内部暴露 `StateFlow<KoraTheme>`
+- `BuiltInThemes.MaterialLight` / `MaterialDark` 与 `FluentLight` / `FluentDark` 提供开箱主题
+- 框架在启动时绑定 `scene` 主题，不需要各页面单独挂载 stylesheet
+- 主题变更通过 `themeManager.setTheme` / `nextTheme` / `toggle` 等动作广播
 
-## 当前实现
+## 主题 token
 
-- `ThemeManager` 管理 `KoraTheme`，通过 `StateFlow` 通知全局。
-- `BuiltInThemes` 提供 `Material Light` 与 `Material Dark`。
-- `scene` 级主题注入由框架控制，不需要每个页面重复设置 stylesheet。
+### Color
 
-## 实施路线
+- `colors.primary`
+- `colors.surface`
+- `colors.surfaceMuted`
+- `colors.textPrimary`
+- `colors.textSecondary`
+- `colors.border`
 
-1. 统一视觉 token：色彩、排版、圆角、间距、状态色。
-2. 逐步补齐 JavaFX 标准组件样式覆盖。
-3. 提供可继承的主题预设，允许下游覆盖部分 token。
-4. 集成 markdown 富文本预览后，支持文档内实时主题色块和代码高亮。
+### Typography / Spacing / Radius / States
+
+- `typography.fontFamily / baseSize / headlineSize`
+- `spacing.xs..xxl`
+- `radii.small|medium|large|pill`
+- `states`（hover、focus、disabled、selected）
+
+右侧源码示例面板也基于当前主题动态渲染，保证示例展示符合 Material 或 Fluent 风格。
+
+## 实现示例
+
+```kotlin
+theme {
+  presets(BuiltInThemes.all)
+  default(BuiltInThemes.MaterialLight)
+  persistSelection = true
+}
+```
+
+## 使用边界
+
+- 当你接入第三方控件时，优先把 `KoraTheme` 的颜色语义映射到控件 style class
+- 组件如果提供 `styleClass`，应避免在代码里内联硬编码颜色
+- 需要更深主题控制时，新增 `ThemeTokenProvider` 并兼容默认 token 读取方式
+
+## 路线图（本页面对应）
+
+1. 统一 Material 与 Fluent Light / Dark 基础变量和交互状态
+2. 覆盖标准 JavaFX 控件的主链路状态（hover、focused、disabled）
+3. 在 `korafx-components` 与高级组件模块中统一状态色定义
+4. 提供主题迁移工具：从旧 token 到新 token 的兼容映射
+5. 增加更细颗粒度的文档演示（按钮组、输入组、代码块）

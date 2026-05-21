@@ -21,6 +21,8 @@ BuiltInThemes.all.forEach { theme ->
 
 themeManager.setTheme("material-light")
 themeManager.setTheme("material-dark")
+themeManager.setTheme("fluent-light")
+themeManager.setTheme("fluent-dark")
 themeManager.toggle()
 themeManager.nextTheme()
 themeManager.previousTheme()
@@ -52,6 +54,8 @@ val themeManager = ThemeManager(
     availableThemes = listOf(
         BuiltInThemes.MaterialLight,
         BuiltInThemes.MaterialDark,
+        BuiltInThemes.FluentLight,
+        BuiltInThemes.FluentDark,
     ),
 )
 ```
@@ -94,9 +98,9 @@ themeManager.setTheme(brandTheme)
 
 You can omit `spacing`, `radii`, `states`, and `elevation`; defaults are derived from `radius` and `colors`. Override them when an application needs compact density, custom hover/pressed colors, or different shadow depth.
 
-### Components covered by built-in theme stylesheet
+### Components covered by built-in theme stylesheets
 
-The built-in theme currently styles the following DSL and component class groups:
+The built-in themes currently style the following DSL and component class groups:
 - core surfaces: `panel`, `card`, `form`, `status-bar`, `app-toolbar`, `kora-window-titlebar`, `app-shell`, `modal-card`, etc.
 - controls and groups: `nav-rail`, `action-bar`, `toast`, `feedback`, `submit-bar`, `route-state-host`
 - component labels and helper texts: `headline`, `muted`, `section-title`, `form-label`, `validation-message`

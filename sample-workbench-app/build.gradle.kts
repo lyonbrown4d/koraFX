@@ -24,7 +24,6 @@ dependencies {
     implementation(project(":korafx-virtual-list"))
     implementation(project(":korafx-resource-explorer"))
     implementation(project(":korafx-source-editor"))
-    implementation(project(":korafx-workspace"))
     implementation(project(":korafx-devtools"))
     implementation(project(":korafx-macos"))
     implementation(libs.ikonli.bootstrapicons.pack)

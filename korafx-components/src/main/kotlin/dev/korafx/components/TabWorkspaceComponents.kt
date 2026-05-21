@@ -1,4 +1,4 @@
-package dev.korafx.workspace
+package dev.korafx.components
 
 import dev.korafx.dsl.NodeContainerBuilder
 import javafx.geometry.Pos
@@ -241,7 +241,7 @@ fun NodeContainerBuilder.tabWorkspace(
     content: TabWorkspaceBuilder.() -> Unit = {},
 ): TabWorkspace =
     add(
-        dev.korafx.workspace.tabWorkspace(
+        dev.korafx.components.tabWorkspace(
             emptyText = emptyText,
             init = init,
             content = content,

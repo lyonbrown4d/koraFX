@@ -102,6 +102,14 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".status-bar")
         assertContains(css, ".status-item")
         assertContains(css, ".app-shell")
+        assertContains(css, ".app-shell-frame")
+        assertContains(css, ".app-shell-body")
+        assertContains(css, ".app-shell-top-bar")
+        assertContains(css, ".app-shell-navigation")
+        assertContains(css, ".app-shell-content")
+        assertContains(css, ".app-shell-details")
+        assertContains(css, ".app-shell-footer")
+        assertContains(css, ".app-shell-overlay-item")
         assertContains(css, ".modal-card")
         assertContains(css, ".modal-backdrop")
         assertContains(css, ".snackbar")
@@ -256,6 +264,15 @@ class ThemeStylesheetFactoryTest {
         assertContains(css, ".data-grid-footer")
         assertContains(css, ".data-grid-selection-summary")
         assertContains(css, ".data-grid-empty")
+        assertContains(css, ".virtual-list")
+        assertContains(css, ".virtual-list-list-view")
+        assertContains(css, ".virtual-table")
+        assertContains(css, ".virtual-table-table-view")
+        assertContains(css, ".virtual-table-cell-node")
+        assertContains(css, ".virtual-terminal")
+        assertContains(css, ".virtual-terminal-list-view")
+        assertContains(css, ".virtual-terminal-line-label")
+        assertContains(css, ".terminal-success .virtual-terminal-line-label")
         assertContains(css, ".inspector-panel")
         assertContains(css, ".inspector-panel-header")
         assertContains(css, ".inspector-panel-title")
@@ -285,11 +302,29 @@ class ThemeStylesheetFactoryTest {
     }
 
     @Test
+    fun `fluent themes render windows typography and shell surfaces`() {
+        listOf(BuiltInThemes.FluentLight, BuiltInThemes.FluentDark).forEach { theme ->
+            val css = ThemeStylesheetFactory.render(theme)
+
+            assertContains(css, "-fx-font-family: \"Segoe UI\", \"Microsoft YaHei UI\", sans-serif;")
+            assertContains(css, "-fx-accent: ${theme.tokens.colors.primary};")
+            assertContains(css, "-fx-background-color: ${theme.tokens.colors.surface};")
+            assertContains(css, "-fx-background-radius: 4px;")
+            assertContains(css, ".app-shell")
+            assertContains(css, ".app-shell-frame")
+            assertContains(css, ".app-shell-navigation")
+            assertContains(css, ".workspace-layout")
+            assertContains(css, ".workspace-layout-content")
+        }
+    }
+
+    @Test
     fun `all built in themes render stylesheet from tokens`() {
         BuiltInThemes.all.forEach { theme ->
             val css = ThemeStylesheetFactory.render(theme)
 
             assertContains(css, "-fx-background-color: ${theme.tokens.colors.surface};")
+            assertContains(css, "-fx-font-family: ${theme.tokens.typography.fontFamily};")
             assertContains(css, "-fx-font-size: ${theme.tokens.typography.baseSize}px;")
             assertContains(css, "-fx-background-radius: ${theme.tokens.radius}px;")
             assertContains(css, "-fx-background-color: ${theme.tokens.states.controlHover};")

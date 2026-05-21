@@ -13,6 +13,7 @@ class KoraDevtoolsBuilder {
     var shortcut: String = "Ctrl+Shift+I"
     var pickerShortcut: String = "Ctrl+Shift+C"
     var highlightSelection: Boolean = true
+    var showFpsOverlay: Boolean = true
     var language: KoraDevtoolsLanguage = KoraDevtoolsLanguage.SYSTEM
     var placement: KoraDevtoolsPlacement = KoraDevtoolsPlacement.BOTTOM
     var dockWidth: Double = 420.0
@@ -32,6 +33,7 @@ class KoraDevtoolsBuilder {
             shortcut = KeyCombination.keyCombination(shortcut),
             pickerShortcut = KeyCombination.keyCombination(pickerShortcut),
             highlightSelection = highlightSelection,
+            showFpsOverlay = showFpsOverlay,
             language = language,
             placement = placement,
             dockWidth = dockWidth,
@@ -99,6 +101,7 @@ internal data class KoraDevtoolsSpec(
     val shortcut: KeyCombination,
     val pickerShortcut: KeyCombination,
     val highlightSelection: Boolean,
+    val showFpsOverlay: Boolean,
     val language: KoraDevtoolsLanguage,
     val placement: KoraDevtoolsPlacement,
     val dockWidth: Double,

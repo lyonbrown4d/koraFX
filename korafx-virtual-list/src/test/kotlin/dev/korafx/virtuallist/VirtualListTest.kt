@@ -1,5 +1,6 @@
 package dev.korafx.virtuallist
 
+import dev.korafx.dsl.vbox
 import javafx.scene.control.Label
 import kotlin.math.min
 import kotlin.test.Test
@@ -36,7 +37,7 @@ class VirtualListTest {
                 ) {
                     selectionMode(VirtualSelectionMode.MULTIPLE)
                     item {
-                        label("value: ${item.toString()}")
+                        label("value: $item")
                     }
                 }
             }
@@ -115,7 +116,9 @@ class VirtualListTest {
                 )
             }
 
-        FxTestSupport.waitForFxCondition { list.listView.placeholder is Label }
+        FxTestSupport.waitForFxCondition {
+            (list.listView.placeholder as? Label)?.text == "Failed to load items"
+        }
         FxTestSupport.runOnFxThread {
             assertIs<Label>(list.listView.placeholder)
 
@@ -127,4 +130,27 @@ class VirtualListTest {
         }
     }
 
+    @Test
+    fun `node container virtual list delegates to factory without recursion`() {
+        val list =
+            FxTestSupport.callOnFxThread {
+                var created: VirtualList<String>? = null
+                val root =
+                    vbox {
+                        created =
+                            virtualList(
+                                dataLoader = { _, _ -> emptyList() },
+                                pageSize = 1,
+                            )
+                    }
+
+                assertEquals(1, root.children.size)
+                assertTrue(root.children.first() === created)
+                checkNotNull(created)
+            }
+
+        FxTestSupport.runOnFxThread {
+            assertTrue("virtual-list" in list.styleClass)
+        }
+    }
 }

@@ -26,5 +26,16 @@ object WorkbenchIcons {
             WorkbenchRoute.Components -> BootstrapIcons.BOX_SEAM
             WorkbenchRoute.Mvvm -> BootstrapIcons.DIAGRAM_3
             WorkbenchRoute.Theme -> BootstrapIcons.PALETTE
+            WorkbenchRoute.Framework -> BootstrapIcons.GEAR
+            WorkbenchRoute.Navigation -> BootstrapIcons.SIGNPOST_SPLIT
+            WorkbenchRoute.SourceEditor -> BootstrapIcons.FILE_CODE
+            WorkbenchRoute.DataGrid -> BootstrapIcons.TABLE
+            WorkbenchRoute.ResourceExplorer -> BootstrapIcons.FOLDER
+            WorkbenchRoute.Workspace -> BootstrapIcons.LAYOUT_SPLIT
+            WorkbenchRoute.InspectorPanel -> BootstrapIcons.SLIDERS
+            WorkbenchRoute.CommandPalette -> BootstrapIcons.COMMAND
+            WorkbenchRoute.GraphEditor -> BootstrapIcons.DIAGRAM_3
+            WorkbenchRoute.VirtualList -> BootstrapIcons.LIST_UL
+            else -> BootstrapIcons.BOX
         }
 }

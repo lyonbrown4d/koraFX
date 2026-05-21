@@ -29,6 +29,8 @@ class ThemeManagerTest {
         }
         assertSame(BuiltInThemes.MaterialLight, BuiltInThemes.requireById("material-light"))
         assertSame(BuiltInThemes.MaterialDark, BuiltInThemes.findById("material-dark"))
+        assertSame(BuiltInThemes.FluentLight, BuiltInThemes.requireById("fluent-light"))
+        assertSame(BuiltInThemes.FluentDark, BuiltInThemes.findById("fluent-dark"))
         assertFailsWith<IllegalStateException> {
             BuiltInThemes.requireById("missing")
         }
@@ -100,6 +102,25 @@ class ThemeManagerTest {
         assertTrue(light.tokens.states.selected != dark.tokens.states.selected)
         assertEquals("#FFFFFF", light.tokens.states.selectedText)
         assertEquals("#381E72", dark.tokens.states.selectedText)
+    }
+
+    @Test
+    fun `fluent light and dark themes use windows token language`() {
+        val light = BuiltInThemes.FluentLight
+        val dark = BuiltInThemes.FluentDark
+
+        assertEquals("\"Segoe UI\", \"Microsoft YaHei UI\", sans-serif", light.tokens.typography.fontFamily)
+        assertEquals("\"Segoe UI\", \"Microsoft YaHei UI\", sans-serif", dark.tokens.typography.fontFamily)
+        assertEquals("#0078D4", light.tokens.colors.primary)
+        assertEquals("#2899F5", dark.tokens.colors.primary)
+        assertEquals(4, light.tokens.radius)
+        assertEquals(4, dark.tokens.radius)
+        assertEquals("#FFFFFF", light.tokens.states.selectedText)
+        assertEquals("#000000", dark.tokens.states.selectedText)
+        assertTrue(light.tokens.colors.surface != dark.tokens.colors.surface)
+        assertTrue(light.tokens.colors.surfaceMuted != dark.tokens.colors.surfaceMuted)
+        assertTrue(light.tokens.colors.textPrimary != dark.tokens.colors.textPrimary)
+        assertTrue(light.tokens.states.selected != dark.tokens.states.selected)
     }
 
     @Test

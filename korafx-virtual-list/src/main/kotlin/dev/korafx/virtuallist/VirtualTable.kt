@@ -2,54 +2,44 @@ package dev.korafx.virtuallist
 
 import dev.korafx.dsl.NodeContainerBuilder
 import javafx.application.Platform
+import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.value.ChangeListener
 import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.geometry.Orientation
 import javafx.scene.Node
 import javafx.scene.control.Label
-import javafx.scene.control.ListCell
-import javafx.scene.control.ListView
-import javafx.scene.control.SelectionMode
 import javafx.scene.control.ScrollBar
-import javafx.scene.layout.HBox
-import javafx.scene.layout.Region
+import javafx.scene.control.SelectionMode
+import javafx.scene.control.TableCell
+import javafx.scene.control.TableColumn
+import javafx.scene.control.TableView
+import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
-import javafx.util.Callback
 import java.util.concurrent.Executors
 import kotlin.math.max
 
-typealias VirtualListDataLoader<T> = (offset: Long, limit: Int) -> Collection<T>
-typealias VirtualListErrorHandler = (Throwable) -> Unit
+typealias VirtualTableDataLoader<T> = (offset: Long, limit: Int) -> Collection<T>
+typealias VirtualTableErrorHandler = (Throwable) -> Unit
 
-data class VirtualListLoadState(
+data class VirtualTableLoadState(
     val isLoading: Boolean,
     val isAtEnd: Boolean,
-    val itemCount: Int,
+    val rowCount: Int,
     val hasError: Boolean,
 )
 
-enum class VirtualListHeightMode {
-    FIXED,
-    DYNAMIC,
-}
-
-enum class VirtualSelectionMode {
-    SINGLE,
-    MULTIPLE,
-}
-
-class VirtualListSelectionModel<T>(
-    private val listView: ListView<T>,
+class VirtualTableSelectionModel<T>(
+    private val tableView: TableView<T>,
 ) {
     var mode: VirtualSelectionMode
         get() =
-            when (listView.selectionModel.selectionMode) {
+            when (tableView.selectionModel.selectionMode) {
                 SelectionMode.SINGLE -> VirtualSelectionMode.SINGLE
                 else -> VirtualSelectionMode.MULTIPLE
             }
         set(value) {
-            listView.selectionModel.selectionMode =
+            tableView.selectionModel.selectionMode =
                 when (value) {
                     VirtualSelectionMode.SINGLE -> SelectionMode.SINGLE
                     VirtualSelectionMode.MULTIPLE -> SelectionMode.MULTIPLE
@@ -57,28 +47,28 @@ class VirtualListSelectionModel<T>(
         }
 
     val selectedItem: T?
-        get() = listView.selectionModel.selectedItem
+        get() = tableView.selectionModel.selectedItem
 
     val selectedItems: List<T>
-        get() = listView.selectionModel.selectedItems.toList()
+        get() = tableView.selectionModel.selectedItems.toList()
 
     val selectedIndices: List<Int>
-        get() = listView.selectionModel.selectedIndices.toList()
+        get() = tableView.selectionModel.selectedIndices.toList()
 
     fun clearSelection() {
-        listView.selectionModel.clearSelection()
+        tableView.selectionModel.clearSelection()
     }
 
     fun select(index: Int) {
-        listView.selectionModel.select(index)
+        tableView.selectionModel.select(index)
     }
 
     fun select(item: T) {
-        listView.selectionModel.select(item)
+        tableView.selectionModel.select(item)
     }
 
     fun onSelect(handler: (List<T>) -> Unit) {
-        listView.selectionModel.selectedItems.addListener(
+        tableView.selectionModel.selectedItems.addListener(
             ListChangeListener {
                 handler(selectedItems)
             },
@@ -86,114 +76,59 @@ class VirtualListSelectionModel<T>(
     }
 }
 
-class VirtualListItemRendererScope<T>(
-    val item: T,
-    private val container: HBox = HBox(8.0),
-) {
-    internal fun root(): Node = container
-
-    fun label(
-        text: String,
-        init: Label.() -> Unit = {},
-    ): Label =
-        Label(text).apply(init).also {
-            container.children += it
-        }
-
-    fun text(value: Any?): Label = label(value?.toString().orEmpty())
-
-    fun node(node: Node): Node =
-        node.also {
-            container.children += it
-        }
-
-    fun region(init: Region.() -> Unit = {}): Region =
-        Region().apply(init).also {
-            container.children += it
-        }
-}
-
-class VirtualList<T>(
-    private val dataLoader: VirtualListDataLoader<T>,
+class VirtualTable<T>(
+    private val dataLoader: VirtualTableDataLoader<T>,
     private val totalCountEstimate: (() -> Int?)? = null,
     pageSize: Int = 50,
-    rowHeightMode: VirtualListHeightMode = VirtualListHeightMode.FIXED,
-    rowHeight: Double = 34.0,
     initialSelectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
 ) : VBox() {
     private var pageSizeValue = max(1, pageSize)
-    private var currentHeightMode = rowHeightMode
-    private var fixedRowHeight = rowHeight
     private var loading = false
     private var reachedEnd = false
     private var requestEpoch = 0
     private var lastError: Throwable? = null
     private val executor = Executors.newSingleThreadExecutor {
-        Thread(it, "korafx-virtual-list-loader").apply {
+        Thread(it, "korafx-virtual-table-loader").apply {
             isDaemon = true
         }
     }
-    private val errorHandlers = mutableListOf<VirtualListErrorHandler>()
-    private var itemRenderer: (T) -> Node = { item -> Label(item.toString()) }
+    private val errorHandlers = mutableListOf<VirtualTableErrorHandler>()
     private var loadingPlaceholder: Node = Label("Loading...")
-    private var emptyPlaceholder: Node = Label("No items")
-    private var errorPlaceholder: Node = Label("Failed to load items")
+    private var emptyPlaceholder: Node = Label("No rows")
+    private var errorPlaceholder: Node = Label("Failed to load rows")
     private val loadTriggerRatio = 0.87
     private var verticalScrollBar: ScrollBar? = null
     private var verticalScrollListener: ChangeListener<Number>? = null
 
-    val listView: ListView<T> = ListView<T>()
-    val selectionModel: VirtualListSelectionModel<T> = VirtualListSelectionModel(listView)
+    val tableView: TableView<T> = TableView<T>()
+    val selectionModel: VirtualTableSelectionModel<T> = VirtualTableSelectionModel(tableView)
 
     val items: ObservableList<T>
-        get() = listView.items
+        get() = tableView.items
 
-    val state: VirtualListLoadState
+    val state: VirtualTableLoadState
         get() =
-            VirtualListLoadState(
+            VirtualTableLoadState(
                 isLoading = loading,
                 isAtEnd = reachedEnd,
-                itemCount = listView.items.size,
+                rowCount = tableView.items.size,
                 hasError = lastError != null,
             )
 
     init {
-        styleClass.add("virtual-list")
-        children += listView
+        styleClass += "virtual-table"
+        children += tableView
 
-        listView.styleClass.add("virtual-list-list-view")
-        listView.prefWidth = Double.MAX_VALUE
-        listView.prefHeight = Double.MAX_VALUE
+        tableView.styleClass += "virtual-table-table-view"
+        tableView.prefWidth = Double.MAX_VALUE
+        tableView.prefHeight = Double.MAX_VALUE
         selectionModel.mode = initialSelectionMode
-        applyRowHeight()
-        attachCellFactory()
         attachScrollListener()
         requestNextPage()
     }
 
     fun setPageSize(size: Int) {
         pageSizeValue = max(1, size)
-    }
-
-    fun setRowHeightMode(
-        mode: VirtualListHeightMode,
-        fixedHeight: Double = fixedRowHeight,
-    ) {
-        currentHeightMode = mode
-        fixedRowHeight = fixedHeight
-        applyRowHeight()
-    }
-
-    fun setItemRenderer(renderer: (T) -> Node) {
-        itemRenderer = renderer
-        listView.refresh()
-    }
-
-    fun setItemRendererFromScope(renderer: VirtualListItemRendererScope<T>.() -> Unit) {
-        itemRenderer = { item ->
-            VirtualListItemRendererScope(item).also(renderer).root()
-        }
-        listView.refresh()
     }
 
     fun setLoadingPlaceholder(node: Node) {
@@ -211,7 +146,7 @@ class VirtualList<T>(
         refreshPlaceholder()
     }
 
-    fun onError(handler: VirtualListErrorHandler) {
+    fun onError(handler: VirtualTableErrorHandler) {
         errorHandlers += handler
     }
 
@@ -235,37 +170,78 @@ class VirtualList<T>(
         }
     }
 
-    private fun attachCellFactory() {
-        listView.setCellFactory(
-            Callback {
-                object : ListCell<T>() {
-                    override fun updateItem(item: T?, empty: Boolean) {
+    fun clearColumns() {
+        tableView.columns.clear()
+    }
+
+    fun <R> column(
+        title: String,
+        valueOf: (T) -> R,
+        init: TableColumn<T, R>.() -> Unit = {},
+    ): TableColumn<T, R> =
+        TableColumn<T, R>(title).apply {
+            styleClass += "virtual-table-column"
+            setCellValueFactory { features ->
+                ReadOnlyObjectWrapper(valueOf(features.value))
+            }
+            init()
+        }.also {
+            tableView.columns += it
+        }
+
+    fun textColumn(
+        title: String,
+        valueOf: (T) -> Any?,
+        init: TableColumn<T, String>.() -> Unit = {},
+    ): TableColumn<T, String> =
+        column(title, valueOf = { row -> valueOf(row)?.toString().orEmpty() }, init = init)
+
+    fun <R> columnText(
+        title: String,
+        valueOf: (T) -> R,
+        render: (R) -> String,
+        init: TableColumn<T, R>.() -> Unit = {},
+    ): TableColumn<T, R> =
+        column(title, valueOf) {
+            setCellFactory {
+                object : TableCell<T, R>() {
+                    override fun updateItem(item: R?, empty: Boolean) {
                         super.updateItem(item, empty)
-
-                        if (empty || item == null) {
-                            text = null
-                            graphic = null
-                            return
-                        }
-
-                        text = null
-                        graphic = itemRenderer(item)
+                        text = if (empty || item == null) null else render(item)
                     }
                 }
-            },
-        )
-    }
-
-    private fun applyRowHeight() {
-        listView.fixedCellSize =
-            when (currentHeightMode) {
-                VirtualListHeightMode.FIXED -> fixedRowHeight
-                VirtualListHeightMode.DYNAMIC -> -1.0
             }
-    }
+            init()
+        }
+
+    fun <R> columnNode(
+        title: String,
+        valueOf: (T) -> R,
+        init: TableColumn<T, R>.() -> Unit = {},
+        content: (R) -> Node,
+    ): TableColumn<T, R> =
+        column(title, valueOf) {
+            setCellFactory {
+                object : TableCell<T, R>() {
+                    override fun updateItem(item: R?, empty: Boolean) {
+                        super.updateItem(item, empty)
+                        text = null
+                        graphic =
+                            if (empty || item == null) {
+                                null
+                            } else {
+                                StackPane(content(item)).apply {
+                                    styleClass += "virtual-table-cell-node"
+                                }
+                            }
+                    }
+                }
+            }
+            init()
+        }
 
     private fun attachScrollListener() {
-        listView.skinProperty().addListener { _, _, skin ->
+        tableView.skinProperty().addListener { _, _, skin ->
             if (skin != null) {
                 maybeAttachScrollListener()
             }
@@ -299,7 +275,7 @@ class VirtualList<T>(
     }
 
     private fun findVerticalScrollBar(): ScrollBar? {
-        return listView.lookupAll(".scroll-bar")
+        return tableView.lookupAll(".scroll-bar")
             .firstOrNull {
                 it is ScrollBar && it.orientation == Orientation.VERTICAL
             } as? ScrollBar
@@ -381,7 +357,7 @@ class VirtualList<T>(
     private fun isCurrentEpoch(epoch: Int): Boolean = epoch == requestEpoch
 
     private fun refreshPlaceholder() {
-        listView.placeholder =
+        tableView.placeholder =
             when {
                 lastError != null && items.isEmpty() -> errorPlaceholder
                 loading && items.isEmpty() -> loadingPlaceholder
@@ -391,105 +367,108 @@ class VirtualList<T>(
     }
 }
 
-class VirtualListBuilder<T> internal constructor(
-    private val list: VirtualList<T>,
+class VirtualTableBuilder<T> internal constructor(
+    private val table: VirtualTable<T>,
 ) {
     fun pageSize(size: Int) {
-        list.setPageSize(size)
+        table.setPageSize(size)
     }
 
     fun loadingPlaceholder(node: Node) {
-        list.setLoadingPlaceholder(node)
+        table.setLoadingPlaceholder(node)
     }
 
     fun emptyPlaceholder(node: Node) {
-        list.setEmptyPlaceholder(node)
+        table.setEmptyPlaceholder(node)
     }
 
     fun errorPlaceholder(node: Node) {
-        list.setErrorPlaceholder(node)
-    }
-
-    fun heightMode(
-        mode: VirtualListHeightMode,
-        fixedHeight: Double = 34.0,
-    ) {
-        list.setRowHeightMode(mode, fixedHeight)
-    }
-
-    fun fixedHeight(height: Double) {
-        list.setRowHeightMode(VirtualListHeightMode.FIXED, height)
-    }
-
-    fun dynamicHeight() {
-        list.setRowHeightMode(VirtualListHeightMode.DYNAMIC)
+        table.setErrorPlaceholder(node)
     }
 
     fun selectionMode(mode: VirtualSelectionMode) {
-        list.selectionModel.mode = mode
+        table.selectionModel.mode = mode
     }
 
-    fun item(renderer: VirtualListItemRendererScope<T>.() -> Unit) {
-        list.setItemRendererFromScope(renderer)
+    fun constrainedResize() {
+        table.tableView.columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
     }
 
-    fun itemOf(renderer: (T) -> Node) {
-        list.setItemRenderer(renderer)
+    fun clearColumns() {
+        table.clearColumns()
     }
 
-    fun onError(handler: VirtualListErrorHandler) {
-        list.onError(handler)
+    fun <R> column(
+        title: String,
+        valueOf: (T) -> R,
+        init: TableColumn<T, R>.() -> Unit = {},
+    ): TableColumn<T, R> = table.column(title, valueOf, init)
+
+    fun textColumn(
+        title: String,
+        valueOf: (T) -> Any?,
+        init: TableColumn<T, String>.() -> Unit = {},
+    ): TableColumn<T, String> = table.textColumn(title, valueOf, init)
+
+    fun <R> columnText(
+        title: String,
+        valueOf: (T) -> R,
+        render: (R) -> String,
+        init: TableColumn<T, R>.() -> Unit = {},
+    ): TableColumn<T, R> = table.columnText(title, valueOf, render, init)
+
+    fun <R> columnNode(
+        title: String,
+        valueOf: (T) -> R,
+        init: TableColumn<T, R>.() -> Unit = {},
+        content: (R) -> Node,
+    ): TableColumn<T, R> = table.columnNode(title, valueOf, init, content)
+
+    fun onError(handler: VirtualTableErrorHandler) {
+        table.onError(handler)
     }
 
     fun onSelect(handler: (List<T>) -> Unit) {
-        list.onSelect(handler)
+        table.onSelect(handler)
     }
 
     fun loadMore() {
-        list.loadMore()
+        table.loadMore()
     }
 }
 
-fun <T> virtualList(
-    dataLoader: VirtualListDataLoader<T>,
+fun <T> virtualTable(
+    dataLoader: VirtualTableDataLoader<T>,
     totalCountEstimate: (() -> Int?)? = null,
     pageSize: Int = 50,
-    heightMode: VirtualListHeightMode = VirtualListHeightMode.FIXED,
-    rowHeight: Double = 34.0,
     selectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
-    init: VirtualList<T>.() -> Unit = {},
-    content: VirtualListBuilder<T>.() -> Unit = {},
-): VirtualList<T> =
-    VirtualList(
+    init: VirtualTable<T>.() -> Unit = {},
+    columns: VirtualTableBuilder<T>.() -> Unit = {},
+): VirtualTable<T> =
+    VirtualTable(
         dataLoader = dataLoader,
         totalCountEstimate = totalCountEstimate,
         pageSize = pageSize,
-        rowHeightMode = heightMode,
-        rowHeight = rowHeight,
         initialSelectionMode = selectionMode,
     ).apply(init).apply {
-        VirtualListBuilder(this).content()
+        VirtualTableBuilder(this).columns()
     }
 
-fun <T> NodeContainerBuilder.virtualList(
-    dataLoader: VirtualListDataLoader<T>,
+fun <T> NodeContainerBuilder.virtualTable(
+    dataLoader: VirtualTableDataLoader<T>,
     totalCountEstimate: (() -> Int?)? = null,
     pageSize: Int = 50,
-    heightMode: VirtualListHeightMode = VirtualListHeightMode.FIXED,
-    rowHeight: Double = 34.0,
     selectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
-    init: VirtualList<T>.() -> Unit = {},
-    content: VirtualListBuilder<T>.() -> Unit = {},
-): VirtualList<T> =
+    init: VirtualTable<T>.() -> Unit = {},
+    columns: VirtualTableBuilder<T>.() -> Unit = {},
+): VirtualTable<T> =
     add(
-        dev.korafx.virtuallist.virtualList(
+        dev.korafx.virtuallist.virtualTable(
             dataLoader = dataLoader,
             totalCountEstimate = totalCountEstimate,
             pageSize = pageSize,
-            heightMode = heightMode,
-            rowHeight = rowHeight,
             selectionMode = selectionMode,
             init = init,
-            content = content,
+            columns = columns,
         ),
     )

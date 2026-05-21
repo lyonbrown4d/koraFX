@@ -27,7 +27,6 @@ include(
     ":korafx-resource-explorer",
     ":korafx-virtual-list",
     ":korafx-source-editor",
-    ":korafx-workspace",
     ":korafx-graph-editor",
     ":korafx-test",
     ":korafx-devtools",

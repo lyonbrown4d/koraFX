@@ -22,6 +22,7 @@ class KoraDevtoolsBuilderTest {
         assertEquals("KoraFX DevTools", spec.title)
         assertEquals(KeyCombination.keyCombination("Ctrl+Shift+I"), spec.shortcut)
         assertEquals(KeyCombination.keyCombination("Ctrl+Shift+C"), spec.pickerShortcut)
+        assertEquals(true, spec.showFpsOverlay)
         assertEquals(KoraDevtoolsLanguage.SYSTEM, spec.language)
         assertEquals(KoraDevtoolsPlacement.BOTTOM, spec.placement)
         assertEquals(420.0, spec.dockWidth)
@@ -36,6 +37,7 @@ class KoraDevtoolsBuilderTest {
             shortcut = "Alt+D"
             pickerShortcut = "Alt+P"
             highlightSelection = false
+            showFpsOverlay = false
             language = KoraDevtoolsLanguage.CHINESE
             placement = KoraDevtoolsPlacement.RIGHT
             dockWidth = 480.0
@@ -51,6 +53,7 @@ class KoraDevtoolsBuilderTest {
         assertEquals(KeyCombination.keyCombination("Alt+D"), spec.shortcut)
         assertEquals(KeyCombination.keyCombination("Alt+P"), spec.pickerShortcut)
         assertFalse(spec.highlightSelection)
+        assertFalse(spec.showFpsOverlay)
         assertEquals(KoraDevtoolsLanguage.CHINESE, spec.language)
         assertEquals(KoraDevtoolsPlacement.RIGHT, spec.placement)
         assertEquals(480.0, spec.dockWidth)

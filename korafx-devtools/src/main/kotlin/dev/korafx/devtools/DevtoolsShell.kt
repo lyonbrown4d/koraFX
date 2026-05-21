@@ -3,7 +3,7 @@ package dev.korafx.devtools
 import dev.korafx.components.ComponentTone
 import dev.korafx.components.badge
 import dev.korafx.components.setKoraIcon
-import dev.korafx.workspace.workspaceLayout
+import dev.korafx.components.workspaceLayout
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.label
 import dev.korafx.dsl.onAction

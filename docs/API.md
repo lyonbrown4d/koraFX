@@ -12,11 +12,10 @@ implementation("io.github.daiyuang:korafx-data-grid") // optional advanced table
 implementation("io.github.daiyuang:korafx-inspector-panel") // optional advanced inspector/detail surfaces
 implementation("io.github.daiyuang:korafx-resource-explorer") // optional advanced resource tree surfaces
 implementation("io.github.daiyuang:korafx-source-editor") // optional advanced editor surfaces
-implementation("io.github.daiyuang:korafx-workspace") // optional advanced workspace/tab surfaces
 testImplementation("io.github.daiyuang:korafx-test") // optional TestFX-backed JavaFX testing utilities
 ```
 
-Runtime code is intentionally split into focused publishable modules: `korafx-dsl`, `korafx-navigation`, `korafx-framework`, `korafx-components`, and optional advanced modules such as `korafx-command-palette`, `korafx-data-grid`, `korafx-inspector-panel`, `korafx-resource-explorer`, `korafx-source-editor`, and `korafx-workspace`.
+Runtime code is intentionally split into focused publishable modules: `korafx-dsl`, `korafx-navigation`, `korafx-framework`, `korafx-components`, and optional advanced modules such as `korafx-command-palette`, `korafx-data-grid`, `korafx-inspector-panel`, `korafx-resource-explorer`, and `korafx-source-editor`.
 `korafx-test` is a test-scope module for JavaFX component tests and TestFX integration.
 `korafx-navigation` and `korafx-components` expose Ikonli JavaFX core for icon-ready APIs, but applications should choose their own icon pack dependency.
 `korafx-devtools` is an optional debug-only module and should not be required by production applications.
@@ -203,7 +202,7 @@ Main API:
 
 - Shell: `appShell`, `appToolbar`, `toolbarGroup`
 - Overlays: `ModalHost`, `modalHost`, `ModalAction`
-- Layout: `borderLayout`
+- Layout: `borderLayout`, `workspaceLayout`, `WorkspaceLayout`, `WorkspaceLayoutBuilder`, `tabWorkspace`, `TabWorkspace`, `TabWorkspaceBuilder`
 - Activity: `activityTimeline`, `ActivityTimeline`, `ActivityTimelineBuilder`
 - Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
 - Surfaces: `card`, `section`, `actionBar`, `breadcrumb`, `pageHeader`, `heroBanner`, `statusBar`, `statusItem`
@@ -352,23 +351,20 @@ Guidelines:
 - Use this module for source previews, simple text/code editing, SQL query panels, diagnostics, find/navigation, and editor result slots.
 - Keep heavyweight editor evolution here instead of adding editor-specific APIs to `korafx-components`.
 
-## korafx-workspace
+### Tab Workspace
 
-`korafx-workspace` is an advanced component module for workbench-style applications. It is published independently so applications can opt into workspace shells and tabbed document surfaces only when needed.
+Tabbed workbench APIs are provided by `korafx-components` for multi-document tools, tabbed editors, query tabs, and resource previews.
 
 Main API:
 
-- `dev.korafx.workspace.workspaceLayout`
-- `dev.korafx.workspace.tabWorkspace`
-- `WorkspaceLayout`
-- `WorkspaceLayoutBuilder`
+- `dev.korafx.components.tabWorkspace`
 - `TabWorkspace`
 - `TabWorkspaceBuilder`
 
 Guidelines:
 
-- Use this module for IDE-like layouts, Git/database workbenches, multi-document tools, and tabbed editors.
-- Keep workspace-specific docking, split panes, tab persistence, and document lifecycle work here instead of adding workbench APIs to `korafx-components`.
+- Use `tabWorkspace` for multi-document tools and tabbed editors.
+- Keep tab persistence and document lifecycle work in application code; use `workspaceLayout` for named workbench layout slots.
 
 ## korafx-test
 
@@ -430,6 +426,7 @@ fun main(args: Array<String>) = koraApplication(args) {
         shortcut = "Ctrl+Shift+I"
         pickerShortcut = "Ctrl+Shift+C"
         highlightSelection = true
+        showFpsOverlay = true
         language = KoraDevtoolsLanguage.SYSTEM
         placement = KoraDevtoolsPlacement.BOTTOM
         dockWidth = 420.0
@@ -452,9 +449,10 @@ Initial panels:
 - Navigation also shows the current full path, params/query/hash, back/forward stacks, and can navigate by route path.
 - Theme: view theme tokens and switch the active theme at runtime.
 - Pick Node: press `Ctrl+Shift+C` or the `Pick Node` button, then click an application node to select and highlight it.
+- FPS Overlay: `showFpsOverlay = true` by default. DevTools attaches a non-interactive in-process badge to the inspected application overlay and samples JavaFX pulse timing with `AnimationTimer`.
 - DevTools opens as a resizable bottom dock by default. Use `LEFT`, `RIGHT`, `BOTTOM`, or `WINDOW`, or switch placement from the DevTools header at runtime.
 - Node picking is in-process. DevTools hit-tests the application scene by screen coordinates and renders highlights in an application overlay, so docked and window placements share the same picker behavior.
-- The DevTools surface is implemented as an internal KoraFX subapp using `dev.korafx.workspace.workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
+- The DevTools surface is implemented as an internal KoraFX subapp using `dev.korafx.components.workspaceLayout`, `navigationRail`, `routeHost`, framework theme binding, localized text, and Ikonli icons.
 - DevTools plugin services are loaded into the host `KoraApplication` Koin graph and unloaded during application shutdown.
 - Built-in text supports `SYSTEM`, `ENGLISH`, and `CHINESE`.
 

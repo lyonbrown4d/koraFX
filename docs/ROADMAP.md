@@ -23,7 +23,7 @@ Target apps: Git source clients, database admin tools, internal desktop consoles
 
 Goal: provide a reusable application workspace structure above `borderLayout`, with named slots for navigation, toolbar, content, details, status, and overlays.
 
-Module boundary: workspace APIs live in `korafx-workspace` under `dev.korafx.workspace`; keep `korafx-components` for smaller shared building blocks.
+Module boundary: workspace layout APIs live in `korafx-components` under `dev.korafx.components`; `tabWorkspace` also lives in components.
 
 First version:
 
@@ -142,7 +142,7 @@ Target apps: multi-file Git tools, multi-query database clients, multi-document 
 
 Goal: provide a themed multi-tab workspace that manages close/dirty indicators and typed tab metadata while still returning JavaFX `TabPane`.
 
-Module boundary: tab workspace APIs live in `korafx-workspace` under `dev.korafx.workspace`.
+Module boundary: tab workspace APIs live in `korafx-components` under `dev.korafx.components`.
 
 First version:
 

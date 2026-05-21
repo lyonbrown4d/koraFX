@@ -1,4 +1,4 @@
-package dev.korafx.workspace
+package dev.korafx.components
 
 import dev.korafx.dsl.label
 import dev.korafx.dsl.panel

@@ -57,7 +57,6 @@ implementation("io.github.daiyuang:korafx-data-grid")
 implementation("io.github.daiyuang:korafx-inspector-panel")
 implementation("io.github.daiyuang:korafx-resource-explorer")
 implementation("io.github.daiyuang:korafx-source-editor")
-implementation("io.github.daiyuang:korafx-workspace")
 testImplementation("io.github.daiyuang:korafx-test")
 ```
 

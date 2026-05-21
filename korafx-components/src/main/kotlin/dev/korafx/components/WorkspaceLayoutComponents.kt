@@ -1,4 +1,4 @@
-package dev.korafx.workspace
+package dev.korafx.components
 
 import dev.korafx.dsl.NodeContainerBuilder
 import dev.korafx.dsl.styleClass
@@ -207,7 +207,7 @@ fun NodeContainerBuilder.workspaceLayout(
     content: WorkspaceLayoutBuilder.() -> Unit,
 ): WorkspaceLayout =
     add(
-        dev.korafx.workspace.workspaceLayout(
+        dev.korafx.components.workspaceLayout(
             init = init,
             content = content,
         ),

@@ -102,7 +102,7 @@ Avoid adding new top-level runtime packages unless a feature clearly cannot fit 
 
 KoraFX should ship one coherent default visual language before adding more presets.
 
-- Built-in themes are Material Light and Material Dark.
+- Built-in themes are Material Light/Dark and Fluent Light/Dark.
 - `surface` is the application canvas and inner content area.
 - `surfaceMuted` is the raised container background for cards, panels, toolbars, inspectors, and workbench shells.
 - `primary` is the selected/action color; every theme must define a readable `selectedText` for that primary color.

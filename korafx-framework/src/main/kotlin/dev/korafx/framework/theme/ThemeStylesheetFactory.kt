@@ -1411,6 +1411,26 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("background-color", colors.surfaceMuted)
     }
 
+    rule(".korafx-devtools-fps-overlay") {
+        fx("background-color", "rgba(15, 23, 42, 0.86)")
+        fx("background-radius", "${context.radii.large}px")
+        fx("border-color", "rgba(148, 163, 184, 0.36)")
+        fx("border-radius", "${context.radii.large}px")
+        fx("effect", elevation.dropdown)
+        padding(spacing.xs, spacing.sm)
+    }
+
+    rule(".korafx-devtools-fps-overlay-fps") {
+        fx("text-fill", "#ffffff")
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "800")
+    }
+
+    rule(".korafx-devtools-fps-overlay-frame-time") {
+        fx("text-fill", "rgba(226, 232, 240, 0.84)")
+        fx("font-size", "${typography.baseSize - 3}px")
+    }
+
     rule(".resource-explorer") {
         surface(colors.surfaceMuted, colors.border, context.radii.large)
         fx("effect", elevation.card)
@@ -1624,6 +1644,83 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
 
     rule(".data-grid-selection-summary") {
         fx("font-weight", "700")
+    }
+
+    rule(".virtual-list", ".virtual-table", ".virtual-terminal") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.md)
+    }
+
+    rule(".virtual-list-list-view", ".virtual-table-table-view", ".virtual-terminal-list-view") {
+        surface(colors.surface, colors.border, context.radii.medium)
+    }
+
+    rule(".virtual-list-list-view .list-cell", ".virtual-terminal-list-view .list-cell") {
+        fx("background-color", "transparent")
+        fx("text-fill", colors.textPrimary)
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(spacing.sm, spacing.md)
+    }
+
+    rule(".virtual-list-list-view .list-cell:hover", ".virtual-terminal-list-view .list-cell:hover") {
+        fx("background-color", states.rowHover)
+    }
+
+    rule(".virtual-list-list-view .list-cell:selected", ".virtual-terminal-list-view .list-cell:selected") {
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".virtual-table-table-view .column-header-background", ".virtual-table-table-view .column-header") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", colors.border)
+    }
+
+    rule(".virtual-table-table-view .table-row-cell") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".virtual-table-table-view .table-row-cell:odd") {
+        fx("background-color", states.rowAlternate)
+    }
+
+    rule(".virtual-table-table-view .table-row-cell:hover") {
+        fx("background-color", states.rowHover)
+    }
+
+    rule(".virtual-table-table-view .table-row-cell:selected") {
+        fx("background-color", states.selected)
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".virtual-table-cell-node") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".virtual-terminal-line-label") {
+        fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".terminal-muted .virtual-terminal-line-label", ".virtual-terminal-list-view .terminal-muted") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".terminal-info .virtual-terminal-line-label", ".virtual-terminal-list-view .terminal-info") {
+        fx("text-fill", colors.info)
+    }
+
+    rule(".terminal-success .virtual-terminal-line-label", ".virtual-terminal-list-view .terminal-success") {
+        fx("text-fill", colors.success)
+    }
+
+    rule(".terminal-warning .virtual-terminal-line-label", ".virtual-terminal-list-view .terminal-warning") {
+        fx("text-fill", colors.warning)
+    }
+
+    rule(".terminal-danger .virtual-terminal-line-label", ".virtual-terminal-list-view .terminal-danger") {
+        fx("text-fill", colors.danger)
     }
 
     rule(".inspector-panel") {
@@ -2307,12 +2404,46 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.lg, spacing.xl)
     }
 
-    rule(".app-shell", ".app-shell-layout") {
+    rule(".app-shell", ".app-shell-frame", ".app-shell-body") {
+        fx("background-color", colors.surface)
+    }
+
+    rule(".app-shell-top-bar", ".app-shell-footer") {
+        fx("background-color", colors.surfaceMuted)
+        padding(spacing.lg, spacing.xl)
+    }
+
+    rule(".app-shell-top-bar") {
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+    }
+
+    rule(".app-shell-footer") {
+        fx("border-color", "${colors.border} transparent transparent transparent")
+    }
+
+    rule(".app-shell-navigation", ".app-shell-details") {
+        fx("background-color", colors.surfaceMuted)
+        padding(spacing.xl)
+    }
+
+    rule(".app-shell-navigation") {
+        fx("border-color", "transparent ${colors.border} transparent transparent")
+    }
+
+    rule(".app-shell-details") {
+        fx("border-color", "transparent transparent transparent ${colors.border}")
+    }
+
+    rule(".app-shell-content") {
         fx("background-color", colors.surface)
     }
 
     rule(".app-shell-overlay", ".modal-host") {
         fx("background-color", "transparent")
+    }
+
+    rule(".app-shell-overlay-item") {
+        fx("effect", elevation.dropdown)
     }
 
     rule(".modal-backdrop") {

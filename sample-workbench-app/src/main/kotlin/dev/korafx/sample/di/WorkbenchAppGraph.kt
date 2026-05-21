@@ -38,66 +38,45 @@ class WorkbenchAppGraph(
 fun workbenchModule(): Module =
     module {
         single<WorkbenchCatalog> { InMemoryWorkbenchCatalog() }
-        single { WorkbenchViewModel(get(), get()) }
+        single { WorkbenchViewModel(get(), get(), get()) }
         single { CommandPaletteHost(commandPaletteCommands(get())) }
     }
 
 private fun commandPaletteCommands(viewModel: WorkbenchViewModel): List<CommandPaletteCommand> =
-    listOf(
-        CommandPaletteCommand(
-            id = "route.dsl",
-            title = "Open DSL Route",
-            description = "Navigate to Kotlin DSL examples.",
-            group = "Navigation",
-        ) {
-            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Dsl.path))
-        },
-        CommandPaletteCommand(
-            id = "route.components",
-            title = "Open Components Route",
-            description = "Navigate to the component gallery.",
-            group = "Navigation",
-        ) {
-            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Components.path))
-        },
-        CommandPaletteCommand(
-            id = "route.mvvm",
-            title = "Open MVVM Route",
-            description = "Navigate to MVVM overview.",
-            group = "Navigation",
-        ) {
-            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Mvvm.path))
-        },
-        CommandPaletteCommand(
-            id = "route.theme",
-            title = "Open Theme Route",
-            description = "Navigate to theme preview.",
-            group = "Navigation",
-        ) {
-            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Theme.path))
-        },
-        CommandPaletteCommand(
-            id = "theme.previous",
-            title = "Previous Theme",
-            description = "Switch to the previous built-in theme preset.",
-            group = "Theme",
-        ) {
-            viewModel.dispatch(WorkbenchAction.PreviousTheme)
-        },
-        CommandPaletteCommand(
-            id = "theme.next",
-            title = "Next Theme",
-            description = "Switch to the next built-in theme preset.",
-            group = "Theme",
-        ) {
-            viewModel.dispatch(WorkbenchAction.NextTheme)
-        },
-        CommandPaletteCommand(
-            id = "theme.toggle",
-            title = "Toggle Light / Dark",
-            description = "Toggle between the default light and dark presets.",
-            group = "Theme",
-        ) {
-            viewModel.dispatch(WorkbenchAction.ToggleTheme)
-        },
-    )
+    listOf(WorkbenchRoute.Overview)
+        .plus(WorkbenchRoute.moduleRoutes)
+        .map { route ->
+            CommandPaletteCommand(
+                id = "route.${route.id}",
+                title = "Open ${route.title}",
+                description = route.summary,
+                group = "Navigation",
+            ) {
+                viewModel.dispatch(WorkbenchAction.NavigatePath(route.path))
+            }
+        } + listOf(
+            CommandPaletteCommand(
+                id = "theme.previous",
+                title = "Previous Theme",
+                description = "Switch to the previous built-in theme preset.",
+                group = "Theme",
+            ) {
+                viewModel.dispatch(WorkbenchAction.PreviousTheme)
+            },
+            CommandPaletteCommand(
+                id = "theme.next",
+                title = "Next Theme",
+                description = "Switch to the next built-in theme preset.",
+                group = "Theme",
+            ) {
+                viewModel.dispatch(WorkbenchAction.NextTheme)
+            },
+            CommandPaletteCommand(
+                id = "theme.toggle",
+                title = "Toggle Light / Dark",
+                description = "Toggle between the default light and dark presets.",
+                group = "Theme",
+            ) {
+                viewModel.dispatch(WorkbenchAction.ToggleTheme)
+            },
+        )

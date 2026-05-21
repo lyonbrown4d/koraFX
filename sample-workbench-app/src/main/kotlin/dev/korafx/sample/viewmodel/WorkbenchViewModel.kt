@@ -5,8 +5,12 @@ import dev.korafx.framework.mvvm.UiEvent
 import dev.korafx.framework.mvvm.ViewModel
 import dev.korafx.framework.mvvm.ViewState
 import dev.korafx.navigation.Navigator
-import dev.korafx.sample.navigation.WorkbenchRoute
 import dev.korafx.framework.theme.ThemeManager
+import dev.korafx.sample.data.WorkbenchCatalog
+import dev.korafx.sample.domain.ModuleCategory
+import dev.korafx.sample.domain.ModuleShowcase
+import dev.korafx.sample.domain.SourceSnippet
+import dev.korafx.sample.navigation.WorkbenchRoute
 import kotlinx.coroutines.flow.collectLatest
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -17,6 +21,10 @@ data class WorkbenchState(
     val summary: String,
     val document: String,
     val currentThemeName: String,
+    val moduleDirectory: List<ModuleShowcase>,
+    val moduleCategories: List<ModuleCategory>,
+    val currentModule: ModuleShowcase?,
+    val sourceSnippets: List<SourceSnippet>,
     val statusItems: List<String>,
     val feedbackMessage: String,
     val mvvmCount: Int,
@@ -27,6 +35,7 @@ data class WorkbenchState(
 sealed interface WorkbenchAction : UiAction {
     data class Navigate(val routeId: String) : WorkbenchAction
     data class NavigatePath(val path: String) : WorkbenchAction
+    data class NavigateModule(val moduleId: String) : WorkbenchAction
     data object ToggleTheme : WorkbenchAction
     data object NextTheme : WorkbenchAction
     data object PreviousTheme : WorkbenchAction
@@ -45,8 +54,9 @@ sealed interface WorkbenchEvent : UiEvent {
 }
 
 class WorkbenchViewModel(
-    private val themeManager: ThemeManager,
-    private val navigator: Navigator<WorkbenchRoute>,
+    themeManager: ThemeManager,
+    navigator: Navigator<WorkbenchRoute>,
+    catalog: WorkbenchCatalog,
 ) : ViewModel<WorkbenchState, WorkbenchAction, WorkbenchEvent>(
     initialState = WorkbenchState(
         currentRouteId = navigator.currentRoute.id,
@@ -54,13 +64,29 @@ class WorkbenchViewModel(
         summary = navigator.currentRoute.summary,
         document = loadDocumentText(navigator.currentRoute.documentResource),
         currentThemeName = themeManager.currentTheme().displayName,
-        statusItems = listOf("DSL", "StateFlow", "MVVM", "Navigation", "Theme", "Components", "DI Graph"),
+        moduleDirectory = WorkbenchRoute.moduleDirectory,
+        moduleCategories = ModuleCategory.values().toList(),
+        currentModule = navigator.currentRoute.moduleId?.let(WorkbenchRoute::findModule),
+        sourceSnippets = catalog.sourceSnippets.forRoute(navigator.currentRoute),
+        statusItems = listOf(
+            "Framework",
+            "DSL",
+            "MVVM",
+            "Theme",
+            "Navigation",
+            "Components",
+            "Advanced Components",
+        ),
         feedbackMessage = "Workbench started from koraApplication framework entry.",
         mvvmCount = 0,
         mvvmDraft = "StateFlow keeps JavaFX views predictable.",
         mvvmNotes = emptyList(),
     ),
 ) {
+    private val themeManager: ThemeManager = themeManager
+    private val navigator: Navigator<WorkbenchRoute> = navigator
+    private val catalog: WorkbenchCatalog = catalog
+
     init {
         rebuild(navigator.currentRoute)
 
@@ -81,6 +107,7 @@ class WorkbenchViewModel(
         when (action) {
             is WorkbenchAction.Navigate -> navigate(action.routeId)
             is WorkbenchAction.NavigatePath -> navigatePath(action.path)
+            is WorkbenchAction.NavigateModule -> navigateModule(action.moduleId)
             WorkbenchAction.ToggleTheme -> toggleTheme()
             WorkbenchAction.NextTheme -> nextTheme()
             WorkbenchAction.PreviousTheme -> previousTheme()
@@ -119,6 +146,16 @@ class WorkbenchViewModel(
                 }
             announce(message)
         }
+    }
+
+    private fun navigateModule(moduleId: String) {
+        val route = WorkbenchRoute.findRoute(moduleId)
+        if (route == null) {
+            record("Module not found: $moduleId")
+            return
+        }
+
+        navigatePath(route.path)
     }
 
     private fun toggleTheme() {
@@ -203,24 +240,18 @@ class WorkbenchViewModel(
     }
 
     private fun rebuild(route: WorkbenchRoute) {
+        val module = route.moduleId?.let(WorkbenchRoute::findModule)
         updateState {
             it.copy(
                 currentRouteId = route.id,
                 title = route.title,
                 summary = route.summary,
                 document = loadDocumentText(route.documentResource),
+                currentModule = module,
+                sourceSnippets = catalog.sourceSnippets.forRoute(route),
             )
         }
     }
-
-    private fun loadDocumentText(resourcePath: String): String =
-        runCatching {
-            WorkbenchViewModel::class.java.classLoader.getResource(resourcePath)?.let { url ->
-                url.openStream().use { stream ->
-                    BufferedReader(InputStreamReader(stream)).readText()
-                }
-            }
-        }.getOrElse { null } ?: "# Documentation Unavailable\n\nUnable to load `$resourcePath`."
 
     private suspend fun announce(message: String) {
         updateState { it.copy(feedbackMessage = message) }
@@ -232,3 +263,17 @@ class WorkbenchViewModel(
         tryEmitEvent(WorkbenchEvent.Feedback(message))
     }
 }
+
+private fun loadDocumentText(resourcePath: String): String =
+    runCatching {
+        WorkbenchViewModel::class.java.classLoader.getResource(resourcePath)?.let { url ->
+            url.openStream().use { stream ->
+                BufferedReader(InputStreamReader(stream)).readText()
+            }
+        }
+    }.getOrElse { null } ?: "# Documentation Unavailable\n\nUnable to load `$resourcePath`."
+
+private fun List<SourceSnippet>.forRoute(route: WorkbenchRoute): List<SourceSnippet> =
+    filter { snippet ->
+        route.id in snippet.routeIds || route.moduleId in snippet.routeIds
+    }

@@ -42,6 +42,7 @@ internal class KoraDevtoolsController(
     private var devtoolsRoot: Parent? = null
     private var originalRoot: Parent? = null
     private var themeController: SceneThemeController? = null
+    private var frameRateOverlay: FrameRateOverlay? = null
     private val jobs = mutableListOf<Job>()
     private val inspector = InProcessInspector(
         scene = app.scene,
@@ -188,6 +189,7 @@ internal class KoraDevtoolsController(
         app.scene.root = container
         host.children.setAll(currentRoot)
         highlighter.renderIn(host)
+        installFrameRateOverlay(host)
         container.setDividerPositions(currentPlacement.initialDivider(app.scene.width, app.scene.height))
     }
 
@@ -199,6 +201,7 @@ internal class KoraDevtoolsController(
         inspectedHost?.children?.clear()
         highlighter.limitTo(null)
         highlighter.renderIn(null)
+        uninstallFrameRateOverlay()
         container.items.clear()
         if (root != null && app.scene.root === container) {
             app.scene.root = root
@@ -274,6 +277,7 @@ internal class KoraDevtoolsController(
         host.children.setAll(currentRoot)
         highlighter.limitTo(host)
         highlighter.renderIn(host)
+        installFrameRateOverlay(host)
     }
 
     private fun restoreWindowOverlay() {
@@ -281,6 +285,7 @@ internal class KoraDevtoolsController(
         val root = originalRoot
         highlighter.limitTo(null)
         highlighter.renderIn(null)
+        uninstallFrameRateOverlay()
         host?.children?.clear()
         if (host != null && root != null && app.scene.root === host) {
             app.scene.root = root
@@ -294,7 +299,6 @@ internal class KoraDevtoolsController(
         stackPane(
             init = {
                 styleClass("korafx-devtools-inspected-host")
-                isMouseTransparent = true
                 isPickOnBounds = false
                 val host = this
                 clip = rectangle {
@@ -303,6 +307,24 @@ internal class KoraDevtoolsController(
                 }
             },
         ) {}
+
+    private fun installFrameRateOverlay(host: StackPane) {
+        if (!spec.showFpsOverlay || frameRateOverlay != null) {
+            return
+        }
+
+        FrameRateOverlay().also { overlay ->
+            frameRateOverlay = overlay
+            host.attachFrameRateOverlay(overlay)
+        }
+    }
+
+    private fun uninstallFrameRateOverlay() {
+        val overlay = frameRateOverlay ?: return
+        overlay.stop()
+        inspectedHost?.children?.remove(overlay.node)
+        frameRateOverlay = null
+    }
 
     private fun createShell(inspectedRoot: () -> Parent = ::inspectedRoot): Parent =
         DevtoolsShell(

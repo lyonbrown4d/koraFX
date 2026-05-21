@@ -17,7 +17,6 @@ dependencies {
         api(project(":korafx-resource-explorer"))
         api(project(":korafx-virtual-list"))
         api(project(":korafx-source-editor"))
-        api(project(":korafx-workspace"))
         api(project(":korafx-test"))
         api(project(":korafx-devtools"))
         api(project(":korafx-macos"))
