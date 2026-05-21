@@ -33,9 +33,28 @@ class EditableTableTest {
             assertTrue("editable-table" in table.styleClass)
             assertEquals(rows, table.items.toList())
             assertEquals(3, table.columns.size)
-            assertEquals("No rows", assertIs<Label>(table.placeholder).text)
+            val placeholder = assertIs<Label>(table.placeholder)
+            assertEquals("No rows", placeholder.text)
+            assertTrue("editable-table-placeholder" in placeholder.styleClass)
+            assertTrue("editable-table-text-column" in table.columns[0].styleClass)
             assertTrue(table.columns[1].isEditable)
             assertTrue("editable-table-column" in table.columns[1].styleClass)
+            assertTrue("editable-table-editable-text-column" in table.columns[1].styleClass)
+            assertTrue("editable-table-action-column" in table.columns[2].styleClass)
+        }
+    }
+
+    @Test
+    fun `editable table marks placeholder nodes and node columns`() {
+        FxTestSupport.runOnFxThread {
+            val placeholder = Label("Nothing")
+            val table = editableTable(listOf(Row("DSL", "Core"))) {
+                placeholder(placeholder)
+                columnNode("Owner", valueOf = { it.owner }) { Label(it) }
+            }
+
+            assertTrue("editable-table-placeholder" in placeholder.styleClass)
+            assertTrue("editable-table-node-column" in table.columns.single().styleClass)
         }
     }
 

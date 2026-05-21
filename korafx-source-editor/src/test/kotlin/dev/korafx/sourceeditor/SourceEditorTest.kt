@@ -74,6 +74,26 @@ class SourceEditorTest {
     }
 
     @Test
+    fun `source editor exposes replace and selection state through dsl`() {
+        FxTestSupport.runOnFxThread {
+            val editor = sourceEditor(
+                text = "where status = active\nand status = active",
+            ) {
+                showReplace("active", "archived")
+                replaceNext()
+            }
+
+            editor.editor.textArea.selectRange(0, 21)
+
+            assertEquals("where status = archived\nand status = active", editor.editor.textArea.text)
+            assertEquals(21, editor.selectionLength)
+            assertEquals(1, editor.selectedLineCount)
+            assertEquals(1, editor.replaceAll())
+            assertEquals("where status = archived\nand status = archived", editor.editor.textArea.text)
+        }
+    }
+
+    @Test
     fun `query editor wires run and stop actions to current query text`() {
         FxTestSupport.runOnFxThread {
             var query = ""

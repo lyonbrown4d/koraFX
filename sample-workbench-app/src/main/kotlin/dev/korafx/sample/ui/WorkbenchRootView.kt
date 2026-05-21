@@ -212,7 +212,7 @@ class WorkbenchRootView(
                   }.stateText(uiScope, viewModel.state) { it.summary }
                   textArea {
                     isEditable = false
-                    prefRowCount = 16
+                    prefRowCount = 7
                   }.stateText(uiScope, viewModel.state) { it.document }
                   label {
                     styleClasses(ThemeStyleClass.Muted)
@@ -353,10 +353,29 @@ class WorkbenchRootView(
                     it.currentRouteId == WorkbenchRoute.Overview.id
                   }
                   vbox(spacing = 16.0) {
+                    heroBanner(
+                      title = "DSL Workbench Primitives",
+                      subtitle = "A compact route for native JavaFX controls, Kotlin builders and Flow-backed bindings.",
+                      eyebrow = "Showcase / DSL",
+                      icon = WorkbenchIcons.Dsl,
+                    ) {
+                      hbox(spacing = 8.0) {
+                        badge("Native JavaFX", ComponentTone.PRIMARY, icon = WorkbenchIcons.Dsl)
+                        badge("Flow binding", ComponentTone.INFO, icon = WorkbenchIcons.Stable)
+                        badge("No wrapper lock-in", ComponentTone.SUCCESS, icon = WorkbenchIcons.Samples)
+                      }
+                    }
+
                     section(
                       title = "DSL Composition",
                       description = "This route focuses on the base Kotlin DSL: layout builders, control builders, binding helpers and native JavaFX access.",
                     ) {
+                      pageHeader(
+                        title = "Native Control Composition",
+                        subtitle = "The DSL adds layout clarity while keeping the underlying JavaFX nodes directly configurable.",
+                        eyebrow = "DSL / Native Controls",
+                        icon = WorkbenchIcons.Dsl,
+                      )
                       borderLayout(
                         init = {
                           prefHeight = 220.0
@@ -405,6 +424,12 @@ class WorkbenchRootView(
                       title = "State Binding",
                       description = "Bindings are explicit at component property level, so views stay readable without reflection or generated UI models.",
                     ) {
+                      pageHeader(
+                        title = "Flow-backed Form State",
+                        subtitle = "Validation, bidirectional text and spinner values are shown as one consistent workbench form.",
+                        eyebrow = "DSL / Binding",
+                        icon = WorkbenchIcons.Stable,
+                      )
                       form {
                         item(
                           label = "Project",
@@ -452,7 +477,7 @@ class WorkbenchRootView(
 
                     section(
                       title = "Component Gallery",
-                      description = "A paged showcase keeps each custom component independent, like a desktop component banner deck.",
+                      description = "The paged gallery is the primary component showcase. Each page owns one component family to avoid one oversized demo route.",
                     ) {
                       heroBanner(
                         title = "KoraFX Component Gallery",
@@ -474,15 +499,15 @@ class WorkbenchRootView(
                           badge("Theme-covered", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
                         }
                         hbox(spacing = 12.0) {
-                          metricCard("Advanced modules", "6", "Published as focused artifacts", ComponentTone.PRIMARY, init = {
+                          metricCard("Advanced modules", "6", "Focused artifacts with standalone APIs", ComponentTone.PRIMARY, init = {
                             maxWidth = Double.MAX_VALUE
                             HBox.setHgrow(this, Priority.ALWAYS)
                           })
-                          metricCard("Showcase pages", "6", "One component family per page", ComponentTone.INFO, init = {
+                          metricCard("Gallery pages", "6", "Base, editor, workspace, data, runtime and commands", ComponentTone.INFO, init = {
                             maxWidth = Double.MAX_VALUE
                             HBox.setHgrow(this, Priority.ALWAYS)
                           })
-                          metricCard("Sample pattern", "MVVM", "Koin + Navigator + DSL", ComponentTone.SUCCESS, init = {
+                          metricCard("App pattern", "MVVM", "Koin + Navigator + themed DSL", ComponentTone.SUCCESS, init = {
                             maxWidth = Double.MAX_VALUE
                             HBox.setHgrow(this, Priority.ALWAYS)
                           })
@@ -553,7 +578,7 @@ class WorkbenchRootView(
                                   title = "RepositoryConfig.kt",
                                   text = "data class RepositoryConfig(\n    val branch: String,\n    val remote: String,\n)",
                                   language = "kotlin",
-                                  readOnly = true,
+                                  readOnly = false,
                                   showSearch = true,
                                   diagnostics = listOf(
                                     SourceDiagnostic(2, 9, "Click diagnostics to jump to a source position.", ComponentTone.INFO),
@@ -562,9 +587,13 @@ class WorkbenchRootView(
                                     prefHeight = 420.0
                                   },
                                 ) {
-                                  showSearch("RepositoryConfig")
+                                  showReplace("remote", "origin")
                                   onDiagnosticSelected { diagnostic ->
                                     feedbackLabel.text = "State: Gallery jumped to ${diagnostic.line}:${diagnostic.column}."
+                                  }
+                                  action("Replace Next") {
+                                    val replaced = replaceNext("remote", "origin")
+                                    feedbackLabel.text = "State: Source editor replace next = $replaced."
                                   }
                                   action("Open File") {
                                     feedbackLabel.text = "State: Source editor gallery action."
@@ -605,6 +634,10 @@ class WorkbenchRootView(
                                     ) {
                                       search(prompt = "Search repository or database...")
                                       breadcrumb(separator = " > ")
+                                      graphic { Label(resourceIconText(it)) }
+                                      secondaryText { resourceSecondaryText(it) }
+                                      status { resourceStatusText(it) }
+                                      emptyState("No matching resources")
                                       rowAction { resource ->
                                         openResourceTab(resource)
                                       }
@@ -670,6 +703,10 @@ class WorkbenchRootView(
                                   toolbar {
                                     action("Refresh") {
                                       feedbackLabel.text = "State: Data grid gallery refresh."
+                                    }
+                                    columnVisibility()
+                                    snapshotAction("Copy visible") { snapshot ->
+                                      feedbackLabel.text = "State: Copied ${snapshot.rows.size} visible rows."
                                     }
                                     batchAction("Archive selected") { rows ->
                                       feedbackLabel.text = "State: Prepared ${rows.size} module rows for archive."
@@ -762,49 +799,40 @@ class WorkbenchRootView(
                     }
 
                     section(
-                      title = "Surface Components",
-                      description = "section, card and actionBar are lightweight containers built on top of the DSL.",
+                      title = "Component Usage Map",
+                      description = "A compact index replaces repeated inline demos: base surfaces are proven in gallery page 1, while advanced modules get focused pages below.",
                     ) {
-                      gridPane(
-                        hgap = 12.0,
-                        vgap = 10.0,
-                      ) {
-                        column(prefWidth = 120.0, alignment = HPos.RIGHT)
-                        column(grow = Priority.ALWAYS, fillWidth = true)
-
-                        label(0, 0, "Project")
-                        textField(1, 0, "KoraFX") {
+                      pageHeader(
+                        title = "Base And Advanced Component Inventory",
+                        subtitle = "Use this as a product-level map, then inspect the paged gallery for the visual behavior.",
+                        eyebrow = "Components / Inventory",
+                        icon = WorkbenchIcons.Samples,
+                      )
+                      hbox(spacing = 12.0) {
+                        metricCard("Base surfaces", "6", "card, section, actionBar, badge, chip, metricCard", ComponentTone.PRIMARY, init = {
                           maxWidth = Double.MAX_VALUE
-                        }
-
-                        label(0, 1, "Mode")
-                        checkBox(1, 1, "Kotlin-first JavaFX DSL") {
-                          isSelected = true
-                        }
+                          HBox.setHgrow(this, Priority.ALWAYS)
+                        })
+                        metricCard("Advanced modules", "6", "Editor, workspace, data, inspector, resources, commands", ComponentTone.INFO, init = {
+                          maxWidth = Double.MAX_VALUE
+                          HBox.setHgrow(this, Priority.ALWAYS)
+                        })
+                        metricCard("Demo density", "Paged", "Primary demos are distributed across gallery pages", ComponentTone.SUCCESS, init = {
+                          maxWidth = Double.MAX_VALUE
+                          HBox.setHgrow(this, Priority.ALWAYS)
+                        })
                       }
-
-                      actionBar {
-                        ghostButton("Secondary") {
-                          onAction {
-                            feedbackLabel.text = "State: Secondary action from actionBar."
-                          }
-                        }
-                        button("Primary") {
-                          onAction {
-                            feedbackLabel.text = "State: Primary action from actionBar."
-                          }
-                        }
-                      }
-
-                      hbox(spacing = 8.0) {
-                        badge("Stable", ComponentTone.SUCCESS, icon = WorkbenchIcons.Stable)
-                        badge("Theme", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
-                        chip("DSL", ComponentTone.PRIMARY, selected = true, icon = WorkbenchIcons.Dsl)
-                        chip("Samples", ComponentTone.NEUTRAL, icon = WorkbenchIcons.Samples) {
-                          onAction {
-                            feedbackLabel.text = "State: Chip action."
-                          }
-                        }
+                      tableView(
+                        items = moduleSummaries,
+                        init = {
+                          prefHeight = 220.0
+                          maxWidth = Double.MAX_VALUE
+                        },
+                      ) {
+                        constrainedResize()
+                        placeholder("No component modules")
+                        textColumn("Module") { it.name }
+                        textColumn("Showcase Role") { it.responsibility }
                       }
                     }
 
@@ -823,22 +851,27 @@ class WorkbenchRootView(
                         },
                       ) {
                         prefHeight = 220.0
+                        showReplaceBar("KoraFX", "KoraFX Framework")
                       }
                       sourceEditor(
                         title = "RepositoryConfig.kt",
                         text = "data class RepositoryConfig(\n    val branch: String,\n    val remote: String,\n)",
                         language = "kotlin",
-                        readOnly = true,
+                        readOnly = false,
                         diagnostics = listOf(
-                          SourceDiagnostic(2, 9, "Preview mode keeps source read-only.", ComponentTone.INFO),
+                          SourceDiagnostic(2, 9, "Replace bar can edit simple source previews.", ComponentTone.INFO),
                         ),
                         init = {
                           prefHeight = 260.0
                         },
                       ) {
-                        showSearch("RepositoryConfig")
+                        showReplace("remote", "origin")
                         onDiagnosticSelected { diagnostic ->
                           feedbackLabel.text = "State: Jumped to ${diagnostic.line}:${diagnostic.column}."
+                        }
+                        action("Replace Next") {
+                          val replaced = replaceNext("remote", "origin")
+                          feedbackLabel.text = "State: Source editor replace next = $replaced."
                         }
                         action("Open File") {
                           feedbackLabel.text = "State: Open source file requested."
@@ -916,6 +949,10 @@ class WorkbenchRootView(
                           ) {
                             search(prompt = "Search repository or database...")
                             breadcrumb(separator = " > ")
+                            graphic { Label(resourceIconText(it)) }
+                            secondaryText { resourceSecondaryText(it) }
+                            status { resourceStatusText(it) }
+                            emptyState("No matching resources")
                             onSelect { resource ->
                               if (resource != null) {
                                 feedbackLabel.text = "State: Selected resource ${resource.name}."
@@ -1062,6 +1099,10 @@ class WorkbenchRootView(
                         toolbar {
                           action("Refresh") {
                             feedbackLabel.text = "State: Data grid refresh requested."
+                          }
+                          columnVisibility()
+                          snapshotAction("Copy visible") { snapshot ->
+                            feedbackLabel.text = "State: Copied ${snapshot.rows.size} visible rows."
                           }
                           batchAction("Archive selected") { rows ->
                             feedbackLabel.text = "State: Prepared ${rows.size} module rows for archive."
@@ -1350,10 +1391,47 @@ class WorkbenchRootView(
                     it.currentRouteId == WorkbenchRoute.Mvvm.id
                   }
                   vbox(spacing = 16.0) {
+                    heroBanner(
+                      title = "Theme System Showcase",
+                      subtitle = "Preset selection, token inspection and native control coverage share one product-level theme route.",
+                      eyebrow = "Showcase / Theme",
+                      icon = WorkbenchIcons.Theme,
+                      actions = {
+                        ghostButton("Next Theme") {
+                          setKoraIcon(WorkbenchIcons.NextTheme)
+                          onAction {
+                            viewModel.dispatch(WorkbenchAction.NextTheme)
+                          }
+                        }
+                      },
+                    ) {
+                      hbox(spacing = 8.0) {
+                        badge("Generated CSS", ComponentTone.PRIMARY, icon = WorkbenchIcons.Theme)
+                        badge("Native controls", ComponentTone.INFO, icon = WorkbenchIcons.Dsl)
+                        badge("Semantic tones", ComponentTone.SUCCESS, icon = WorkbenchIcons.Stable)
+                      }
+                      hbox(spacing = 12.0) {
+                        metricCard("Presets", themeManager.availableThemes.size.toString(), "Selectable built-in themes", ComponentTone.INFO, init = {
+                          maxWidth = Double.MAX_VALUE
+                          HBox.setHgrow(this, Priority.ALWAYS)
+                        })
+                        metricCard("Tones", ComponentTone.entries.size.toString(), "Shared badge, chip and alert semantics", ComponentTone.SUCCESS, init = {
+                          maxWidth = Double.MAX_VALUE
+                          HBox.setHgrow(this, Priority.ALWAYS)
+                        })
+                      }
+                    }
+
                     section(
                       title = "Theme Presets",
                       description = "Choose any built-in theme. The Scene stylesheet is regenerated from typed tokens.",
                     ) {
+                      pageHeader(
+                        title = "Preset Selector",
+                        subtitle = "ThemeManager owns the active preset and keeps toolbar and page controls synchronized.",
+                        eyebrow = "Theme / Presets",
+                        icon = WorkbenchIcons.Theme,
+                      )
                       gridPane(
                         hgap = 12.0,
                         vgap = 10.0,
@@ -1409,6 +1487,12 @@ class WorkbenchRootView(
                       title = "Current Theme Tokens",
                       description = "These values are the source for generated JavaFX CSS.",
                     ) {
+                      pageHeader(
+                        title = "Token Snapshot",
+                        subtitle = "Color, spacing, radius, typography and state tokens are shown as compact inspection data.",
+                        eyebrow = "Theme / Tokens",
+                        icon = WorkbenchIcons.Stable,
+                      )
                       gridPane(
                         hgap = 12.0,
                         vgap = 10.0,
@@ -1455,6 +1539,12 @@ class WorkbenchRootView(
                       title = "Theme Control Gallery",
                       description = "Switch presets above and check whether common JavaFX controls keep a consistent surface, radius and interaction style.",
                     ) {
+                      pageHeader(
+                        title = "Native And Semantic Controls",
+                        subtitle = "Controls, badges, chips, metric cards, banners, tabs and lists validate token coverage together.",
+                        eyebrow = "Theme / Control Gallery",
+                        icon = WorkbenchIcons.Samples,
+                      )
                       vbox(spacing = 16.0) {
                         flowPane(
                           hgap = 10.0,
@@ -1491,21 +1581,6 @@ class WorkbenchRootView(
                           badge("Danger", ComponentTone.DANGER)
                           chip("Selected", ComponentTone.PRIMARY, selected = true, icon = WorkbenchIcons.Dsl)
                           chip("Info", ComponentTone.INFO, icon = WorkbenchIcons.Theme)
-                        }
-
-                        hbox(spacing = 12.0) {
-                          metricCard(
-                            label = "Presets",
-                            value = themeManager.availableThemes.size.toString(),
-                            helper = "Built-in themes",
-                            tone = ComponentTone.INFO,
-                          )
-                          metricCard(
-                            label = "Tones",
-                            value = ComponentTone.entries.size.toString(),
-                            helper = "Semantic component states",
-                            tone = ComponentTone.SUCCESS,
-                          )
                         }
 
                         alertBanner(
@@ -1698,5 +1773,31 @@ class WorkbenchRootView(
       commandPalette(commandPaletteHost) {
         emptyState("No commands match the current search.")
       }
+    }
+
+  private fun resourceSecondaryText(resource: ExplorerResource): String =
+    if (resource.children.isEmpty()) {
+      "Leaf resource"
+    } else {
+      "${resource.children.size} children"
+    }
+
+  private fun resourceStatusText(resource: ExplorerResource): String? =
+    when {
+      resource.name.endsWith(".kt") -> "KT"
+      resource.name.endsWith(".md") -> "DOC"
+      resource.name in setOf("users", "orders") -> "TABLE"
+      resource.name == "analytics" -> "VIEW"
+      resource.children.isNotEmpty() -> "GROUP"
+      else -> null
+    }
+
+  private fun resourceIconText(resource: ExplorerResource): String =
+    when {
+      resource.children.isNotEmpty() -> "D"
+      resource.name.endsWith(".kt") -> "K"
+      resource.name.endsWith(".md") -> "M"
+      resource.name in setOf("users", "orders", "analytics") -> "T"
+      else -> "F"
     }
 }

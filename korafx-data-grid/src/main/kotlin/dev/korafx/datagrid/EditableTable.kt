@@ -41,10 +41,14 @@ class EditableTableBuilder<T> internal constructor(
     }
 
     fun placeholder(text: String, init: Label.() -> Unit = {}) {
-        tableView.placeholder = Label(text).apply(init)
+        tableView.placeholder = Label(text).apply {
+            styleClass("editable-table-placeholder")
+            init()
+        }
     }
 
     fun placeholder(node: Node) {
+        node.styleClass("editable-table-placeholder")
         tableView.placeholder = node
     }
 
@@ -97,6 +101,7 @@ class EditableTableBuilder<T> internal constructor(
         valueOf: (T) -> Any?,
     ): TableColumn<T, String> =
         TableColumn<T, String>(title).apply {
+            styleClass += "editable-table-text-column"
             setCellValueFactory { features ->
                 ReadOnlyObjectWrapper(valueOf(features.value)?.toString().orEmpty())
             }
@@ -114,6 +119,7 @@ class EditableTableBuilder<T> internal constructor(
         TableColumn<T, String>(title).apply {
             isEditable = true
             styleClass += "editable-table-column"
+            styleClass += "editable-table-editable-text-column"
             setCellValueFactory { features ->
                 ReadOnlyObjectWrapper(valueOf(features.value).orEmpty())
             }
@@ -134,6 +140,7 @@ class EditableTableBuilder<T> internal constructor(
         content: (R) -> Node,
     ): TableColumn<T, R> =
         TableColumn<T, R>(title).apply {
+            styleClass += "editable-table-node-column"
             setCellValueFactory { features ->
                 ReadOnlyObjectWrapper(valueOf(features.value))
             }
@@ -146,7 +153,9 @@ class EditableTableBuilder<T> internal constructor(
                             if (empty || item == null) {
                                 null
                             } else {
-                                StackPane(content(item))
+                                StackPane(content(item)).apply {
+                                    styleClass("editable-table-cell-node")
+                                }
                             }
                     }
                 }
@@ -163,6 +172,7 @@ class EditableTableBuilder<T> internal constructor(
         handler: (T) -> Unit,
     ): TableColumn<T, T> =
         TableColumn<T, T>(title).apply {
+            styleClass += "editable-table-action-column"
             setCellValueFactory { features ->
                 ReadOnlyObjectWrapper(features.value)
             }

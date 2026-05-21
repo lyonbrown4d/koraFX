@@ -280,6 +280,7 @@ Main API:
 - `ResourceExplorer.breadcrumb(...)`, `hideBreadcrumb()`
 - `ResourceExplorer.selectedItem()`, `selectedPath()`, `selectedPathText(...)`, `selectPath(...)`
 - `ResourceExplorer.expandSelected()`, `collapseSelected()`, `collapseAll()`
+- `ResourceExplorerBuilder.secondaryText { ... }`, `status { ... }`, `emptyState(...)`
 
 Guidelines:
 
@@ -299,8 +300,11 @@ Main API:
 - `DataGridBuilder`
 - `DataGridBuilder.selectionSummary(...)`
 - `DataGridBuilder.toolbarBatchAction(...)`
+- `DataGridBuilder.columnVisibility(...)`, `toolbarSnapshotAction(...)`, `dataSnapshot(...)`, `copyText(...)`
 - `DataGridToolbarBuilder.batchAction(...)`
+- `DataGridToolbarBuilder.columnVisibility(...)`, `snapshotAction(...)`
 - `DataGrid.selectedItems()`
+- `DataGridDataSnapshot`
 - `EditableTableBuilder`
 
 Guidelines:
@@ -322,8 +326,9 @@ Main API:
 - `SourceEditor`
 - `SourceDiagnostic`
 - `CodeEditor.goTo(line, column)`, `selectLine(line)`, `find(...)`, `findNext(...)`, `findPrevious(...)`
-- `CodeEditor.showSearchBar(...)`, `hideSearchBar()`, `setLineNumbersVisible(...)`, `setWrapText(...)`
-- `SourceEditor.jumpToDiagnostic(...)`, `onDiagnosticSelected { ... }`
+- `CodeEditor.showSearchBar(...)`, `showReplaceBar(...)`, `replaceNext(...)`, `replaceAll(...)`, `hideSearchBar()`
+- `CodeEditor.selectionLength`, `selectedLineCount`, `setLineNumbersVisible(...)`, `setWrapText(...)`
+- `SourceEditor.jumpToDiagnostic(...)`, `showReplace(...)`, `replaceNext(...)`, `replaceAll(...)`, `onDiagnosticSelected { ... }`
 
 Example:
 
@@ -335,6 +340,7 @@ sourceEditor(
     showSearch = true,
 ) {
     diagnostic(3, 12, "Unused value", ComponentTone.WARNING)
+    showReplace("value", "result")
     onDiagnosticSelected { diagnostic ->
         println("Jumped to ${diagnostic.line}:${diagnostic.column}")
     }

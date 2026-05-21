@@ -6,7 +6,9 @@ import dev.korafx.dsl.styleClass
 import javafx.collections.ListChangeListener
 import javafx.scene.Node
 import javafx.scene.control.Button
+import javafx.scene.control.CheckMenuItem
 import javafx.scene.control.Label
+import javafx.scene.control.MenuButton
 import javafx.scene.control.SelectionMode
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableRow
@@ -35,6 +37,7 @@ class DataGrid<T> internal constructor(
     private val sourceItems = mutableListOf<T>()
     private val toolbarNodes = mutableListOf<Node>()
     private val batchActions = mutableListOf<DataGridBatchAction<T>>()
+    private val snapshotActions = mutableListOf<DataGridSnapshotAction<T>>()
 
     private var loading = false
     private var searchTextOf: (T) -> String = { it.toString() }
@@ -210,8 +213,101 @@ class DataGrid<T> internal constructor(
             updateSelectionState()
         }
 
+    fun addSnapshotAction(
+        text: String,
+        selectedOnly: Boolean = false,
+        separator: String = "\t",
+        includeHeaders: Boolean = true,
+        init: Button.() -> Unit = {},
+        handler: (DataGridDataSnapshot<T>) -> Unit,
+    ): Button =
+        Button(text).apply {
+            styleClass("data-grid-toolbar-action")
+            styleClass("data-grid-toolbar-snapshot-action")
+            init()
+            onAction {
+                handler(
+                    createDataSnapshot(selectedOnly).also { snapshot ->
+                        snapshot.defaultSeparator = separator
+                        snapshot.defaultIncludeHeaders = includeHeaders
+                    },
+                )
+            }
+        }.also { button ->
+            snapshotActions += DataGridSnapshotAction(button, selectedOnly)
+            addToolbarNode(button)
+            updateSelectionState()
+        }
+
+    fun addColumnVisibilityMenu(
+        text: String = "Columns",
+        includeColumn: (TableColumn<T, *>) -> Boolean = { true },
+        init: MenuButton.() -> Unit = {},
+    ): MenuButton =
+        MenuButton(text).apply {
+            styleClass("data-grid-toolbar-action")
+            styleClass("data-grid-column-visibility")
+            syncColumnVisibilityMenu(this, includeColumn)
+            setOnShowing {
+                syncColumnVisibilityMenu(this, includeColumn)
+            }
+            init()
+        }.also {
+            addToolbarNode(it)
+        }
+
+    private fun syncColumnVisibilityMenu(
+        menu: MenuButton,
+        includeColumn: (TableColumn<T, *>) -> Boolean,
+    ) {
+        menu.items.setAll(
+            tableView.columns
+                .filter(includeColumn)
+                .map { column ->
+                    CheckMenuItem(column.text.ifBlank { "Column" }).apply {
+                        styleClass += "data-grid-column-visibility-item"
+                        isSelected = column.isVisible
+                        selectedProperty().addListener { _, _, selected ->
+                            column.isVisible = selected
+                        }
+                        column.visibleProperty().addListener { _, _, visible ->
+                            if (isSelected != visible) {
+                                isSelected = visible
+                            }
+                        }
+                    }
+                },
+        )
+    }
+
     fun selectedItems(): List<T> =
         tableView.selectionModel.selectedItems.toList()
+
+    fun createDataSnapshot(selectedOnly: Boolean = false): DataGridDataSnapshot<T> {
+        val columns = tableView.columns.filter { it.isVisible }
+        val rows =
+            if (selectedOnly) {
+                selectedItems()
+            } else {
+                tableView.items.toList()
+            }
+        return DataGridDataSnapshot(
+            sourceRows = rows,
+            headers = columns.map { it.text },
+            rows = rows.map { row ->
+                columns.map { column ->
+                    column.getCellObservableValue(row)?.value?.toString().orEmpty()
+                }
+            },
+        )
+    }
+
+    fun copyText(
+        selectedOnly: Boolean = false,
+        separator: String = "\t",
+        includeHeaders: Boolean = true,
+    ): String =
+        createDataSnapshot(selectedOnly).toDelimitedText(separator, includeHeaders)
 
     fun rowAction(
         clickCount: Int = 2,
@@ -318,6 +414,9 @@ class DataGrid<T> internal constructor(
         batchActions.forEach { action ->
             action.button.isDisable = action.requireSelection && selected.isEmpty()
         }
+        snapshotActions.forEach { action ->
+            action.button.isDisable = action.selectedOnly && selected.isEmpty()
+        }
         refreshFooterVisibility()
     }
 
@@ -337,9 +436,44 @@ data class DataGridSelectionSummary<T>(
     val selectedCount: Int = selectedItems.size
 }
 
+data class DataGridDataSnapshot<T>(
+    val sourceRows: List<T>,
+    val headers: List<String>,
+    val rows: List<List<String>>,
+) {
+    internal var defaultSeparator: String = "\t"
+    internal var defaultIncludeHeaders: Boolean = true
+
+    fun toDelimitedText(
+        separator: String = defaultSeparator,
+        includeHeaders: Boolean = defaultIncludeHeaders,
+    ): String {
+        val lines = mutableListOf<List<String>>()
+        if (includeHeaders) {
+            lines += headers
+        }
+        lines += rows
+        return lines.joinToString("\n") { cells ->
+            cells.joinToString(separator) { cell ->
+                cell.sanitizeDelimitedCell(separator)
+            }
+        }
+    }
+
+    private fun String.sanitizeDelimitedCell(separator: String): String =
+        replace("\r", " ")
+            .replace("\n", " ")
+            .replace(separator, " ")
+}
+
 private data class DataGridBatchAction<T>(
     val button: Button,
     val requireSelection: Boolean,
+)
+
+private data class DataGridSnapshotAction<T>(
+    val button: Button,
+    val selectedOnly: Boolean,
 )
 
 class DataGridBuilder<T> internal constructor(
@@ -424,6 +558,33 @@ class DataGridBuilder<T> internal constructor(
         handler: (List<T>) -> Unit,
     ): Button =
         grid.addBatchAction(text, requireSelection, init, handler)
+
+    fun toolbarSnapshotAction(
+        text: String,
+        selectedOnly: Boolean = false,
+        separator: String = "\t",
+        includeHeaders: Boolean = true,
+        init: Button.() -> Unit = {},
+        handler: (DataGridDataSnapshot<T>) -> Unit,
+    ): Button =
+        grid.addSnapshotAction(text, selectedOnly, separator, includeHeaders, init, handler)
+
+    fun columnVisibility(
+        text: String = "Columns",
+        includeColumn: (TableColumn<T, *>) -> Boolean = { true },
+        init: MenuButton.() -> Unit = {},
+    ): MenuButton =
+        grid.addColumnVisibilityMenu(text, includeColumn, init)
+
+    fun dataSnapshot(selectedOnly: Boolean = false): DataGridDataSnapshot<T> =
+        grid.createDataSnapshot(selectedOnly)
+
+    fun copyText(
+        selectedOnly: Boolean = false,
+        separator: String = "\t",
+        includeHeaders: Boolean = true,
+    ): String =
+        grid.copyText(selectedOnly, separator, includeHeaders)
 
     fun selectionMode(mode: SelectionMode) {
         tableBuilder.selectionMode(mode)
@@ -516,6 +677,23 @@ class DataGridToolbarBuilder<T> internal constructor(
         handler: (List<T>) -> Unit,
     ): Button =
         grid.addBatchAction(text, requireSelection, init, handler)
+
+    fun snapshotAction(
+        text: String,
+        selectedOnly: Boolean = false,
+        separator: String = "\t",
+        includeHeaders: Boolean = true,
+        init: Button.() -> Unit = {},
+        handler: (DataGridDataSnapshot<T>) -> Unit,
+    ): Button =
+        grid.addSnapshotAction(text, selectedOnly, separator, includeHeaders, init, handler)
+
+    fun columnVisibility(
+        text: String = "Columns",
+        includeColumn: (TableColumn<T, *>) -> Boolean = { true },
+        init: MenuButton.() -> Unit = {},
+    ): MenuButton =
+        grid.addColumnVisibilityMenu(text, includeColumn, init)
 
     fun spacer(): Region =
         Region().apply {

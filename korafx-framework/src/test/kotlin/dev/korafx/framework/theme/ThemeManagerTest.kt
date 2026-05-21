@@ -98,6 +98,8 @@ class ThemeManagerTest {
         assertTrue(light.tokens.colors.textSecondary != dark.tokens.colors.textSecondary)
         assertTrue(light.tokens.colors.border != dark.tokens.colors.border)
         assertTrue(light.tokens.states.selected != dark.tokens.states.selected)
+        assertEquals("#FFFFFF", light.tokens.states.selectedText)
+        assertEquals("#381E72", dark.tokens.states.selectedText)
     }
 
     @Test

@@ -111,6 +111,57 @@ class CodeEditorTest {
     }
 
     @Test
+    fun `code editor supports replace next and replace all`() {
+        FxTestSupport.runOnFxThread {
+            val editor = codeEditor(
+                text = "select foo\nselect foo",
+            )
+
+            editor.showReplaceBar("foo", "bar")
+
+            assertTrue(editor.replaceField.isVisible)
+            assertTrue(editor.replaceNext())
+            assertEquals("select bar\nselect foo", editor.textArea.text)
+            assertEquals("bar", editor.textArea.selectedText)
+            assertTrue(editor.isDirty)
+
+            assertEquals(1, editor.replaceAll())
+            assertEquals("select bar\nselect bar", editor.textArea.text)
+        }
+    }
+
+    @Test
+    fun `code editor tracks selected character and line counts`() {
+        FxTestSupport.runOnFxThread {
+            val editor = codeEditor(
+                text = "alpha\nbeta\ngamma",
+            )
+
+            editor.textArea.selectRange(0, 10)
+
+            assertEquals(10, editor.selectionLength)
+            assertEquals(2, editor.selectedLineCount)
+            assertTrue("10 selected across 2 lines" in editor.statusLabel.text)
+        }
+    }
+
+    @Test
+    fun `code editor does not replace while read only`() {
+        FxTestSupport.runOnFxThread {
+            val editor = codeEditor(
+                text = "alpha alpha",
+                readOnly = true,
+            )
+
+            editor.showReplaceBar("alpha", "beta")
+
+            assertFalse(editor.replaceNext())
+            assertEquals(0, editor.replaceAll())
+            assertEquals("alpha alpha", editor.textArea.text)
+        }
+    }
+
+    @Test
     fun `code editor can toggle line numbers and wrapping`() {
         FxTestSupport.runOnFxThread {
             val editor = codeEditor(

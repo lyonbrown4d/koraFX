@@ -40,6 +40,7 @@ class CodeEditor internal constructor(
 ) : VBox(0.0) {
     val searchBar: HBox = HBox(8.0)
     val searchField: TextField = TextField()
+    val replaceField: TextField = TextField()
     val searchResultLabel: Label = Label()
     val editorFrame: HBox = HBox(0.0)
     val lineNumberGutter: VBox = VBox(0.0)
@@ -55,6 +56,8 @@ class CodeEditor internal constructor(
     private val currentColumnValue = SimpleIntegerProperty(1)
     private val lineCountValue = SimpleIntegerProperty(1)
     private val charCountValue = SimpleIntegerProperty(text.length)
+    private val selectionLengthValue = SimpleIntegerProperty(0)
+    private val selectedLineCountValue = SimpleIntegerProperty(0)
 
     val currentLineProperty: ReadOnlyIntegerProperty
         get() = currentLineValue
@@ -68,6 +71,12 @@ class CodeEditor internal constructor(
     val charCountProperty: ReadOnlyIntegerProperty
         get() = charCountValue
 
+    val selectionLengthProperty: ReadOnlyIntegerProperty
+        get() = selectionLengthValue
+
+    val selectedLineCountProperty: ReadOnlyIntegerProperty
+        get() = selectedLineCountValue
+
     val currentLine: Int
         get() = currentLineValue.get()
 
@@ -79,6 +88,12 @@ class CodeEditor internal constructor(
 
     val charCount: Int
         get() = charCountValue.get()
+
+    val selectionLength: Int
+        get() = selectionLengthValue.get()
+
+    val selectedLineCount: Int
+        get() = selectedLineCountValue.get()
 
     val isDirty: Boolean
         get() = textArea.text.orEmpty() != cleanText
@@ -141,6 +156,9 @@ class CodeEditor internal constructor(
             }
         }
         textArea.caretPositionProperty().addListener { _, _, _ ->
+            refreshMetrics()
+        }
+        textArea.selectedTextProperty().addListener { _, _, _ ->
             refreshMetrics()
         }
         refreshMetrics()
@@ -217,14 +235,31 @@ class CodeEditor internal constructor(
     }
 
     fun showSearchBar(query: String = selectedTextOrEmpty()) {
+        setReplaceControlsVisible(false)
         searchBar.isVisible = true
         searchBar.isManaged = true
         if (query.isNotEmpty()) {
             searchField.text = query
-            find(query)
+            find(query, startAt = 0)
         }
         searchField.requestFocus()
         searchField.selectAll()
+    }
+
+    fun showReplaceBar(
+        query: String = selectedTextOrEmpty(),
+        replacement: String = replaceField.text.orEmpty(),
+    ) {
+        setReplaceControlsVisible(true)
+        searchBar.isVisible = true
+        searchBar.isManaged = true
+        if (query.isNotEmpty()) {
+            searchField.text = query
+            find(query, startAt = 0)
+        }
+        replaceField.text = replacement
+        replaceField.requestFocus()
+        replaceField.selectAll()
     }
 
     fun hideSearchBar() {
@@ -276,6 +311,80 @@ class CodeEditor internal constructor(
             textArea.caretPosition - 1
         }
         return findFrom(query, start, forward = false, ignoreCase = ignoreCase, requestEditorFocus = true)
+    }
+
+    fun replaceNext(
+        query: String = searchField.text.orEmpty(),
+        replacement: String = replaceField.text.orEmpty(),
+        ignoreCase: Boolean = searchIgnoreCase,
+    ): Boolean {
+        if (!textArea.isEditable || query.isEmpty()) {
+            return false
+        }
+
+        val selected = textArea.selectedText.orEmpty()
+        val selectionMatches = selected.equals(query, ignoreCase = ignoreCase)
+        val matchIndex = when {
+            query == lastSearchQuery && lastSearchIndex >= 0 && matchesAt(lastSearchIndex, query, ignoreCase) -> {
+                lastSearchIndex
+            }
+            selectionMatches -> {
+                textArea.selection.start
+            }
+            else -> {
+                find(query, textArea.caretPosition, ignoreCase)
+            }
+        }
+
+        if (matchIndex < 0) {
+            return false
+        }
+
+        textArea.replaceText(matchIndex, matchIndex + query.length, replacement)
+        lastSearchQuery = query
+        lastSearchIndex = matchIndex
+        textArea.selectRange(matchIndex, matchIndex + replacement.length)
+        updateSearchStatus()
+        return true
+    }
+
+    fun replaceAll(
+        query: String = searchField.text.orEmpty(),
+        replacement: String = replaceField.text.orEmpty(),
+        ignoreCase: Boolean = searchIgnoreCase,
+    ): Int {
+        if (!textArea.isEditable || query.isEmpty()) {
+            return 0
+        }
+
+        val source = textArea.text.orEmpty()
+        val searchableSource = if (ignoreCase) source.lowercase() else source
+        val searchableQuery = if (ignoreCase) query.lowercase() else query
+        var index = searchableSource.indexOf(searchableQuery)
+        if (index < 0) {
+            lastSearchQuery = query
+            lastSearchIndex = -1
+            updateSearchStatus()
+            return 0
+        }
+
+        val result = StringBuilder(source.length)
+        var consumed = 0
+        var count = 0
+        while (index >= 0) {
+            result.append(source, consumed, index)
+            result.append(replacement)
+            consumed = index + query.length
+            count += 1
+            index = searchableSource.indexOf(searchableQuery, consumed)
+        }
+        result.append(source, consumed, source.length)
+
+        textArea.text = result.toString()
+        lastSearchQuery = query
+        lastSearchIndex = -1
+        updateSearchStatus()
+        return count
     }
 
     fun positionAt(offset: Int): CodeEditorPosition {
@@ -340,6 +449,36 @@ class CodeEditor internal constructor(
                     }
                 }
             }
+            children += Label("Replace").apply {
+                styleClass("code-editor-replace-label")
+                isVisible = false
+                isManaged = false
+            }
+            children += replaceField.apply {
+                styleClass("code-editor-replace-field")
+                promptText = "Replace..."
+                isVisible = false
+                isManaged = false
+                setOnAction {
+                    replaceNext()
+                }
+            }
+            children += Button("Replace").apply {
+                styleClass("code-editor-search-button")
+                isVisible = false
+                isManaged = false
+                setOnAction {
+                    replaceNext()
+                }
+            }
+            children += Button("All").apply {
+                styleClass("code-editor-search-button")
+                isVisible = false
+                isManaged = false
+                setOnAction {
+                    replaceAll()
+                }
+            }
             children += Button("Prev").apply {
                 styleClass("code-editor-search-button")
                 setOnAction {
@@ -377,6 +516,10 @@ class CodeEditor internal constructor(
             when {
                 event.isShortcutDown && event.code == KeyCode.F -> {
                     showSearchBar()
+                    event.consume()
+                }
+                event.isShortcutDown && event.code == KeyCode.H -> {
+                    showReplaceBar()
                     event.consume()
                 }
                 event.code == KeyCode.ESCAPE && searchBar.isVisible -> {
@@ -469,13 +612,50 @@ class CodeEditor internal constructor(
         val text = textArea.text.orEmpty()
         val position = positionAt(textArea.caretPosition)
         val lines = computeLineCount(text)
+        val selectedText = selectedTextOrEmpty()
+        val selectedLines = computeSelectedLineCount(selectedText)
 
         currentLineValue.set(position.line)
         currentColumnValue.set(position.column)
         lineCountValue.set(lines)
         charCountValue.set(text.length)
-        statusLabel.text = "Ln ${position.line}, Col ${position.column} | $lines lines | ${text.length} chars"
+        selectionLengthValue.set(selectedText.length)
+        selectedLineCountValue.set(selectedLines)
+        statusLabel.text = buildString {
+            append("Ln ${position.line}, Col ${position.column} | $lines lines | ${text.length} chars")
+            if (selectedText.isNotEmpty()) {
+                append(" | ${selectedText.length} selected")
+                if (selectedLines > 1) {
+                    append(" across $selectedLines lines")
+                }
+            }
+        }
         updateActiveLineNumber(position.line)
+    }
+
+    private fun setReplaceControlsVisible(visible: Boolean) {
+        searchBar.children
+            .filter { node ->
+                "code-editor-replace-label" in node.styleClass ||
+                    "code-editor-replace-field" in node.styleClass ||
+                    ("code-editor-search-button" in node.styleClass && node is Button && node.text in setOf("Replace", "All"))
+            }
+            .forEach { node ->
+                node.isVisible = visible
+                node.isManaged = visible
+            }
+    }
+
+    private fun matchesAt(
+        offset: Int,
+        query: String,
+        ignoreCase: Boolean,
+    ): Boolean {
+        val text = textArea.text.orEmpty()
+        if (offset < 0 || offset + query.length > text.length) {
+            return false
+        }
+        return text.regionMatches(offset, query, 0, query.length, ignoreCase = ignoreCase)
     }
 
     private fun updateDirtyState() {
@@ -527,6 +707,13 @@ class CodeEditor internal constructor(
     private fun computeLineCount(text: String): Int =
         if (text.isEmpty()) {
             1
+        } else {
+            text.count { it == '\n' } + 1
+        }
+
+    private fun computeSelectedLineCount(text: String): Int =
+        if (text.isEmpty()) {
+            0
         } else {
             text.count { it == '\n' } + 1
         }

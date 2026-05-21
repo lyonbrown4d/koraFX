@@ -34,6 +34,7 @@ fun feedbackState(
         },
     ) {
         if (graphic != null) {
+            graphic.styleClass("feedback-graphic")
             add(graphic)
         }
 
@@ -50,8 +51,15 @@ fun feedbackState(
         }
 
         if (actionText != null) {
-            hbox(spacing = 8.0, init = { alignment = Pos.CENTER }) {
+            hbox(
+                spacing = 8.0,
+                init = {
+                    alignment = Pos.CENTER
+                    styleClass("feedback-actions")
+                },
+            ) {
                 button(actionText) {
+                    styleClass("feedback-action")
                     onAction?.let { handler ->
                         setOnAction {
                             handler()

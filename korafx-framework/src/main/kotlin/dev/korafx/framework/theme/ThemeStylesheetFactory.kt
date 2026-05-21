@@ -131,6 +131,10 @@ private fun StylesheetBuilder.baseStyles(context: ThemeCssContext) {
         fx("background-color", colors.surface)
         fx("font-family", typography.fontFamily)
         fx("font-size", "${typography.baseSize}px")
+        fx("selection-bar", states.selected)
+        fx("selection-bar-text", states.selectedText)
+        fx("cell-hover-color", states.rowHover)
+        fx("text-background-color", colors.textPrimary)
     }
 
     rule(".label") {
@@ -321,7 +325,7 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
     }
 
     rule(".menu-bar > .container > .menu-button:focused > .label", ".menu-bar > .container > .menu-button:showing > .label") {
-        fx("text-fill", states.selectedText)
+        fx("text-fill", colors.textPrimary)
     }
 
     rule(".menu-bar > .container > .menu-button:disabled") {
@@ -356,8 +360,10 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         ".list-view:focused",
         ".table-view:focused",
         ".tree-view:focused",
+        ".tree-table-view:focused",
     ) {
         fx("border-color", states.focus)
+        fx("effect", "dropshadow(gaussian, derive(${states.focus}, 55%), 8, 0.18, 0, 0)")
     }
 
     rule(
@@ -371,6 +377,13 @@ private fun StylesheetBuilder.buttonStyles(context: ThemeCssContext) {
         ".date-picker:disabled",
         ".color-picker:disabled",
         ".spinner:disabled",
+        ".list-view:disabled",
+        ".table-view:disabled",
+        ".tree-view:disabled",
+        ".tree-table-view:disabled",
+        ".tab-pane:disabled",
+        ".pagination:disabled",
+        ".scroll-bar:disabled",
     ) {
         fx("opacity", states.disabledOpacity.toString())
     }
@@ -488,6 +501,11 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
         padding(spacing.sm, spacing.md)
     }
 
+    rule(".text-field:hover", ".password-field:hover", ".text-area:hover") {
+        fx("background-color", colors.surface)
+        fx("border-color", colors.textSecondary)
+    }
+
     rule(".text-area") {
         fx("control-inner-background", colors.surfaceMuted)
         fx("highlight-fill", states.selected)
@@ -602,6 +620,17 @@ private fun StylesheetBuilder.inputStyles(context: ThemeCssContext) {
     }
 
     rule(
+        ".combo-box-base:pressed",
+        ".choice-box:pressed",
+        ".date-picker:pressed",
+        ".color-picker:pressed",
+        ".spinner .increment-arrow-button:pressed",
+        ".spinner .decrement-arrow-button:pressed",
+    ) {
+        fx("background-color", states.controlPressed)
+    }
+
+    rule(
         ".combo-box-base .arrow",
         ".choice-box .open-button .arrow",
         ".date-picker .arrow",
@@ -703,12 +732,19 @@ private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
 
     rule(".list-view", ".table-view", ".tree-view", ".tree-table-view") {
         fx("padding", "0")
+        fx("border-width", "1px")
+        fx("background-insets", "0")
+        fx("border-insets", "0")
     }
 
     rule(".list-cell", ".tree-cell", ".table-row-cell", ".tree-table-row-cell") {
         fx("background-color", colors.surfaceMuted)
         fx("text-fill", colors.textPrimary)
         fx("border-color", "transparent")
+    }
+
+    rule(".list-cell", ".tree-cell") {
+        padding(spacing.sm, spacing.md)
     }
 
     rule(".table-cell", ".tree-table-cell") {
@@ -729,6 +765,11 @@ private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
         fx("background-color", states.selected)
         fx("text-fill", states.selectedText)
         fx("border-color", states.selected)
+    }
+
+    rule(".list-cell:empty", ".tree-cell:empty") {
+        fx("background-color", "transparent")
+        fx("border-color", "transparent")
     }
 
     rule(".table-row-cell:selected .table-cell", ".tree-table-row-cell:selected .tree-table-cell") {
@@ -769,12 +810,20 @@ private fun StylesheetBuilder.dataControlStyles(context: ThemeCssContext) {
         fx("font-weight", "700")
     }
 
+    rule(".table-view .column-header:hover", ".tree-table-view .column-header:hover") {
+        fx("background-color", states.rowHover)
+    }
+
     rule(".table-view .column-resize-line", ".tree-table-view .column-resize-line") {
         fx("background-color", states.focus)
     }
 
     rule(".tree-view .tree-cell .tree-disclosure-node .arrow", ".tree-table-view .tree-table-row-cell .tree-disclosure-node .arrow") {
         fx("background-color", colors.textSecondary)
+    }
+
+    rule(".tree-cell:selected .tree-disclosure-node .arrow", ".tree-table-row-cell:selected .tree-disclosure-node .arrow") {
+        fx("background-color", states.selectedText)
     }
 }
 
@@ -802,6 +851,10 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
 
     rule(".tab-pane .tab:hover") {
         fx("background-color", states.surfaceHover)
+    }
+
+    rule(".tab-pane .tab:pressed") {
+        fx("background-color", states.controlPressed)
     }
 
     rule(".tab-pane .tab:selected") {
@@ -1004,8 +1057,13 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
         fx("background-color", states.controlPressed)
     }
 
+    rule(".pagination .pagination-control .page-number:pressed") {
+        fx("background-color", states.controlPressed)
+    }
+
     rule(".pagination .pagination-control .page-number:selected") {
         fx("background-color", states.selected)
+        fx("border-color", states.selected)
         fx("text-fill", states.selectedText)
     }
 
@@ -1029,6 +1087,8 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     rule(".scroll-bar .thumb") {
         fx("background-color", states.scrollbarThumb)
         fx("background-radius", "${context.radius}px")
+        fx("min-width", "8px")
+        fx("min-height", "8px")
     }
 
     rule(".scroll-bar .thumb:hover") {
@@ -1067,7 +1127,7 @@ private fun StylesheetBuilder.navigationControlStyles(context: ThemeCssContext) 
     }
 
     rule(".hyperlink:armed", ".hyperlink:visited") {
-        fx("text-fill", states.selectedText)
+        fx("text-fill", states.focus)
     }
 
     rule(".hyperlink:focused") {
@@ -1376,10 +1436,46 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(0, spacing.xs, spacing.xs, spacing.xs)
     }
 
+    rule(".resource-explorer-empty-state") {
+        fx("text-fill", colors.textSecondary)
+        fx("background-color", colors.surface)
+        fx("border-color", colors.border)
+        radius(context.radii.medium)
+        padding(spacing.lg)
+    }
+
     rule(".resource-explorer-tree") {
-        fx("background-color", "transparent")
+        fx("background-color", colors.surface)
         fx("border-color", "transparent")
+        radius(context.radii.medium)
         fx("padding", "0")
+    }
+
+    rule(".resource-explorer-row", ".resource-explorer-row-text") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".resource-explorer-row-primary") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "700")
+    }
+
+    rule(".resource-explorer-row-secondary") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+    }
+
+    rule(".resource-explorer-row-status") {
+        fx("text-fill", colors.primary)
+        fx("background-color", "derive(${colors.primary}, 88%)")
+        fx("font-size", "${typography.baseSize - 2}px")
+        fx("font-weight", "800")
+        radius(context.radii.pill)
+        padding(spacing.xxs, spacing.sm)
+    }
+
+    rule(".resource-explorer-row-icon") {
+        fx("text-fill", colors.textSecondary)
     }
 
     rule(".resource-explorer-tree .tree-cell", ".resource-explorer-cell") {
@@ -1399,6 +1495,23 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("text-fill", states.selectedText)
     }
 
+    rule(
+        ".resource-explorer-tree .tree-cell:selected .resource-explorer-row-primary",
+        ".resource-explorer-tree .tree-cell:selected .resource-explorer-row-secondary",
+        ".resource-explorer-tree .tree-cell:selected .resource-explorer-row-icon",
+    ) {
+        fx("text-fill", states.selectedText)
+    }
+
+    rule(".resource-explorer-tree .tree-cell:selected .resource-explorer-row-status") {
+        fx("background-color", states.selectedText)
+        fx("text-fill", states.selected)
+    }
+
+    rule(".resource-explorer-tree .tree-cell:empty") {
+        fx("background-color", "transparent")
+    }
+
     rule(".resource-explorer-tree .tree-cell:selected .tree-disclosure-node .arrow") {
         fx("background-color", states.selectedText)
     }
@@ -1406,6 +1519,24 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
     rule(".editable-table") {
         surface(colors.surfaceMuted, colors.border, context.radii.large)
         fx("effect", elevation.card)
+    }
+
+    rule(".editable-table-placeholder") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(
+        ".editable-table-text-column .label",
+        ".editable-table-editable-text-column .label",
+        ".editable-table-node-column .label",
+        ".editable-table-action-column .label",
+    ) {
+        fx("font-weight", "700")
+    }
+
+    rule(".editable-table-cell-node") {
+        fx("background-color", "transparent")
+        padding(spacing.xs, spacing.sm)
     }
 
     rule(".editable-table .table-cell:editing") {
@@ -1455,8 +1586,16 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.sm, spacing.lg)
     }
 
-    rule(".data-grid-toolbar-batch-action") {
+    rule(".data-grid-toolbar-batch-action", ".data-grid-toolbar-snapshot-action", ".data-grid-column-visibility") {
         fx("border-color", colors.border)
+    }
+
+    rule(".data-grid-column-visibility .label") {
+        fx("text-fill", colors.textPrimary)
+    }
+
+    rule(".data-grid-column-visibility-item") {
+        fx("font-size", "${typography.baseSize - 1}px")
     }
 
     rule(".data-grid-table") {
@@ -1840,12 +1979,12 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(spacing.sm, spacing.md)
     }
 
-    rule(".code-editor-search-label", ".code-editor-search-result") {
+    rule(".code-editor-search-label", ".code-editor-replace-label", ".code-editor-search-result") {
         fx("text-fill", colors.textSecondary)
         fx("font-size", "${typography.baseSize - 1}px")
     }
 
-    rule(".code-editor-search-field") {
+    rule(".code-editor-search-field", ".code-editor-replace-field") {
         surface(colors.surfaceMuted, colors.border, context.smallRadius)
         fx("font-family", "\"Cascadia Mono\", \"JetBrains Mono\", Consolas, monospace")
         fx("font-size", "${typography.baseSize}px")
@@ -2093,6 +2232,14 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
 
     rule(".section-description", ".modal-message", ".snackbar-message", ".form-helper") {
         fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".feedback-graphic", ".feedback-actions") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".feedback-action") {
+        padding(spacing.sm, spacing.xl)
     }
 
     rule(".action-bar") {

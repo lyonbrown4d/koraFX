@@ -12,6 +12,7 @@ import javafx.scene.control.TreeCell
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
 import javafx.scene.input.MouseButton
+import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 
@@ -25,12 +26,15 @@ class ResourceExplorer<T> internal constructor(
     val searchField: TextField = TextField()
     val breadcrumbLabel: Label = Label()
     val treeView: TreeView<T> = TreeView()
+    val emptyStateLabel: Label = Label("No resources")
 
     private val rootItem = TreeItem<T>().apply {
         isExpanded = true
     }
     private var roots: List<T> = items.toList()
     private var graphicOf: ((T) -> Node?)? = null
+    private var secondaryTextOf: ((T) -> String?)? = null
+    private var statusTextOf: ((T) -> String?)? = null
     private var contextMenuProvider: ((T) -> ContextMenu?)? = null
     private var rowActionHandler: ((T) -> Unit)? = null
     private var rowClickCount: Int = 2
@@ -69,6 +73,13 @@ class ResourceExplorer<T> internal constructor(
             VBox.setVgrow(this, Priority.ALWAYS)
         }
 
+        children += emptyStateLabel.apply {
+            styleClass("resource-explorer-empty-state")
+            isVisible = false
+            isManaged = false
+            maxWidth = Double.MAX_VALUE
+        }
+
         installCellFactory()
         treeView.selectionModel.selectedItemProperty().addListener { _, _, _ ->
             updateBreadcrumb()
@@ -96,6 +107,20 @@ class ResourceExplorer<T> internal constructor(
         this.graphicOf = graphicOf
         rebuildTree()
         treeView.refresh()
+    }
+
+    fun setSecondaryTextRenderer(secondaryTextOf: ((T) -> String?)?) {
+        this.secondaryTextOf = secondaryTextOf
+        treeView.refresh()
+    }
+
+    fun setStatusTextRenderer(statusTextOf: ((T) -> String?)?) {
+        this.statusTextOf = statusTextOf
+        treeView.refresh()
+    }
+
+    fun setEmptyStateText(text: String) {
+        emptyStateLabel.text = text
     }
 
     fun setSearchVisible(visible: Boolean) {
@@ -207,18 +232,66 @@ class ResourceExplorer<T> internal constructor(
                         return
                     }
 
-                    text = textOf(item)
-                    graphic = graphicOf?.invoke(item)
+                    updateCellContent(item)
                     contextMenu = createContextMenu(item)
+                }
+
+                private fun updateCellContent(item: T) {
+                    val secondaryText = secondaryTextOf?.invoke(item)?.takeIf { it.isNotBlank() }
+                    val statusText = statusTextOf?.invoke(item)?.takeIf { it.isNotBlank() }
+
+                    if (secondaryText == null && statusText == null) {
+                        text = textOf(item)
+                        graphic = graphicOf?.invoke(item)
+                        return
+                    }
+
+                    text = null
+                    graphic = createResourceRow(item, secondaryText, statusText)
                 }
             }
         }
     }
 
+    private fun createResourceRow(
+        item: T,
+        secondaryText: String?,
+        statusText: String?,
+    ): Node =
+        HBox(6.0).apply {
+            styleClass("resource-explorer-row")
+            alignment = javafx.geometry.Pos.CENTER_LEFT
+
+            graphicOf?.invoke(item)?.let { icon ->
+                icon.styleClass("resource-explorer-row-icon")
+                children += icon
+            }
+
+            children += VBox(1.0).apply {
+                styleClass("resource-explorer-row-text")
+                children += Label(textOf(item)).apply {
+                    styleClass("resource-explorer-row-primary")
+                }
+                secondaryText?.let {
+                    children += Label(it).apply {
+                        styleClass("resource-explorer-row-secondary")
+                    }
+                }
+                HBox.setHgrow(this, Priority.ALWAYS)
+            }
+
+            statusText?.let {
+                children += Label(it).apply {
+                    styleClass("resource-explorer-row-status")
+                }
+            }
+        }
+
     private fun rebuildTree() {
         val query = searchField.text.orEmpty().trim()
         rootItem.children.setAll(roots.mapNotNull { buildTreeItem(it, query) })
         rootItem.isExpanded = true
+        updateEmptyState()
         updateBreadcrumb()
     }
 
@@ -252,6 +325,14 @@ class ResourceExplorer<T> internal constructor(
 
     private fun updateBreadcrumb() {
         breadcrumbLabel.text = selectedPathText()
+    }
+
+    private fun updateEmptyState() {
+        val empty = rootItem.children.isEmpty()
+        emptyStateLabel.isVisible = empty
+        emptyStateLabel.isManaged = empty
+        treeView.isVisible = !empty
+        treeView.isManaged = !empty
     }
 
     private fun pathOf(item: TreeItem<T>?): List<T> {
@@ -302,6 +383,18 @@ class ResourceExplorerBuilder<T> internal constructor(
 
     fun graphic(graphicOf: (T) -> Node?) {
         explorer.setGraphicRenderer(graphicOf)
+    }
+
+    fun secondaryText(secondaryTextOf: (T) -> String?) {
+        explorer.setSecondaryTextRenderer(secondaryTextOf)
+    }
+
+    fun status(statusTextOf: (T) -> String?) {
+        explorer.setStatusTextRenderer(statusTextOf)
+    }
+
+    fun emptyState(text: String) {
+        explorer.setEmptyStateText(text)
     }
 
     fun search(

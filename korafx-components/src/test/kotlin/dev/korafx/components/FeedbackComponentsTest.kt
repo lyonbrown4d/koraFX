@@ -31,6 +31,8 @@ class FeedbackComponentsTest {
             assertTrue("empty-state" in state.styleClass)
             assertEquals("No files", labels[0].text)
             assertEquals("Drop files here to import.", labels[1].text)
+            assertTrue("feedback-actions" in button.parent.styleClass)
+            assertTrue("feedback-action" in button.styleClass)
 
             button.fire()
             assertEquals(1, actionCount)
@@ -45,6 +47,7 @@ class FeedbackComponentsTest {
             assertTrue("feedback-state" in state.styleClass)
             assertTrue("loading-state" in state.styleClass)
             assertIs<ProgressIndicator>(state.children.first())
+            assertTrue("feedback-graphic" in state.children.first().styleClass)
             assertEquals(0.5, (state.children.first() as ProgressIndicator).progress)
             assertEquals("Loading routes", state.children.filterIsInstance<Label>().single().text)
         }

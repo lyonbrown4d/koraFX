@@ -98,6 +98,18 @@ Avoid adding new top-level runtime packages unless a feature clearly cannot fit 
 - Keep low-level DSL names close to JavaFX class names.
 - Keep framework-owned names in `dev.korafx.framework.*`.
 
+## Visual Design Direction
+
+KoraFX should ship one coherent default visual language before adding more presets.
+
+- Built-in themes are Material Light and Material Dark.
+- `surface` is the application canvas and inner content area.
+- `surfaceMuted` is the raised container background for cards, panels, toolbars, inspectors, and workbench shells.
+- `primary` is the selected/action color; every theme must define a readable `selectedText` for that primary color.
+- Hover, pressed, focus, selected, alternate row, scrollbar, and invalid states come from `StateColorTokens`; components should not invent local state colors.
+- JavaFX native controls and KoraFX custom components should share the same radius scale, border color, focus ring, elevation, and row-selection treatment.
+- Advanced components should expose stable style classes and rely on `korafx-framework` themes instead of setting inline colors.
+
 ## Iteration Order
 
 1. Stabilize the DSL and state binding surface.

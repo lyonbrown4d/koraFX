@@ -2,7 +2,9 @@ package dev.korafx.datagrid
 
 import dev.korafx.dsl.panel
 import javafx.scene.control.Button
+import javafx.scene.control.CheckMenuItem
 import javafx.scene.control.Label
+import javafx.scene.control.MenuButton
 import javafx.scene.control.SelectionMode
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableRow
@@ -173,6 +175,68 @@ class DataGridTest {
 
             assertEquals(listOf(rows[1]), captured)
             assertTrue("data-grid-toolbar-batch-action" in action.styleClass)
+        }
+    }
+
+    @Test
+    fun `data grid column visibility menu toggles exported columns`() {
+        FxTestSupport.runOnFxThread {
+            val rows = listOf(Row("DSL", "Core", "Ready"))
+            val grid = dataGrid(rows) {
+                readOnlyTextColumn("Name") { it.name }
+                readOnlyTextColumn("Owner") { it.owner }
+                readOnlyTextColumn("Status") { it.status }
+                columnVisibility()
+            }
+            val menu = assertIs<MenuButton>(grid.toolbar.children.last())
+            val ownerItem = assertIs<CheckMenuItem>(menu.items[1])
+
+            ownerItem.isSelected = false
+
+            assertFalse(grid.tableView.columns[1].isVisible)
+            assertEquals(
+                "Name\tStatus\nDSL\tReady",
+                grid.copyText(),
+            )
+            assertTrue("data-grid-column-visibility" in menu.styleClass)
+            assertTrue("data-grid-column-visibility-item" in ownerItem.styleClass)
+        }
+    }
+
+    @Test
+    fun `data grid snapshot action receives selected visible rows`() {
+        FxTestSupport.runOnFxThread {
+            val rows = listOf(
+                Row("DSL", "Core", "Ready"),
+                Row("Theme", "Design", "Review"),
+            )
+            lateinit var action: Button
+            var exported = ""
+            val grid = dataGrid(rows) {
+                selectionMode(SelectionMode.MULTIPLE)
+                readOnlyTextColumn("Name") { it.name }
+                readOnlyTextColumn("Status") { it.status }
+                toolbar {
+                    action = snapshotAction(
+                        text = "Copy selected",
+                        selectedOnly = true,
+                        separator = ",",
+                        includeHeaders = false,
+                    ) { snapshot ->
+                        exported = snapshot.toDelimitedText()
+                    }
+                }
+            }
+
+            assertTrue(action.isDisable)
+
+            grid.tableView.selectionModel.select(1)
+            action.fire()
+
+            assertFalse(action.isDisable)
+            assertEquals(listOf(rows[1]), grid.createDataSnapshot(selectedOnly = true).sourceRows)
+            assertEquals("Theme,Review", exported)
+            assertTrue("data-grid-toolbar-snapshot-action" in action.styleClass)
         }
     }
 

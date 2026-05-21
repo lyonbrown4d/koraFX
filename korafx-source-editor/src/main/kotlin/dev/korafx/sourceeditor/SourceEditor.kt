@@ -55,6 +55,18 @@ class SourceEditor internal constructor(
     val isDirty: Boolean
         get() = editor.isDirty
 
+    val currentLine: Int
+        get() = editor.currentLine
+
+    val currentColumn: Int
+        get() = editor.currentColumn
+
+    val selectionLength: Int
+        get() = editor.selectionLength
+
+    val selectedLineCount: Int
+        get() = editor.selectedLineCount
+
     private val currentDiagnostics = mutableListOf<SourceDiagnostic>()
     private var diagnosticSelectionHandler: ((SourceDiagnostic) -> Unit)? = null
 
@@ -132,9 +144,34 @@ class SourceEditor internal constructor(
         editor.showSearchBar(query)
     }
 
+    fun showReplace(
+        query: String = "",
+        replacement: String = "",
+    ) {
+        editor.showReplaceBar(query, replacement)
+    }
+
     fun hideSearch() {
         editor.hideSearchBar()
     }
+
+    fun findNext(query: String = editor.searchField.text.orEmpty()): Int =
+        editor.findNext(query)
+
+    fun findPrevious(query: String = editor.searchField.text.orEmpty()): Int =
+        editor.findPrevious(query)
+
+    fun replaceNext(
+        query: String = editor.searchField.text.orEmpty(),
+        replacement: String = editor.replaceField.text.orEmpty(),
+    ): Boolean =
+        editor.replaceNext(query, replacement)
+
+    fun replaceAll(
+        query: String = editor.searchField.text.orEmpty(),
+        replacement: String = editor.replaceField.text.orEmpty(),
+    ): Int =
+        editor.replaceAll(query, replacement)
 
     fun goTo(
         line: Int,
@@ -294,6 +331,25 @@ class SourceEditorBuilder internal constructor(
         sourceEditor.showSearch(query)
     }
 
+    fun showReplace(
+        query: String = "",
+        replacement: String = "",
+    ) {
+        sourceEditor.showReplace(query, replacement)
+    }
+
+    fun replaceNext(
+        query: String = sourceEditor.editor.searchField.text.orEmpty(),
+        replacement: String = sourceEditor.editor.replaceField.text.orEmpty(),
+    ): Boolean =
+        sourceEditor.replaceNext(query, replacement)
+
+    fun replaceAll(
+        query: String = sourceEditor.editor.searchField.text.orEmpty(),
+        replacement: String = sourceEditor.editor.replaceField.text.orEmpty(),
+    ): Int =
+        sourceEditor.replaceAll(query, replacement)
+
     fun goTo(
         line: Int,
         column: Int = 1,
@@ -365,6 +421,25 @@ class QueryEditorBuilder internal constructor(
     fun showSearch(query: String = "") {
         delegate.showSearch(query)
     }
+
+    fun showReplace(
+        query: String = "",
+        replacement: String = "",
+    ) {
+        delegate.showReplace(query, replacement)
+    }
+
+    fun replaceNext(
+        query: String = sourceEditor.editor.searchField.text.orEmpty(),
+        replacement: String = sourceEditor.editor.replaceField.text.orEmpty(),
+    ): Boolean =
+        delegate.replaceNext(query, replacement)
+
+    fun replaceAll(
+        query: String = sourceEditor.editor.searchField.text.orEmpty(),
+        replacement: String = sourceEditor.editor.replaceField.text.orEmpty(),
+    ): Int =
+        delegate.replaceAll(query, replacement)
 
     fun goTo(
         line: Int,

@@ -2,6 +2,11 @@ package dev.korafx.resourceexplorer
 
 import dev.korafx.dsl.panel
 import javafx.scene.control.Label
+import javafx.scene.control.TreeCell
+import javafx.scene.control.TreeItem
+import javafx.scene.control.TreeView
+import javafx.scene.layout.HBox
+import javafx.scene.layout.VBox
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -11,6 +16,8 @@ import kotlin.test.assertTrue
 class ResourceExplorerTest {
     private data class Resource(
         val name: String,
+        val status: String? = null,
+        val secondary: String? = null,
         val children: List<Resource> = emptyList(),
     )
 
@@ -18,15 +25,15 @@ class ResourceExplorerTest {
         listOf(
             Resource(
                 "repository",
-                listOf(
-                    Resource("src", listOf(Resource("Main.kt"), Resource("Theme.kt"))),
+                children = listOf(
+                    Resource("src", children = listOf(Resource("Main.kt"), Resource("Theme.kt"))),
                     Resource("README.md"),
                 ),
             ),
             Resource(
                 "database",
-                listOf(
-                    Resource("public", listOf(Resource("users"), Resource("orders"))),
+                children = listOf(
+                    Resource("public", children = listOf(Resource("users"), Resource("orders"))),
                 ),
             ),
         )
@@ -103,6 +110,66 @@ class ResourceExplorerTest {
             assertFalse(explorer.searchField.isVisible)
             assertFalse(explorer.searchField.isManaged)
             assertIs<Label>(explorer.treeView.root.children.first().graphic)
+        }
+    }
+
+    @Test
+    fun `resource explorer renders secondary text and status rows`() {
+        FxTestSupport.runOnFxThread {
+            val changedFile = Resource(
+                name = "UserRepository.kt",
+                status = "M",
+                secondary = "src/main/kotlin/data",
+            )
+            val explorer =
+                resourceExplorer(
+                    items = listOf(changedFile),
+                    textOf = { it.name },
+                ) {
+                    graphic { Label("KT") }
+                    secondaryText { it.secondary }
+                    status { it.status }
+            }
+            val cell = explorer.treeView.cellFactory.call(explorer.treeView)
+
+            cell.render(explorer.treeView, explorer.treeView.root.children.single())
+
+            val row = assertIs<HBox>(cell.graphic)
+            val labels = row.descendantLabels()
+
+            assertEquals(null, cell.text)
+            assertTrue("resource-explorer-row" in row.styleClass)
+            assertEquals(listOf("KT", "UserRepository.kt", "src/main/kotlin/data", "M"), labels.map { it.text })
+            assertTrue("resource-explorer-row-icon" in labels[0].styleClass)
+            assertTrue("resource-explorer-row-primary" in labels[1].styleClass)
+            assertTrue("resource-explorer-row-secondary" in labels[2].styleClass)
+            assertTrue("resource-explorer-row-status" in labels[3].styleClass)
+        }
+    }
+
+    @Test
+    fun `resource explorer shows empty state for empty and filtered trees`() {
+        FxTestSupport.runOnFxThread {
+            val explorer =
+                resourceExplorer(
+                    items = resources,
+                    childrenOf = { it.children },
+                    textOf = { it.name },
+                ) {
+                    emptyState("No matching resources")
+                }
+
+            assertFalse(explorer.emptyStateLabel.isVisible)
+            assertTrue(explorer.treeView.isVisible)
+
+            explorer.setSearchText("missing-resource")
+
+            assertTrue(explorer.emptyStateLabel.isVisible)
+            assertTrue(explorer.emptyStateLabel.isManaged)
+            assertFalse(explorer.treeView.isVisible)
+            assertFalse(explorer.treeView.isManaged)
+            assertEquals("No matching resources", explorer.emptyStateLabel.text)
+            assertTrue("resource-explorer-empty-state" in explorer.emptyStateLabel.styleClass)
         }
     }
 
@@ -196,4 +263,22 @@ class ResourceExplorerTest {
             assertEquals("repository", explorer.treeView.root.children.first().value.name)
         }
     }
+
+    private fun <T> TreeCell<T>.render(
+        treeView: TreeView<T>,
+        item: TreeItem<T>,
+    ) {
+        updateTreeView(treeView)
+        updateTreeItem(item)
+        updateIndex(0)
+    }
+
+    private fun HBox.descendantLabels(): List<Label> =
+        children.flatMap { child ->
+            when (child) {
+                is Label -> listOf(child)
+                is VBox -> child.children.filterIsInstance<Label>()
+                else -> emptyList()
+            }
+        }
 }

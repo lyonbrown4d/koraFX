@@ -38,6 +38,18 @@ object BuiltInThemes {
             ),
             typography = desktopTypography,
             radius = 12,
+            states = StateColorTokens(
+                controlHover = "#5B4695",
+                controlPressed = "#4F3D84",
+                surfaceHover = "#F4EFF7",
+                rowHover = "#F2EAFB",
+                rowAlternate = "#F7F2FA",
+                selected = "#6750A4",
+                selectedText = "#FFFFFF",
+                focus = "#6750A4",
+                invalid = "#B3261E",
+                scrollbarThumb = "#938F99",
+            ),
         ),
     )
 
@@ -59,6 +71,18 @@ object BuiltInThemes {
             ),
             typography = desktopTypography,
             radius = 12,
+            states = StateColorTokens(
+                controlHover = "#E9DDFF",
+                controlPressed = "#F6EDFF",
+                surfaceHover = "#36343B",
+                rowHover = "#3A3446",
+                rowAlternate = "#242128",
+                selected = "#D0BCFF",
+                selectedText = "#381E72",
+                focus = "#D0BCFF",
+                invalid = "#F2B8B5",
+                scrollbarThumb = "#6F6A75",
+            ),
         ),
     )
 
