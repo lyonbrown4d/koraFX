@@ -475,6 +475,21 @@ val content = panel {
 ## Surfaces
 
 ```kotlin
+val header = pageHeader(
+    title = "Repository",
+    subtitle = "main branch / working tree",
+    eyebrow = "Workspace",
+) {
+    breadcrumb(
+        items = listOf(
+            breadcrumbItem("workspace", "Workspace"),
+            breadcrumbItem("repository", "Repository"),
+            breadcrumbItem("source", "src/Main.kt", current = true),
+        ),
+        onSelect = { id -> println("Open $id") },
+    )
+}
+
 val settings = section(
     title = "General",
     description = "Basic workspace preferences.",
@@ -506,6 +521,12 @@ val dashboard = card {
     label("All modules are passing.") {
         styleClasses("muted")
     }
+}
+
+val status = statusBar {
+    statusItem("Ready", ComponentTone.SUCCESS)
+    spacer()
+    statusItem("main", ComponentTone.INFO)
 }
 ```
 

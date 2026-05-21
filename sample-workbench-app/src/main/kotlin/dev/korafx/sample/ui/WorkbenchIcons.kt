@@ -13,6 +13,8 @@ object WorkbenchIcons {
     val Connected: BootstrapIcons = BootstrapIcons.LIGHTNING_CHARGE
     val Overlay: BootstrapIcons = BootstrapIcons.WINDOW_SIDEBAR
     val Warning: BootstrapIcons = BootstrapIcons.INFO_CIRCLE
+    val Home: BootstrapIcons = BootstrapIcons.HOUSE
+    val Route: BootstrapIcons = BootstrapIcons.SIGNPOST_SPLIT
 
     fun route(route: WorkbenchRoute): BootstrapIcons =
         when (route) {

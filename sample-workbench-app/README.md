@@ -17,7 +17,7 @@ implementation(libs.ikonli.bootstrapicons.pack)
 - `dev.korafx.sample.di`: Koin composition module plus `WorkbenchAppGraph`, a small typed access layer over framework services.
 - `dev.korafx.sample.data`: In-memory demo data sources used by the UI.
 - `dev.korafx.sample.domain`: Plain domain models for tables, explorer resources, and activity events.
-- `dev.korafx.sample.navigation`: Route definitions consumed by `Navigator`.
+- `dev.korafx.sample.navigation`: `PathRoute` definitions consumed by `Navigator`.
 - `dev.korafx.sample.viewmodel`: StateFlow-backed MVVM state, actions, and events.
 - `dev.korafx.sample.ui`: JavaFX UI built with KoraFX DSL and component APIs.
 
@@ -35,8 +35,8 @@ The sample uses `korafx-framework` as the application layer:
 
 - Kotlin-first JavaFX DSL: layout, control, form, menu, table, tree, and binding helpers.
 - MVVM: `ViewModel`, `ViewState`, `UiAction`, `UiEvent`, and StateFlow rendering.
-- Navigation: `Navigator`, `Route`, and route-driven page visibility.
+- Navigation: `Navigator`, `PathRoute`, persisted location, active route controls, path/query/hash navigation, history, and explicit scroll/selection restoration.
 - Theme: token-driven built-in presets and `SceneThemeController`.
-- Components: workbench layout, border layout, resource explorer, tab workspace, source/query editors, data grid, inspector panel, activity timeline, command palette, Ikonli-ready controls, badges, chips, metrics, alerts, and feedback states.
+- Components: workbench layout, border layout, breadcrumbs, page headers, status bars, resource explorer, tab workspace, source/query editors, data grid, inspector panel, activity timeline, command palette, Ikonli-ready controls, badges, chips, metrics, alerts, and feedback states.
 - Icons: the app chooses `ikonli-bootstrapicons-pack`; the reusable KoraFX component module only depends on Ikonli JavaFX core.
 - DevTools: localized subapp shell, Ikonli icons, scene graph, node picker/highlighter, node inspector, navigation state, and theme token panels.

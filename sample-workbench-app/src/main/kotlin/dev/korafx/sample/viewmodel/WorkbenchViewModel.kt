@@ -24,6 +24,7 @@ data class WorkbenchState(
 
 sealed interface WorkbenchAction : UiAction {
     data class Navigate(val routeId: String) : WorkbenchAction
+    data class NavigatePath(val path: String) : WorkbenchAction
     data object ToggleTheme : WorkbenchAction
     data object NextTheme : WorkbenchAction
     data object PreviousTheme : WorkbenchAction
@@ -77,6 +78,7 @@ class WorkbenchViewModel(
     override fun onAction(action: WorkbenchAction) {
         when (action) {
             is WorkbenchAction.Navigate -> navigate(action.routeId)
+            is WorkbenchAction.NavigatePath -> navigatePath(action.path)
             WorkbenchAction.ToggleTheme -> toggleTheme()
             WorkbenchAction.NextTheme -> nextTheme()
             WorkbenchAction.PreviousTheme -> previousTheme()
@@ -93,12 +95,25 @@ class WorkbenchViewModel(
 
     private fun navigate(routeId: String) {
         launch {
-            val changed = navigator.navigate(routeId)
+            val changed = navigator.navigateAsync(routeId)
             val message =
                 if (changed) {
-                    "Navigated to ${navigator.currentRoute.title}."
+                    "Navigated to ${navigator.currentLocation.fullPath}."
                 } else {
                     "Route not found: $routeId"
+                }
+            announce(message)
+        }
+    }
+
+    private fun navigatePath(path: String) {
+        launch {
+            val changed = navigator.navigatePathAsync(path)
+            val message =
+                if (changed) {
+                    "Navigated to ${navigator.currentLocation.fullPath}."
+                } else {
+                    "Path not found: $path"
                 }
             announce(message)
         }

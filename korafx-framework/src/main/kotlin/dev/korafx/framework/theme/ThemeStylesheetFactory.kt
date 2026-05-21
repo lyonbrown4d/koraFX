@@ -1834,6 +1834,72 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         fx("border-color", colors.info)
     }
 
+    rule(".breadcrumb") {
+        fx("background-color", "transparent")
+        padding(spacing.xs, 0)
+    }
+
+    rule(".breadcrumb-item") {
+        fx("font-size", "${typography.baseSize - 1}px")
+    }
+
+    rule(".breadcrumb-item-link") {
+        fx("text-fill", colors.primary)
+        fx("border-color", "transparent")
+        fx("background-color", "transparent")
+        radius(context.smallRadius)
+        padding(spacing.xs, spacing.sm)
+    }
+
+    rule(".breadcrumb-item-link:hover") {
+        fx("background-color", states.surfaceHover)
+        fx("text-fill", states.focus)
+    }
+
+    rule(".breadcrumb-item-current") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-weight", "800")
+        padding(spacing.xs, spacing.sm)
+    }
+
+    rule(".breadcrumb-item-disabled", ".breadcrumb-separator") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".breadcrumb-item .ikonli-font-icon") {
+        fx("icon-color", colors.textSecondary)
+    }
+
+    rule(".page-header") {
+        surface(colors.surfaceMuted, colors.border, context.radii.large)
+        fx("effect", elevation.card)
+        padding(spacing.lg)
+    }
+
+    rule(".page-header-title-row", ".page-header-actions", ".page-header-content") {
+        fx("background-color", "transparent")
+    }
+
+    rule(".page-header-eyebrow") {
+        fx("text-fill", colors.textSecondary)
+        fx("font-size", "${typography.baseSize - 1}px")
+        fx("font-weight", "800")
+    }
+
+    rule(".page-header-title") {
+        fx("text-fill", colors.textPrimary)
+        fx("font-size", "${typography.headlineSize}px")
+        fx("font-weight", "900")
+    }
+
+    rule(".page-header-title .ikonli-font-icon") {
+        fx("icon-color", colors.primary)
+    }
+
+    rule(".page-header-subtitle") {
+        fx("text-fill", colors.textSecondary)
+    }
+
     rule(".section") {
         fx("background-color", colors.surfaceMuted)
     }
@@ -1849,6 +1915,23 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
 
     rule(".action-bar") {
         padding(spacing.sm, 0, 0, 0)
+    }
+
+    rule(".status-bar") {
+        fx("background-color", colors.surfaceMuted)
+        fx("border-color", colors.border)
+        fx("border-width", "1px 0 0 0")
+        padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".status-item") {
+        fx("font-size", "${typography.baseSize - 1}px")
+        radius(context.smallRadius)
+        padding(spacing.xs, spacing.sm)
+    }
+
+    rule(".status-item .ikonli-font-icon") {
+        fx("icon-color", colors.textSecondary)
     }
 
     rule(".form") {

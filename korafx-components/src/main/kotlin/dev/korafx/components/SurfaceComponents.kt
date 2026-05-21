@@ -10,8 +10,10 @@ import dev.korafx.dsl.styleClass
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.vbox
 import javafx.geometry.Pos
+import javafx.scene.control.Label
 import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
+import org.kordamp.ikonli.Ikon
 
 fun card(
     spacing: Double = 12.0,
@@ -80,6 +82,36 @@ fun actionBar(
         content()
     }
 
+fun statusBar(
+    spacing: Double = 10.0,
+    init: HBox.() -> Unit = {},
+    content: HBoxBuilder.() -> Unit,
+): HBox =
+    hbox(
+        spacing = spacing,
+        init = {
+            styleClass("status-bar")
+            alignment = Pos.CENTER_LEFT
+            init()
+        },
+        content = content,
+    )
+
+fun statusItem(
+    text: String,
+    tone: ComponentTone = ComponentTone.NEUTRAL,
+    icon: Ikon? = null,
+    iconSize: Int = 13,
+    init: Label.() -> Unit = {},
+): Label =
+    Label(text).apply {
+        styleClasses("status-item", tone.styleClass)
+        if (icon != null) {
+            setKoraIcon(icon, iconSize)
+        }
+        init()
+    }
+
 fun NodeContainerBuilder.card(
     spacing: Double = 12.0,
     padding: Double = 18.0,
@@ -126,5 +158,35 @@ fun NodeContainerBuilder.actionBar(
             alignEnd = alignEnd,
             init = init,
             content = content,
+        ),
+    )
+
+fun NodeContainerBuilder.statusBar(
+    spacing: Double = 10.0,
+    init: HBox.() -> Unit = {},
+    content: HBoxBuilder.() -> Unit,
+): HBox =
+    add(
+        dev.korafx.components.statusBar(
+            spacing = spacing,
+            init = init,
+            content = content,
+        ),
+    )
+
+fun NodeContainerBuilder.statusItem(
+    text: String,
+    tone: ComponentTone = ComponentTone.NEUTRAL,
+    icon: Ikon? = null,
+    iconSize: Int = 13,
+    init: Label.() -> Unit = {},
+): Label =
+    add(
+        dev.korafx.components.statusItem(
+            text = text,
+            tone = tone,
+            icon = icon,
+            iconSize = iconSize,
+            init = init,
         ),
     )

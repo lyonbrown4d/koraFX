@@ -91,7 +91,7 @@ fun statusBar(
     hbox(
         spacing = spacing,
         init = {
-            styleClass("status-strip")
+            styleClass("status-bar")
             paddingAll(padding)
             init()
         },

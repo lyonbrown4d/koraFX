@@ -140,7 +140,7 @@ Main API:
 - Commands: `CommandPaletteHost`, `CommandPaletteCommand`, `commandPalette`, `CommandPalette`
 - Navigation: `navigationRail`, `routeButton`, `pathButton`, `routeLink`, `pathLink`, `routeHost`, `routerHost`, `routeDataHost`, `routeStateHost`, `RouterModule`, `RouteDataController`, `routeLazy`, `routeScrollRestoration`, `routeSelectionRestoration`, `routeFocusRestoration`
 - Feedback: `feedbackState`, `emptyState`, `loadingState`, `errorState`, `ToastHost`, `toastHost`, `snackbar`
-- Surfaces: `card`, `section`, `actionBar`
+- Surfaces: `card`, `section`, `actionBar`, `breadcrumb`, `pageHeader`, `statusBar`, `statusItem`
 - Icons: `koraIcon`, `iconButton`, `setKoraIcon`, `clearKoraIcon`
 - Semantic display: `badge`, `chip`, `metricCard`, `alertBanner`, `ComponentTone`
 

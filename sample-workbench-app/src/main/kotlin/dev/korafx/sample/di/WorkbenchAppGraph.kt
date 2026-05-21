@@ -50,7 +50,7 @@ private fun commandPaletteCommands(viewModel: WorkbenchViewModel): List<CommandP
             description = "Navigate to Kotlin DSL examples.",
             group = "Navigation",
         ) {
-            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Dsl.id))
+            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Dsl.path))
         },
         CommandPaletteCommand(
             id = "route.components",
@@ -58,7 +58,7 @@ private fun commandPaletteCommands(viewModel: WorkbenchViewModel): List<CommandP
             description = "Navigate to the component gallery.",
             group = "Navigation",
         ) {
-            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Components.id))
+            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Components.path))
         },
         CommandPaletteCommand(
             id = "route.mvvm",
@@ -66,7 +66,7 @@ private fun commandPaletteCommands(viewModel: WorkbenchViewModel): List<CommandP
             description = "Navigate to MVVM overview.",
             group = "Navigation",
         ) {
-            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Mvvm.id))
+            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Mvvm.path))
         },
         CommandPaletteCommand(
             id = "route.theme",
@@ -74,7 +74,7 @@ private fun commandPaletteCommands(viewModel: WorkbenchViewModel): List<CommandP
             description = "Navigate to theme preview.",
             group = "Navigation",
         ) {
-            viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Theme.id))
+            viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Theme.path))
         },
         CommandPaletteCommand(
             id = "theme.previous",

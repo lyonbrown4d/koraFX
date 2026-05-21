@@ -6,6 +6,8 @@ import dev.korafx.components.alertBanner
 import dev.korafx.components.ComponentTone
 import dev.korafx.components.badge
 import dev.korafx.components.borderLayout
+import dev.korafx.components.breadcrumb
+import dev.korafx.components.breadcrumbItem
 import dev.korafx.components.card
 import dev.korafx.components.chip
 import dev.korafx.components.codeEditor
@@ -15,12 +17,21 @@ import dev.korafx.components.emptyState
 import dev.korafx.components.inspectorPanel
 import dev.korafx.components.metricCard
 import dev.korafx.components.navigationRail
+import dev.korafx.components.pageHeader
+import dev.korafx.components.pathButton
+import dev.korafx.components.pathLink
 import dev.korafx.components.queryEditor
 import dev.korafx.components.resourceExplorer
+import dev.korafx.components.routeButton
+import dev.korafx.components.routeLink
+import dev.korafx.components.routeScrollRestoration
+import dev.korafx.components.routeSelectionRestoration
 import dev.korafx.components.section
 import dev.korafx.components.setKoraIcon
 import dev.korafx.components.sourceEditor
 import dev.korafx.components.SourceDiagnostic
+import dev.korafx.components.statusBar
+import dev.korafx.components.statusItem
 import dev.korafx.components.TabWorkspace
 import dev.korafx.components.tabWorkspace
 import dev.korafx.components.workspaceLayout
@@ -55,7 +66,6 @@ import dev.korafx.dsl.stateDisable
 import dev.korafx.dsl.stateList
 import dev.korafx.dsl.stateText
 import dev.korafx.dsl.stateVisible
-import dev.korafx.dsl.statusBar
 import dev.korafx.dsl.stackPane
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.splitMenuButton
@@ -79,6 +89,7 @@ import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
 import javafx.scene.paint.Color
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -214,6 +225,131 @@ class WorkbenchRootView(
                   }
                   vbox(spacing = 16.0) {
                     section(
+                      title = "Router Showcase",
+                      description = "The workbench uses PathRoute plus Navigator state: route buttons keep active state, path navigation supports query/hash, and scroll or selection restoration is explicit.",
+                    ) {
+                      pageHeader(
+                        title = "Router and Navigation Surface",
+                        subtitle = "Breadcrumbs and page headers share the same Material token stylesheet as the route controls.",
+                        eyebrow = "Workbench / Navigation",
+                        icon = WorkbenchIcons.Route,
+                        actions = {
+                          button("Open DevTools") {
+                            onAction {
+                              commandPaletteHost.show()
+                            }
+                          }
+                        },
+                      ) {
+                        breadcrumb(
+                          items = listOf(
+                            breadcrumbItem(WorkbenchRoute.Overview.path, "Workbench", icon = WorkbenchIcons.Home),
+                            breadcrumbItem(WorkbenchRoute.Components.path, "Components"),
+                            breadcrumbItem(navigator.currentLocation.fullPath, "Router", current = true),
+                          ),
+                          onSelect = { path ->
+                            viewModel.dispatch(WorkbenchAction.NavigatePath(path))
+                          },
+                        )
+                      }
+                      label {
+                        styleClasses(ThemeStyleClass.Muted)
+                      }.stateText(uiScope, navigator.state) { state ->
+                        "Current location: ${state.currentLocation.fullPath}"
+                      }
+                      label {
+                        styleClasses(ThemeStyleClass.Muted)
+                      }.stateText(uiScope, navigator.state) { state ->
+                        "History: back=${state.backStack.size}, forward=${state.forwardStack.size}"
+                      }
+
+                      hbox(spacing = 8.0) {
+                        add(routeButton(uiScope, navigator, WorkbenchRoute.Overview))
+                        add(pathButton(uiScope, navigator, WorkbenchRoute.Components.path, text = "Components path"))
+                        add(routeLink(uiScope, navigator, WorkbenchRoute.Mvvm))
+                        add(pathLink(uiScope, navigator, "${WorkbenchRoute.Theme.path}?preview=palette", text = "Theme query"))
+                      }
+
+                      actionBar {
+                        ghostButton("Add query") {
+                          onAction {
+                            uiScope.launch {
+                              navigator.navigatePathAsync(
+                                navigator.currentLocation.withQuery(
+                                  "view" to "quickstart",
+                                  "page" to 1,
+                                ),
+                              )
+                            }
+                          }
+                        }
+                        ghostButton("Set hash") {
+                          onAction {
+                            uiScope.launch {
+                              navigator.navigatePathAsync(navigator.currentLocation.withHash("router-showcase"))
+                            }
+                          }
+                        }
+                        ghostButton("Back") {
+                          onAction {
+                            uiScope.launch {
+                              navigator.backAsync()
+                            }
+                          }
+                        }
+                        ghostButton("Forward") {
+                          onAction {
+                            uiScope.launch {
+                              navigator.forwardAsync()
+                            }
+                          }
+                        }
+                      }
+
+                      scrollPane(
+                        init = {
+                          isFitToWidth = true
+                          prefHeight = 180.0
+                          routeScrollRestoration(
+                            scope = uiScope,
+                            navigator = navigator,
+                            key = "overview-router-showcase",
+                          )
+                        },
+                      ) {
+                        content {
+                          vbox(spacing = 10.0) {
+                            label("Route list with selection restoration") {
+                              styleClasses(ThemeStyleClass.Headline)
+                            }
+                            listView(
+                              items = WorkbenchRoute.all,
+                              init = {
+                                prefHeight = 130.0
+                                routeSelectionRestoration(
+                                  scope = uiScope,
+                                  navigator = navigator,
+                                  key = "overview-route-list",
+                                  keyOf = { route -> route.path },
+                                )
+                              },
+                            ) {
+                              render { route -> "${route.title} -> ${route.path}" }
+                              onSelect { route ->
+                                if (route != null) {
+                                  viewModel.dispatch(WorkbenchAction.NavigatePath(route.path))
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }.stateVisible(uiScope, viewModel.state) {
+                    it.currentRouteId == WorkbenchRoute.Overview.id
+                  }
+                  vbox(spacing = 16.0) {
+                    section(
                       title = "DSL Composition",
                       description = "This route focuses on the base Kotlin DSL: layout builders, control builders, binding helpers and native JavaFX access.",
                     ) {
@@ -299,13 +435,13 @@ class WorkbenchRootView(
                           viewModel.dispatch(WorkbenchAction.ToggleTheme)
                         }
                         actionItem("Open MVVM Route") {
-                          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Mvvm.id))
+                          viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Mvvm.path))
                         }
                         actionItem("Open Components Route") {
-                          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Components.id))
+                          viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Components.path))
                         }
                         actionItem("Open Theme Route") {
-                          viewModel.dispatch(WorkbenchAction.Navigate(WorkbenchRoute.Theme.id))
+                          viewModel.dispatch(WorkbenchAction.NavigatePath(WorkbenchRoute.Theme.path))
                         }
                       }
                     }
@@ -544,7 +680,11 @@ class WorkbenchRootView(
                           }
                         }
                         status {
-                          label("Ready - 3 modules loaded")
+                          statusBar {
+                            statusItem("Ready", ComponentTone.SUCCESS, icon = WorkbenchIcons.Connected)
+                            spacer()
+                            statusItem("3 modules loaded", ComponentTone.INFO)
+                          }
                         }
                         overlay(alignment = Pos.BOTTOM_RIGHT) {
                           badge("Overlay slot", ComponentTone.SUCCESS, icon = WorkbenchIcons.Overlay)
@@ -1223,9 +1363,7 @@ class WorkbenchRootView(
               state = viewModel.state,
               items = { it.statusItems },
             ) { item ->
-              label(item) {
-                styleClasses(ThemeStyleClass.Muted)
-              }
+              statusItem(item)
             }
           }
         },
