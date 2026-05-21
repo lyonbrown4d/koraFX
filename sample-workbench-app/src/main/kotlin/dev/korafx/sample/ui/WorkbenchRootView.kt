@@ -489,15 +489,14 @@ class WorkbenchRootView(
                         }
                       }
 
-                      add(
-                        pagination(
-                          pageCount = 6,
-                          init = {
-                            maxWidth = Double.MAX_VALUE
-                            prefHeight = 620.0
-                            styleClass += "component-gallery-pagination"
-                          },
-                        ) { pageIndex ->
+                      pagination(
+                        pageCount = 6,
+                        init = {
+                          maxWidth = Double.MAX_VALUE
+                          prefHeight = 620.0
+                          styleClass += "component-gallery-pagination"
+                        },
+                      ) { pageIndex ->
                           panel {
                             when (pageIndex) {
                               0 -> {
@@ -759,8 +758,7 @@ class WorkbenchRootView(
                               }
                             }
                           }
-                        },
-                      )
+                      }
                     }
 
                     section(
