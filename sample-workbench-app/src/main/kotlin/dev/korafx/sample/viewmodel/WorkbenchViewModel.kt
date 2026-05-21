@@ -8,6 +8,8 @@ import dev.korafx.navigation.Navigator
 import dev.korafx.sample.navigation.WorkbenchRoute
 import dev.korafx.framework.theme.ThemeManager
 import kotlinx.coroutines.flow.collectLatest
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 data class WorkbenchState(
     val currentRouteId: String,
@@ -50,7 +52,7 @@ class WorkbenchViewModel(
         currentRouteId = navigator.currentRoute.id,
         title = navigator.currentRoute.title,
         summary = navigator.currentRoute.summary,
-        document = navigator.currentRoute.document,
+        document = loadDocumentText(navigator.currentRoute.documentResource),
         currentThemeName = themeManager.currentTheme().displayName,
         statusItems = listOf("DSL", "StateFlow", "MVVM", "Navigation", "Theme", "Components", "DI Graph"),
         feedbackMessage = "Workbench started from koraApplication framework entry.",
@@ -206,10 +208,19 @@ class WorkbenchViewModel(
                 currentRouteId = route.id,
                 title = route.title,
                 summary = route.summary,
-                document = route.document,
+                document = loadDocumentText(route.documentResource),
             )
         }
     }
+
+    private fun loadDocumentText(resourcePath: String): String =
+        runCatching {
+            WorkbenchViewModel::class.java.classLoader.getResource(resourcePath)?.let { url ->
+                url.openStream().use { stream ->
+                    BufferedReader(InputStreamReader(stream)).readText()
+                }
+            }
+        }.getOrElse { null } ?: "# Documentation Unavailable\n\nUnable to load `$resourcePath`."
 
     private suspend fun announce(message: String) {
         updateState { it.copy(feedbackMessage = message) }

@@ -196,7 +196,9 @@ class WorkbenchRootView(
           }
 
           content {
-            scrollPane(
+            borderLayout {
+              content {
+                scrollPane(
               init = {
                 isFitToWidth = true
               },
@@ -210,10 +212,6 @@ class WorkbenchRootView(
                     isWrapText = true
                     styleClasses(ThemeStyleClass.Muted)
                   }.stateText(uiScope, viewModel.state) { it.summary }
-                  textArea {
-                    isEditable = false
-                    prefRowCount = 7
-                  }.stateText(uiScope, viewModel.state) { it.document }
                   label {
                     styleClasses(ThemeStyleClass.Muted)
                   }.stateText(uiScope, viewModel.state) { "Theme: ${it.currentThemeName}" }
@@ -1754,6 +1752,57 @@ class WorkbenchRootView(
                   }.stateVisible(uiScope, viewModel.state) {
                     it.currentRouteId == WorkbenchRoute.Theme.id
                   }
+                }
+              }
+            }
+            sidebar {
+              vbox(spacing = 10.0) {
+                card(padding = 12.0) {
+                  styleClass += "korafx-workbench-sidebar-card"
+                  label("Demo Modules") {
+                    styleClasses(ThemeStyleClass.Headline)
+                  }
+                  vbox(spacing = 8.0) {
+                    routeButton(uiScope, navigator, WorkbenchRoute.Overview)
+                    routeButton(uiScope, navigator, WorkbenchRoute.Dsl)
+                    routeButton(uiScope, navigator, WorkbenchRoute.Components)
+                    routeButton(uiScope, navigator, WorkbenchRoute.Mvvm)
+                    routeButton(uiScope, navigator, WorkbenchRoute.Theme)
+                  }
+                }
+
+                card(padding = 12.0) {
+                  label("Quick Actions") {
+                    styleClasses(ThemeStyleClass.Headline)
+                  }
+                  vbox(spacing = 8.0) {
+                    button("Open Command Palette") {
+                      onAction {
+                        commandPaletteHost.show()
+                      }
+                    }
+                    button("Toggle Theme") {
+                      onAction {
+                        viewModel.dispatch(WorkbenchAction.ToggleTheme)
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            details {
+              vbox(spacing = 10.0) {
+                label("Module Documentation") {
+                  styleClasses(ThemeStyleClass.Headline)
+                }
+                label("Right panel shows markdown source for the current route.") {
+                  styleClasses(ThemeStyleClass.Muted)
+                }
+                panel {
+                  textArea {
+                    isEditable = false
+                    prefRowCount = 38
+                  }.stateText(uiScope, viewModel.state) { it.document }
                 }
               }
             }
