@@ -11,11 +11,15 @@ import javafx.scene.control.TableView
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
+import kotlinx.coroutines.async
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
 import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
 import org.kordamp.ikonli.javafx.FontIcon
 import java.util.concurrent.atomic.AtomicInteger
@@ -418,6 +422,24 @@ class NavigationComponentsTest {
         } finally {
             scope.cancel()
         }
+    }
+
+    @Test
+    fun `route transition resolves route meta transition override`() {
+        val navigator = Navigator(
+            initialRoute = TransitionMetaRoute.Source,
+            routes = TransitionMetaRoute.all,
+        )
+        val transitions = runBlocking {
+            val collected = async {
+                navigator.state.routeTransition(NavigationTransitionProfile.Scale).take(2).toList()
+            }
+            navigator.navigate(TransitionMetaRoute.CustomTransition.id)
+            collected.await()
+        }
+
+        assertTrue(transitions[0] is RouteTransition.Scale)
+        assertTrue(transitions[1] is RouteTransition.Fade)
     }
 
     @Test
@@ -972,6 +994,31 @@ class NavigationComponentsTest {
 
             val all: List<TestRoute>
                 get() = listOf(Home, Settings)
+        }
+    }
+
+    private data class TransitionMetaRoute(
+        override val id: String,
+        override val title: String,
+        override val path: String,
+        override val meta: RouteMeta = RouteMeta.Empty,
+    ) : PathRoute {
+        companion object {
+            val Source = TransitionMetaRoute(
+                id = "source",
+                title = "Source",
+                path = "/",
+                meta = RouteMeta.Empty,
+            )
+            val CustomTransition = TransitionMetaRoute(
+                id = "custom-transition",
+                title = "CustomTransition",
+                path = "/custom",
+                meta = routeMeta(ROUTE_TRANSITION_META_KEY to "fade"),
+            )
+
+            val all: List<TransitionMetaRoute>
+                get() = listOf(Source, CustomTransition)
         }
     }
 

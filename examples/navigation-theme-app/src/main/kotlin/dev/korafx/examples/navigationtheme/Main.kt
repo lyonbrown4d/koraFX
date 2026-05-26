@@ -44,6 +44,7 @@ import dev.korafx.navigation.RouteMeta
 import dev.korafx.navigation.RoutePattern
 import dev.korafx.navigation.NavigationTransitionProfile
 import dev.korafx.navigation.RouteDataController
+import dev.korafx.navigation.ROUTE_TRANSITION_META_KEY
 import dev.korafx.navigation.RouteTransition
 import dev.korafx.navigation.routerHost
 import dev.korafx.navigation.navigationResultKey
@@ -182,6 +183,17 @@ private data class DemoRoute(
             section = RouteSection.Advanced,
         )
 
+        val RouteTransitionMeta = DemoRoute(
+            id = "route-transition-meta",
+            title = "Route Transition Meta",
+            path = "/route-transition-meta",
+            description = "通过 route meta 覆盖当前路由的转场策略。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/route-transition-meta.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/route-transition-meta.kt",
+            section = RouteSection.Advanced,
+            meta = routeMeta(ROUTE_TRANSITION_META_KEY to "fade"),
+        )
+
         val all: List<DemoRoute> = listOf(
             Overview,
             PathRouting,
@@ -192,6 +204,7 @@ private data class DemoRoute(
             RouteData,
             LazyRouter,
             RouteResult,
+            RouteTransitionMeta,
             Transitions,
         )
 
@@ -333,6 +346,7 @@ class NavigationThemeApp : Application() {
                 DemoRoute.RouteData -> buildRouteData()
                 DemoRoute.LazyRouter -> buildLazyRouter()
                 DemoRoute.RouteResult -> buildRouteResultDemo()
+                DemoRoute.RouteTransitionMeta -> buildRouteTransitionMeta()
                 DemoRoute.Transitions -> buildTransitions()
             }
         }
@@ -1080,7 +1094,29 @@ class NavigationThemeApp : Application() {
                     bindDisable(
                         uiScope,
                         navigator.state.map { state -> state.backStack.isEmpty() },
-                    )
+                )
+            }
+            }
+
+            actionBar(alignEnd = false) {
+                button("Route Meta 转场示例") {
+                    onAction { navigator.navigate(DemoRoute.RouteTransitionMeta) }
+                }
+            }
+        }
+    }
+
+    private fun buildRouteTransitionMeta() {
+        section("路由级转场覆盖") {
+            label("本页面的 `PathRoute.meta` 中配置了：")
+            label("${ROUTE_TRANSITION_META_KEY} = \"fade\"")
+            label("即使在顶部全局选择了其他 profile，进入此路由时也会优先采用 Fade 转场。")
+            actionBar(alignEnd = false) {
+                button("返回动画示例页") {
+                    onAction { navigator.navigate(DemoRoute.Transitions.id) }
+                }
+                button("再次返回 Home") {
+                    onAction { navigator.navigate(DemoRoute.Overview.id) }
                 }
             }
         }

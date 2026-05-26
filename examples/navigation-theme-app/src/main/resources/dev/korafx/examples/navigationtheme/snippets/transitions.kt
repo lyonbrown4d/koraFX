@@ -7,3 +7,5 @@ transitionPreset.value = NavigationTransitionProfile.None
 
 navigator.navigatePath("/routes/42/history")
 navigator.back() // 使用 POP 策略
+// 路由 Meta 覆盖示例（见 Route Transition Meta 页面）
+val fadeRoute = DemoRoute.RouteTransitionMeta
