@@ -110,12 +110,12 @@ class WorkbenchRootView(
                 splitPane(
                     orientation = Orientation.VERTICAL,
                     init = {
-                        setDividerPositions(0.68)
+                        setDividerPositions(0.64)
                         minWidth = 420.0
                     },
                 ) {
                     add(showcasePane())
-                    add(sourcePane())
+                    add(docsAndSourcePane())
                 }
 
             SplitPane.setResizableWithParent(sidebar, false)
@@ -250,7 +250,7 @@ class WorkbenchRootView(
             }
         }
 
-    private fun sourcePane() =
+    private fun docsAndSourcePane() =
         scrollPane(
             init = {
                 isFitToWidth = true
@@ -259,13 +259,61 @@ class WorkbenchRootView(
             },
         ) {
             content {
+                splitPane(
+                    orientation = Orientation.HORIZONTAL,
+                    init = {
+                        setDividerPositions(0.5)
+                    },
+                ) {
+                    add(documentationPane())
+                    add(sourceCodePane())
+                }
+            }
+        }
+
+    private fun documentationPane() =
+        scrollPane(
+            init = {
+                isFitToWidth = true
+            },
+        ) {
+            content {
                 panel(
-                    spacing = 14.0,
+                    spacing = 12.0,
                     padding = 18.0,
                     init = {
                         maxWidth = Double.MAX_VALUE
                     },
                 ) {
+                    label("Documentation") {
+                        styleClasses(ThemeStyleClass.Headline)
+                    }
+                }.also { container ->
+                    container.growVertical()
+                    container.bindContent(uiScope, viewModel.state) { state ->
+                        markdownDocument(state.document)
+                    }
+                }
+            }
+        }
+
+    private fun sourceCodePane() =
+        scrollPane(
+            init = {
+                isFitToWidth = true
+            },
+        ) {
+            content {
+                panel(
+                    spacing = 12.0,
+                    padding = 18.0,
+                    init = {
+                        maxWidth = Double.MAX_VALUE
+                    },
+                ) {
+                    label("Source Code") {
+                        styleClasses(ThemeStyleClass.Headline)
+                    }
                 }.also { container ->
                     container.growVertical()
                     container.bindContent(uiScope, viewModel.state) { state ->
@@ -317,7 +365,7 @@ class WorkbenchRootView(
             WorkbenchRoute.SourceEditor.id -> sourceEditorPage(pageContext)
             WorkbenchRoute.DataGrid.id -> dataGridPage(pageContext)
             WorkbenchRoute.ResourceExplorer.id -> resourceExplorerPage(pageContext)
-            WorkbenchRoute.Workspace.id -> workspacePage()
+            WorkbenchRoute.Workspace.id -> workspacePage(pageContext)
             WorkbenchRoute.InspectorPanel.id -> inspectorPage(pageContext)
             WorkbenchRoute.CommandPalette.id -> commandPalettePage(pageContext)
             WorkbenchRoute.GraphEditor.id -> graphEditorPage()
@@ -336,10 +384,6 @@ class WorkbenchRootView(
                     description = "Every module in the left rail is a typed KoraFX route.",
                 ),
             )
-        }
-
-        label("Source Code") {
-            styleClasses(ThemeStyleClass.Headline)
         }
 
         snippets.forEach { snippet ->

@@ -22,7 +22,7 @@ data class WorkbenchRoute(
                     category = ModuleCategory.CORE,
                     summary = "Application bootstrapping, lifecycle, DI integration and workbench-level service wiring.",
                     routePath = "/framework",
-                    documentResource = "dev/korafx/sample/docs/overview.md",
+                    documentResource = "dev/korafx/sample/docs/framework.md",
                     artifactName = "korafx-framework",
                     tags = listOf("application", "lifecycle", "koin"),
                     sourceSnippets = listOf(
@@ -73,7 +73,7 @@ data class WorkbenchRoute(
                     category = ModuleCategory.CORE,
                     summary = "PathRoute navigation, history, query/hash support and route-scoped restoration helpers.",
                     routePath = "/navigation",
-                    documentResource = "dev/korafx/sample/docs/overview.md",
+                    documentResource = "dev/korafx/sample/docs/navigation.md",
                     artifactName = "korafx-navigation",
                     tags = listOf("routes", "history", "restoration"),
                 ),
@@ -93,6 +93,7 @@ data class WorkbenchRoute(
                     summary = "Code, source and query editor surfaces with diagnostics and read-only preview modes.",
                     artifactName = "korafx-source-editor",
                     tags = listOf("code", "diagnostics", "query"),
+                    documentResource = "dev/korafx/sample/docs/source-editor.md",
                 ),
                 advancedComponent(
                     id = "data-grid",
@@ -100,6 +101,7 @@ data class WorkbenchRoute(
                     summary = "Editable table and data grid patterns for module catalogs and tabular resources.",
                     artifactName = "korafx-data-grid",
                     tags = listOf("table", "editing", "records"),
+                    documentResource = "dev/korafx/sample/docs/data-grid.md",
                 ),
                 advancedComponent(
                     id = "resource-explorer",
@@ -107,6 +109,7 @@ data class WorkbenchRoute(
                     summary = "Tree-backed resource browsing with status metadata and workspace open actions.",
                     artifactName = "korafx-resource-explorer",
                     tags = listOf("tree", "resources", "workspace"),
+                    documentResource = "dev/korafx/sample/docs/resource-explorer.md",
                 ),
                 advancedComponent(
                     id = "workspace",
@@ -114,6 +117,7 @@ data class WorkbenchRoute(
                     summary = "Workspace layout and tabbed workbench surfaces for multi-document flows.",
                     artifactName = "korafx-components",
                     tags = listOf("tabs", "documents", "workspace"),
+                    documentResource = "dev/korafx/sample/docs/workspace.md",
                 ),
                 advancedComponent(
                     id = "inspector-panel",
@@ -121,6 +125,7 @@ data class WorkbenchRoute(
                     summary = "Property and metadata inspection panels for selected resources, rows or graph nodes.",
                     artifactName = "korafx-inspector-panel",
                     tags = listOf("properties", "selection", "metadata"),
+                    documentResource = "dev/korafx/sample/docs/inspector-panel.md",
                 ),
                 advancedComponent(
                     id = "command-palette",
@@ -128,6 +133,7 @@ data class WorkbenchRoute(
                     summary = "Searchable command launcher and command host integration for workbench actions.",
                     artifactName = "korafx-command-palette",
                     tags = listOf("commands", "search", "launcher"),
+                    documentResource = "dev/korafx/sample/docs/command-palette.md",
                 ),
                 advancedComponent(
                     id = "graph-editor",
@@ -135,6 +141,7 @@ data class WorkbenchRoute(
                     summary = "Advanced node and edge editing showcase route reserved for graph-oriented workflows.",
                     artifactName = "korafx-graph-editor",
                     tags = listOf("graph", "nodes", "edges"),
+                    documentResource = "dev/korafx/sample/docs/graph-editor.md",
                 ),
                 advancedComponent(
                     id = "virtual-list",
@@ -142,6 +149,7 @@ data class WorkbenchRoute(
                     summary = "Virtualized list, table and terminal surfaces for large data and live logs.",
                     artifactName = "korafx-virtual-list",
                     tags = listOf("virtualization", "large-data", "terminal"),
+                    documentResource = "dev/korafx/sample/docs/virtual-list.md",
                 ),
             )
 
@@ -197,6 +205,7 @@ data class WorkbenchRoute(
             summary: String,
             artifactName: String,
             tags: List<String>,
+            documentResource: String,
         ): ModuleShowcase =
             ModuleShowcase(
                 id = id,
@@ -204,7 +213,7 @@ data class WorkbenchRoute(
                 category = ModuleCategory.ADVANCED_COMPONENT,
                 summary = summary,
                 routePath = "/components/$id",
-                documentResource = "dev/korafx/sample/docs/components.md",
+                documentResource = documentResource,
                 artifactName = artifactName,
                 tags = tags,
                 sourceSnippets = listOf(
