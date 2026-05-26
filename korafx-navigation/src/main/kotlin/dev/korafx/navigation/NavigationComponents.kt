@@ -13,17 +13,27 @@ import dev.korafx.dsl.sidebar
 import dev.korafx.dsl.styleClass
 import dev.korafx.dsl.vbox
 import dev.korafx.dsl.state.collectLatestIn
+import javafx.animation.Animation
+import javafx.animation.FadeTransition
+import javafx.animation.Interpolator
+import javafx.animation.ParallelTransition
+import javafx.animation.ScaleTransition
+import javafx.animation.TranslateTransition
 import javafx.application.Platform
 import javafx.scene.Node
 import javafx.scene.control.Button
 import javafx.scene.control.Hyperlink
+import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
+import javafx.util.Duration
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -38,6 +48,170 @@ data class RouteLinkState<R : Route>(
     val currentLocation: NavigationLocation<R>,
     val active: Boolean,
 )
+
+sealed class RouteTransition(val durationMs: Double = 170.0) {
+    abstract fun createAnimation(
+        host: Pane,
+        swapContent: () -> Unit,
+        onFinished: () -> Unit,
+    ): Animation?
+
+    internal fun resetHost(host: Pane) {
+        host.opacity = 1.0
+        host.translateX = 0.0
+        host.translateY = 0.0
+        host.scaleX = 1.0
+        host.scaleY = 1.0
+    }
+
+    object None : RouteTransition(0.0) {
+        override fun createAnimation(
+            host: Pane,
+            swapContent: () -> Unit,
+            onFinished: () -> Unit,
+        ): Animation? = null
+    }
+
+    class Fade(durationMs: Double = 190.0) : RouteTransition(durationMs) {
+        override fun createAnimation(
+            host: Pane,
+            swapContent: () -> Unit,
+            onFinished: () -> Unit,
+        ): Animation {
+            val fadeOut = FadeTransition(Duration.millis(durationMs), host).apply {
+                fromValue = 1.0
+                toValue = 0.0
+                interpolator = Interpolator.EASE_BOTH
+            }
+
+            fadeOut.setOnFinished {
+                swapContent()
+                val fadeIn = FadeTransition(Duration.millis(durationMs), host).apply {
+                    fromValue = 0.0
+                    toValue = 1.0
+                    interpolator = Interpolator.EASE_BOTH
+                }
+                fadeIn.setOnFinished { onFinished() }
+                fadeIn.playFromStart()
+            }
+
+            return fadeOut
+        }
+    }
+
+    class Slide(
+        durationMs: Double = 210.0,
+        private val distance: Double = 28.0,
+        private val direction: SlideDirection = SlideDirection.END,
+    ) : RouteTransition(durationMs) {
+        override fun createAnimation(
+            host: Pane,
+            swapContent: () -> Unit,
+            onFinished: () -> Unit,
+        ): Animation {
+            val directionOffset = direction.offset * distance
+            val fadeOut = FadeTransition(Duration.millis(durationMs), host).apply {
+                fromValue = 1.0
+                toValue = 0.45
+            }
+            val slideOut = TranslateTransition(Duration.millis(durationMs), host).apply {
+                fromX = 0.0
+                toX = directionOffset
+            }
+            val exit = ParallelTransition(fadeOut, slideOut)
+
+            exit.setOnFinished {
+                swapContent()
+                host.translateX = -directionOffset
+                host.opacity = 0.0
+
+                val fadeIn = FadeTransition(Duration.millis(durationMs), host).apply {
+                    fromValue = 0.0
+                    toValue = 1.0
+                    interpolator = Interpolator.EASE_BOTH
+                }
+                val slideIn = TranslateTransition(Duration.millis(durationMs), host).apply {
+                    fromX = -directionOffset
+                    toX = 0.0
+                }
+                val enter = ParallelTransition(fadeIn, slideIn)
+                enter.setOnFinished {
+                    onFinished()
+                }
+                enter.playFromStart()
+            }
+
+            return exit
+        }
+    }
+
+    class Scale(
+        durationMs: Double = 220.0,
+        private val scaleFrom: Double = 0.985,
+    ) : RouteTransition(durationMs) {
+        override fun createAnimation(
+            host: Pane,
+            swapContent: () -> Unit,
+            onFinished: () -> Unit,
+        ): Animation {
+            val fadeOut = FadeTransition(Duration.millis(durationMs), host).apply {
+                fromValue = 1.0
+                toValue = 0.0
+            }
+            val scaleOutX = ScaleTransition(Duration.millis(durationMs), host).apply {
+                fromX = 1.0
+                toX = scaleFrom
+            }
+            val scaleOutY = ScaleTransition(Duration.millis(durationMs), host).apply {
+                fromY = 1.0
+                toY = scaleFrom
+            }
+            val exit = ParallelTransition(fadeOut, scaleOutX, scaleOutY)
+
+            exit.setOnFinished {
+                swapContent()
+                host.scaleX = scaleFrom
+                host.scaleY = scaleFrom
+                host.opacity = 0.0
+
+                val fadeIn = FadeTransition(Duration.millis(durationMs), host).apply {
+                    fromValue = 0.0
+                    toValue = 1.0
+                }
+                val scaleInX = ScaleTransition(Duration.millis(durationMs), host).apply {
+                    fromX = scaleFrom
+                    toX = 1.0
+                }
+                val scaleInY = ScaleTransition(Duration.millis(durationMs), host).apply {
+                    fromY = scaleFrom
+                    toY = 1.0
+                }
+                val enter = ParallelTransition(fadeIn, scaleInX, scaleInY)
+                enter.setOnFinished {
+                    onFinished()
+                }
+                enter.playFromStart()
+            }
+
+            return exit
+        }
+    }
+
+    class Custom(
+        private val factory: (Pane, () -> Unit, () -> Unit) -> Animation?,
+    ) : RouteTransition(0.0) {
+        override fun createAnimation(
+            host: Pane,
+            swapContent: () -> Unit,
+            onFinished: () -> Unit,
+        ): Animation? = factory(host, swapContent, onFinished)
+    }
+
+    enum class SlideDirection(val offset: Double) {
+        START(-1.0),
+        END(1.0),
+    }
+}
 
 fun <R : Route> navigationRail(
     scope: CoroutineScope,
@@ -204,11 +378,13 @@ fun <R : Route> pathLink(
 fun <R : Route> routeHost(
     scope: CoroutineScope,
     navigator: Navigator<R>,
+    transition: RouteTransition = RouteTransition.None,
     init: StackPane.() -> Unit = {},
     content: (route: R) -> Node,
 ): StackPane {
     val cache = linkedMapOf<String, Node>()
     val host = StackPane().apply(init)
+    val transitionHost = ContentTransitionHost()
 
     navigator.state.collectLatestIn(scope) { state ->
         runOnFxThread {
@@ -221,7 +397,7 @@ fun <R : Route> routeHost(
                     -> cache.getOrPut(route.id) { content(route) }
                 }
 
-            host.children.setAll(node)
+            transitionHost.render(host, node, transition)
         }
     }
 
@@ -231,11 +407,12 @@ fun <R : Route> routeHost(
 fun <R : Route> routerHost(
     scope: CoroutineScope,
     navigator: Navigator<R>,
+    transition: RouteTransition = RouteTransition.None,
     init: StackPane.() -> Unit = {},
     content: RouterHostBuilder<R>.() -> Unit,
 ): StackPane {
     val graph = RouterHostBuilder<R>().apply(content).build()
-    val renderer = RouterHostRenderer(graph)
+    val renderer = RouterHostRenderer(graph, transition)
     val host = StackPane().apply {
         styleClass("router-host")
         init()
@@ -721,9 +898,12 @@ internal data class RouterLayoutInstance(
 
 internal class RouterHostRenderer<R : Route>(
     private val graph: RouterHostGraph<R>,
+    private val transition: RouteTransition,
 ) {
     private val pageCache = linkedMapOf<String, Node>()
     private val layoutCache = linkedMapOf<Any, RouterLayoutInstance>()
+    private val transitionHost = ContentTransitionHost()
+    private var activeNode: Node? = null
 
     fun render(
         host: StackPane,
@@ -749,7 +929,19 @@ internal class RouterHostRenderer<R : Route>(
                 )
             } ?: page
 
-        host.children.setAll(nextNode)
+        val current = activeNode
+        if (current === nextNode) {
+            if (host.children.singleOrNull() !== nextNode) {
+                host.children.setAll(nextNode)
+            }
+            return
+        }
+
+        transitionHost.render(
+            host = host,
+            nextNode = nextNode,
+            transition = transition,
+        ) { activeNode = nextNode }
     }
 
     private fun renderLayoutChain(
@@ -849,6 +1041,82 @@ private fun String.toStyleClassSuffix(): String =
         .trim('-')
         .ifBlank { "unnamed" }
 
+private class ContentTransitionHost {
+    private var currentContentKey: Any? = null
+    private var activeTransition: Animation? = null
+    private var renderEpoch = 0
+
+    fun render(
+        host: Pane,
+        nextNode: Node,
+        transition: RouteTransition,
+        onTransitionCompleted: () -> Unit = {},
+    ) {
+        render(host, nextNode, { host.children.setAll(nextNode) }, transition, onTransitionCompleted)
+    }
+
+    fun render(
+        host: Pane,
+        nextChildren: List<Node>,
+        transition: RouteTransition,
+        onTransitionCompleted: () -> Unit = {},
+    ) {
+        val key = nextChildren
+        render(host, key, { host.children.setAll(nextChildren) }, transition, onTransitionCompleted)
+    }
+
+    private fun render(
+        host: Pane,
+        nextContentKey: Any,
+        swapContent: () -> Unit,
+        transition: RouteTransition,
+        onTransitionCompleted: () -> Unit,
+    ) {
+        val epoch = ++renderEpoch
+
+        if (currentContentKey === nextContentKey) {
+            if (host.children.isEmpty()) {
+                swapContent()
+            }
+            onTransitionCompleted()
+            return
+        }
+
+        activeTransition?.stop()
+        activeTransition = null
+        transition.resetHost(host)
+
+        if (host.children.isEmpty() || transition == RouteTransition.None) {
+            swapContent()
+            currentContentKey = nextContentKey
+            transition.resetHost(host)
+            onTransitionCompleted()
+            return
+        }
+
+        val animation = transition.createAnimation(
+            host = host,
+            swapContent = swapContent,
+            onFinished = {
+                if (epoch == renderEpoch) {
+                    currentContentKey = nextContentKey
+                    transition.resetHost(host)
+                    onTransitionCompleted()
+                }
+            },
+        ) ?: run {
+            swapContent()
+            currentContentKey = nextContentKey
+            transition.resetHost(host)
+            onTransitionCompleted()
+            return
+        }
+
+        activeTransition = animation
+        animation.playFromStart()
+    }
+}
+
 private fun <R : Route, T : Node> T.bindRouteLinkState(
     scope: CoroutineScope,
     navigator: Navigator<R>,
@@ -894,6 +1162,42 @@ private fun <R : Route> NavigationLocation<R>.isActivePath(
     } else {
         this.path == target.path || this.path.startsWith("${target.path.trimEnd('/')}/")
     }
+}
+
+fun <T> Pane.bindContentWithTransition(
+    scope: CoroutineScope,
+    state: Flow<T>,
+    transition: RouteTransition = RouteTransition.Fade(),
+    content: FragmentBuilder.(T) -> Unit,
+): Job {
+    val transitionHost = ContentTransitionHost()
+    return state.collectLatestIn(scope) {
+        runOnFxThread {
+            val nextChildren = fragment {
+                content(it)
+            }
+            transitionHost.render(this, nextChildren, transition)
+        }
+    }
+}
+
+fun <T> Pane.bindContentWithTransition(
+    scope: CoroutineScope,
+    state: Flow<T>,
+    transition: Flow<RouteTransition>,
+    content: FragmentBuilder.(T) -> Unit,
+): Job {
+    val transitionHost = ContentTransitionHost()
+    return state
+        .combine(transition) { value, routeTransition -> value to routeTransition }
+        .collectLatestIn(scope) { (value, routeTransition) ->
+            runOnFxThread {
+                val nextChildren = fragment {
+                    content(value)
+                }
+                transitionHost.render(this, nextChildren, routeTransition)
+            }
+        }
 }
 
 fun <R : Route, T> routeDataHost(

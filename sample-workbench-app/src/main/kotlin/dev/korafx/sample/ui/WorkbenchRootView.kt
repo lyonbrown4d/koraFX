@@ -26,10 +26,10 @@ import dev.korafx.dsl.stateList
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.tabPane
 import dev.korafx.dsl.vbox
-import dev.korafx.dsl.state.collectLatestIn
-import dev.korafx.dsl.FragmentBuilder
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.ThemeStyleClass
+import dev.korafx.navigation.RouteTransition
+import dev.korafx.navigation.bindContentWithTransition
 import dev.korafx.navigation.routeButton
 import dev.korafx.sample.di.WorkbenchAppGraph
 import dev.korafx.sample.domain.ModuleCategory
@@ -54,17 +54,10 @@ import dev.korafx.sample.ui.pages.workspacePage
 import dev.korafx.sample.viewmodel.WorkbenchAction
 import dev.korafx.sample.viewmodel.WorkbenchState
 import dev.korafx.sourceeditor.codeEditor
-import javafx.animation.Animation
-import javafx.animation.FadeTransition
-import javafx.application.Platform
 import javafx.geometry.Insets
 import javafx.geometry.Pos
-import javafx.scene.layout.Pane
-import javafx.util.Duration
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class WorkbenchRootView(
     private val graph: WorkbenchAppGraph,
@@ -75,6 +68,7 @@ class WorkbenchRootView(
     private val navigator = graph.navigator
     private val viewModel = graph.viewModel
     private val commandPaletteHost = graph.commandPaletteHost
+    private val transitionMode = MutableStateFlow<TransitionMode>(TransitionMode.Fade)
     private val pageContext = WorkbenchPageContext(
         uiScope = graph.uiScope,
         catalog = graph.catalog,
@@ -175,6 +169,19 @@ class WorkbenchRootView(
                         commandPaletteHost.show()
                     }
                 }
+
+                comboBox(
+                    items = TransitionMode.entries.toList(),
+                    init = {
+                        prefWidth = 180.0
+                    },
+                ) {
+                    render { it.label }
+                    onSelect { mode ->
+                        transitionMode.value = mode ?: TransitionMode.Fade
+                    }
+                    select(transitionMode.value)
+                }
             },
         )
 
@@ -251,7 +258,11 @@ class WorkbenchRootView(
                 ) {
                 }.also { container ->
                     container.growVertical()
-                    container.bindContentWithFade(uiScope, viewModel.state) { state ->
+                    container.bindContentWithTransition(
+                        scope = uiScope,
+                        state = viewModel.state,
+                        transition = transitionMode.map { it.transition },
+                    ) { state ->
                         renderShowcase(state)
                     }
                 }
@@ -277,7 +288,11 @@ class WorkbenchRootView(
                     }
                 }.also { container ->
                     container.growVertical()
-                    container.bindContentWithFade(uiScope, viewModel.state) { state ->
+                    container.bindContentWithTransition(
+                        scope = uiScope,
+                        state = viewModel.state,
+                        transition = transitionMode.map { it.transition },
+                    ) { state ->
                         markdownDocument(state.document)
                     }
                 }
@@ -303,7 +318,11 @@ class WorkbenchRootView(
                     }
                 }.also { container ->
                     container.growVertical()
-                    container.bindContentWithFade(uiScope, viewModel.state) { state ->
+                    container.bindContentWithTransition(
+                        scope = uiScope,
+                        state = viewModel.state,
+                        transition = transitionMode.map { it.transition },
+                    ) { state ->
                         renderSourceCode(state)
                     }
                 }
@@ -395,53 +414,13 @@ class WorkbenchRootView(
         }
     }
 
-    private fun <T> Pane.bindContentWithFade(
-        scope: CoroutineScope,
-        flow: Flow<T>,
-        durationMs: Double = 170.0,
-        content: FragmentBuilder.(T) -> Unit,
-    ): Job {
-        var transition: Animation? = null
-
-        return flow.collectLatestIn(scope) { value ->
-            Platform.runLater {
-                transition?.let {
-                    it.stop()
-                    opacity = 1.0
-                }
-
-                val nextChildren = fragment {
-                    content(value)
-                }
-
-                if (children.isEmpty()) {
-                    children.setAll(nextChildren)
-                    opacity = 1.0
-                    return@runLater
-                }
-
-                if (nextChildren.size == children.size && children.withIndex().all { (index, child) -> child === nextChildren[index] }) {
-                    return@runLater
-                }
-
-                val fadeOut = FadeTransition(Duration.millis(durationMs), this).apply {
-                    fromValue = 1.0
-                    toValue = 0.0
-                }
-
-                fadeOut.setOnFinished {
-                    children.setAll(nextChildren)
-                    val fadeIn = FadeTransition(Duration.millis(durationMs), this).apply {
-                        fromValue = 0.0
-                        toValue = 1.0
-                    }
-                    transition = fadeIn
-                    fadeIn.playFromStart()
-                }
-
-                transition = fadeOut
-                fadeOut.playFromStart()
-            }
-        }
+    private enum class TransitionMode(
+        val label: String,
+        val transition: RouteTransition,
+    ) {
+        None("None", RouteTransition.None),
+        Fade("Fade", RouteTransition.Fade()),
+        Slide("Slide", RouteTransition.Slide()),
+        Scale("Scale", RouteTransition.Scale()),
     }
 }
