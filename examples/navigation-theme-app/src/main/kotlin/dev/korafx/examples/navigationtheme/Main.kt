@@ -45,6 +45,8 @@ import dev.korafx.navigation.RoutePattern
 import dev.korafx.navigation.NavigationTransitionProfile
 import dev.korafx.navigation.RouteDataController
 import dev.korafx.navigation.RouteTransition
+import dev.korafx.navigation.routerHost
+import dev.korafx.navigation.navigationResultKey
 import dev.korafx.navigation.scaleDuration
 import dev.korafx.navigation.bindContentWithTransition
 import dev.korafx.navigation.routeDataHost
@@ -61,10 +63,12 @@ import javafx.stage.Stage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import java.util.concurrent.atomic.AtomicInteger
 
 private data class DemoRoute(
     override val id: String,
@@ -158,6 +162,26 @@ private data class DemoRoute(
             section = RouteSection.Advanced,
         )
 
+        val LazyRouter = DemoRoute(
+            id = "lazy-router",
+            title = "Lazy Router",
+            path = "/lazy-router",
+            description = "路由懒加载与按需初始化 page 的真实示例。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/lazy-router.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/lazy-router.kt",
+            section = RouteSection.Advanced,
+        )
+
+        val RouteResult = DemoRoute(
+            id = "route-result",
+            title = "Route Result",
+            path = "/route-result",
+            description = "使用 setResult / results / awaitResult 构建路由返回值。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/route-result.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/route-result.kt",
+            section = RouteSection.Advanced,
+        )
+
         val all: List<DemoRoute> = listOf(
             Overview,
             PathRouting,
@@ -166,6 +190,8 @@ private data class DemoRoute(
             RouterHost,
             StateRestoration,
             RouteData,
+            LazyRouter,
+            RouteResult,
             Transitions,
         )
 
@@ -177,6 +203,35 @@ private data class DemoRoute(
 private enum class RouteSection(val label: String) {
     Core("核心能力"),
     Advanced("高级能力"),
+}
+
+private enum class LazyRouterDemoRoute(
+    override val id: String,
+    override val title: String,
+    override val path: String,
+) : PathRoute {
+    Home(id = "lazy-home", title = "Lazy Home", path = "/"),
+    Detail(id = "lazy-detail", title = "Lazy Detail", path = "/detail/:itemId"),
+    LazyPanel(id = "lazy-panel", title = "Lazy Panel", path = "/panel"),
+    ;
+
+    companion object {
+        val all: List<LazyRouterDemoRoute> = listOf(Home, Detail, LazyPanel)
+    }
+}
+
+private enum class RouteResultDemoRoute(
+    override val id: String,
+    override val title: String,
+    override val path: String,
+) : PathRoute {
+    Entry(id = "result-home", title = "Result Home", path = "/"),
+    Picker(id = "result-picker", title = "Result Picker", path = "/picker"),
+    ;
+
+    companion object {
+        val all: List<RouteResultDemoRoute> = listOf(Entry, Picker)
+    }
 }
 
 fun main(args: Array<String>) {
@@ -268,18 +323,20 @@ class NavigationThemeApp : Application() {
                 title = route.title,
                 description = route.description,
             ) {
-                when (route) {
-                    DemoRoute.Overview -> buildOverview()
-                    DemoRoute.PathRouting -> buildPathRouting()
-                    DemoRoute.History -> buildHistory()
-                    DemoRoute.Guards -> buildGuards()
-                    DemoRoute.RouterHost -> buildRouterHost()
-                    DemoRoute.StateRestoration -> buildStateRestoration()
-                    DemoRoute.RouteData -> buildRouteData()
-                    DemoRoute.Transitions -> buildTransitions()
-                }
+            when (route) {
+                DemoRoute.Overview -> buildOverview()
+                DemoRoute.PathRouting -> buildPathRouting()
+                DemoRoute.History -> buildHistory()
+                DemoRoute.Guards -> buildGuards()
+                DemoRoute.RouterHost -> buildRouterHost()
+                DemoRoute.StateRestoration -> buildStateRestoration()
+                DemoRoute.RouteData -> buildRouteData()
+                DemoRoute.LazyRouter -> buildLazyRouter()
+                DemoRoute.RouteResult -> buildRouteResultDemo()
+                DemoRoute.Transitions -> buildTransitions()
             }
         }
+    }
 
     private fun topToolbar() = toolbar {
             label("KoraFX Navigation + Theme") {
@@ -529,6 +586,8 @@ class NavigationThemeApp : Application() {
                 button("Path Routing") { onAction { navigator.navigate(DemoRoute.PathRouting.id) } }
                 button("History") { onAction { navigator.navigate(DemoRoute.History.id) } }
                 button("Guards") { onAction { navigator.navigate(DemoRoute.Guards.id) } }
+                button("Lazy Router") { onAction { navigator.navigate(DemoRoute.LazyRouter.id) } }
+                button("Route Result") { onAction { navigator.navigate(DemoRoute.RouteResult.id) } }
                 button("Route Data") { onAction { navigator.navigate(DemoRoute.RouteData.id) } }
                 button("Transitions") { onAction { navigator.navigate(DemoRoute.Transitions.id) } }
             }
@@ -540,6 +599,8 @@ class NavigationThemeApp : Application() {
             label("3) Guard 与 async guard")
             label("4) routerHost layouts/outlets")
             label("5) 路由级状态持久化与文档化示例")
+            label("6) routeLazy 与延迟初始化")
+            label("7) 路由结果流(setResult / results / awaitResult)")
         }
     }
 
@@ -806,6 +867,150 @@ class NavigationThemeApp : Application() {
             ) { _, value ->
                 vbox(10.0) {
                     label(value)
+                }
+            }
+        }
+    }
+
+    private fun buildLazyRouter() {
+        val localNavigator = Navigator(
+            initialRoute = LazyRouterDemoRoute.Home,
+            routes = LazyRouterDemoRoute.all,
+            pageInstancePolicy = PageInstancePolicy.KEEP_ALIVE,
+        )
+        val panelInitCount = AtomicInteger(0)
+
+        section("路由按需加载（routeLazy）") {
+            label("本示例使用独立 navigator 演示 routeLazy 何时触发构建。")
+            label("进入 Lazy Panel 前，相关内容不会创建。")
+            label("离开后再次进入也不会重复初始化。")
+            routerHost(
+                scope = uiScope,
+                navigator = localNavigator,
+                transition = RouteTransition.Fade(),
+                init = {
+                    styleClasses("lazy-route-host")
+                },
+            ) {
+                route(LazyRouterDemoRoute.Home) {
+                    vbox(10.0) {
+                        label("当前路由：${localNavigator.currentLocation.fullPath}")
+                        actionBar(alignEnd = false) {
+                            button("打开详情（参数路由）") {
+                                onAction {
+                                    localNavigator.navigatePath("/detail/007")
+                                }
+                            }
+                            button("打开懒加载面板") {
+                                onAction {
+                                    localNavigator.navigate(LazyRouterDemoRoute.LazyPanel)
+                                }
+                            }
+                        }
+                    }
+                }
+                route(LazyRouterDemoRoute.Detail) {
+                    vbox(10.0) {
+                        label("详情页参数：${localNavigator.currentLocation.params["itemId"]}")
+                        actionBar(alignEnd = false) {
+                            button("返回") {
+                                onAction { localNavigator.back() }
+                            }
+                        }
+                    }
+                }
+                routeLazy(LazyRouterDemoRoute.LazyPanel) {
+                    {
+                        val currentInit = panelInitCount.incrementAndGet()
+                        vbox(10.0) {
+                            label("这段内容只在首次导航到该路由时创建。")
+                            label("初始化次数：$currentInit")
+                            actionBar(alignEnd = false) {
+                                button("返回") {
+                                    onAction { localNavigator.back() }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun buildRouteResultDemo() {
+        val localNavigator = Navigator(
+            initialRoute = RouteResultDemoRoute.Entry,
+            routes = RouteResultDemoRoute.all,
+            pageInstancePolicy = PageInstancePolicy.KEEP_ALIVE,
+        )
+        val resultKey = navigationResultKey<String>("sample-route-result")
+        val resultState = MutableStateFlow("未选择")
+
+        uiScope.launch {
+            localNavigator.results(resultKey).collect { value ->
+                resultState.value = value
+            }
+        }
+
+        section("路由返回值") {
+            label("路由结果约定：下游页面通过 setResult 写回上游。")
+            label("当前结果：").stateText(uiScope, resultState) { "当前结果：$it" }
+            actionBar(alignEnd = false) {
+                button("打开 Picker 页面") {
+                    onAction { localNavigator.navigate(RouteResultDemoRoute.Picker) }
+                }
+                button("等待下一次 Picker 返回") {
+                    onAction {
+                        uiScope.launch {
+                            val picked = localNavigator.awaitResult(resultKey)
+                            notifications.show(
+                                message = "awaitResult 接收: $picked",
+                                tone = ToastTone.INFO,
+                            )
+                        }
+                    }
+                }
+            }
+
+            routerHost(
+                scope = uiScope,
+                navigator = localNavigator,
+                transition = RouteTransition.Fade(),
+                init = {
+                    styleClasses("route-result-host")
+                },
+            ) {
+                route(RouteResultDemoRoute.Entry) {
+                    vbox(10.0) {
+                        label("当前路由：${localNavigator.currentLocation.fullPath}")
+                        label("选择一个项目继续：")
+                        button("Picker") {
+                            onAction { localNavigator.navigate(RouteResultDemoRoute.Picker) }
+                        }
+                    }
+                }
+                route(RouteResultDemoRoute.Picker) {
+                    vbox(10.0) {
+                        label("选择后会返回上一页并携带结果。")
+                        button("选择 Alpha") {
+                            onAction {
+                                localNavigator.setResult(resultKey, "alpha")
+                                localNavigator.back()
+                            }
+                        }
+                        button("选择 Beta") {
+                            onAction {
+                                localNavigator.setResult(resultKey, "beta")
+                                localNavigator.back()
+                            }
+                        }
+                        button("选择 Gamma") {
+                            onAction {
+                                localNavigator.setResult(resultKey, "gamma")
+                                localNavigator.back()
+                            }
+                        }
+                    }
                 }
             }
         }
