@@ -13,6 +13,7 @@ import dev.korafx.dsl.onAction
 import dev.korafx.dsl.vbox
 import dev.korafx.inspector.InspectorPanel
 import dev.korafx.inspector.inspectorPanel
+import dev.korafx.resourceexplorer.ResourceExplorer
 import dev.korafx.resourceexplorer.resourceExplorer
 import dev.korafx.sample.domain.ExplorerResource
 import dev.korafx.sample.viewmodel.WorkbenchAction
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 fun NodeContainerBuilder.resourceExplorerPage(context: WorkbenchPageContext) {
     val selected = MutableStateFlow<ExplorerResource?>(null)
+    var explorerRef: ResourceExplorer<ExplorerResource>? = null
     var inspectorRef: InspectorPanel? = null
 
     section(
@@ -35,61 +37,86 @@ fun NodeContainerBuilder.resourceExplorerPage(context: WorkbenchPageContext) {
                         subtitle = "Select one node to inspect metadata and available actions.",
                         eyebrow = "korafx-resource-explorer",
                     )
-                    resourceExplorer(
-                            items = context.catalog.explorerResources,
-                            childrenOf = ExplorerResource::children,
-                            textOf = ExplorerResource::name,
-                            init = {
-                                prefHeight = 360.0
-                                maxWidth = Double.MAX_VALUE
-                            },
-                        ) {
-                            search(prompt = "Search repository or database...")
-                            breadcrumb(separator = " > ")
-                            secondaryText { resource ->
-                                if (resource.children.isEmpty()) {
-                                    "Leaf resource"
-                                } else {
-                                    "${resource.children.size} children"
-                                }
+                    explorerRef = resourceExplorer(
+                        items = context.catalog.explorerResources,
+                        childrenOf = ExplorerResource::children,
+                        textOf = ExplorerResource::name,
+                        init = {
+                            prefHeight = 240.0
+                            maxWidth = Double.MAX_VALUE
+                        },
+                    ) {
+                        search(prompt = "Search repository or database...")
+                        breadcrumb(separator = " > ")
+                        secondaryText { resource ->
+                            if (resource.children.isEmpty()) {
+                                "Leaf resource"
+                            } else {
+                                "${resource.children.size} children"
                             }
-                            status { resource ->
-                                resourceStatusText(resource)
+                        }
+                        status { resource ->
+                            resourceStatusText(resource)
+                        }
+                        emptyState("No matching resources")
+                        rowAction { resource ->
+                            context.viewModel.dispatch(WorkbenchAction.UpdateDraft("Open ${resource.name} from explorer"))
+                        }
+                        onSelect { resource ->
+                            selected.value = resource
+                            inspectorRef?.let {
+                                refreshResourceInspector(
+                                    inspector = it,
+                                    context = context,
+                                    selected = resource,
+                                    path = selectedPathText(context.catalog.explorerResources, resource),
+                                )
                             }
-                            emptyState("No matching resources")
-                            rowAction { resource ->
-                                context.viewModel.dispatch(WorkbenchAction.UpdateDraft("Open ${resource.name} from explorer"))
+                        }
+                        contextMenu {
+                            actionItem("Open") { resource ->
+                                context.viewModel.dispatch(WorkbenchAction.UpdateDraft("Open resource: ${resource.name}"))
                             }
-                            onSelect { resource ->
-                                selected.value = resource
-                                inspectorRef?.let {
-                                    refreshResourceInspector(
-                                        inspector = it,
-                                        context = context,
-                                        selected = resource,
-                                        path = selectedPathText(context.catalog.explorerResources, resource),
-                                    )
-                                }
+                            separator()
+                            actionItem("Copy path") { resource ->
+                                context.viewModel.dispatch(WorkbenchAction.UpdateDraft("Copy resource path: ${resource.name}"))
                             }
-                            contextMenu {
-                                actionItem("Open") { resource ->
-                                    context.viewModel.dispatch(WorkbenchAction.UpdateDraft("Open resource: ${resource.name}"))
-                                }
-                                separator()
-                                actionItem("Copy path") { resource ->
-                                    context.viewModel.dispatch(WorkbenchAction.UpdateDraft("Copy resource path: ${resource.name}"))
-                                }
-                                actionItem("Focus query module") { _ ->
-                                    context.viewModel.dispatch(WorkbenchAction.NavigateModule("data-grid"))
+                            actionItem("Focus query module") { _ ->
+                                context.viewModel.dispatch(WorkbenchAction.NavigateModule("data-grid"))
+                            }
+                        }
+                    }
+
+                    hbox(spacing = 8.0) {
+                        button("Expand all") {
+                            onAction {
+                                explorerRef?.expandAll()
+                            }
+                        }
+                        button("Collapse all") {
+                            onAction {
+                                explorerRef?.collapseAll()
+                            }
+                        }
+                        button("Clear selection") {
+                            onAction {
+                                explorerRef?.clearSelection()
+                            }
+                        }
+                        button("Focus DB") {
+                            onAction {
+                                val db = context.catalog.explorerResources.firstOrNull { it.name == "Database" }
+                                if (db != null) {
+                                    explorerRef?.selectPath(listOf(db))
                                 }
                             }
                         }
+                    }
                 }
             }
 
             val detailPane = vbox(spacing = 12.0) { }
             content {
-                add(detailPane)
                 detailPane.bindContent(context.uiScope, selected) { resource: ExplorerResource? ->
                     renderResourceDetail(context, resource, context.catalog.explorerResources)
                 }
@@ -118,7 +145,6 @@ fun NodeContainerBuilder.resourceExplorerPage(context: WorkbenchPageContext) {
 
             status {
                 val statusPane = vbox(spacing = 8.0) { }
-                add(statusPane)
                 statusPane.bindContent(context.uiScope, selected) { resource: ExplorerResource? ->
                     statusBar {
                         statusItem(

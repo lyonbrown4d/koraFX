@@ -264,6 +264,28 @@ class ResourceExplorerTest {
         }
     }
 
+    @Test
+    fun `resource explorer can clear selection and report emptiness`() {
+        FxTestSupport.runOnFxThread {
+            val explorer =
+                resourceExplorer(
+                    items = resources,
+                    childrenOf = { it.children },
+                    textOf = { it.name },
+                )
+            val repository = explorer.treeView.root.children.first()
+            explorer.treeView.selectionModel.select(repository)
+
+            assertFalse(explorer.isEmpty())
+            assertEquals(repository.value, explorer.selectedItem())
+
+            explorer.clearSelection()
+
+            assertEquals(null, explorer.selectedItem())
+            assertTrue(explorer.selectedPath().isEmpty())
+        }
+    }
+
     private fun <T> TreeCell<T>.render(
         treeView: TreeView<T>,
         item: TreeItem<T>,

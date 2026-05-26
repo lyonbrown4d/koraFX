@@ -1,6 +1,7 @@
 package dev.korafx.sample.ui.pages
 
 import dev.korafx.components.ComponentTone
+import dev.korafx.components.WorkspaceLayout
 import dev.korafx.components.appToolbar
 import dev.korafx.components.card
 import dev.korafx.components.badge
@@ -317,6 +318,9 @@ private fun refreshWorkspaceInspector(
 fun NodeContainerBuilder.workspacePage(context: WorkbenchPageContext) {
     var workspaceRef: TabWorkspace? = null
     var inspectorRef: InspectorPanel? = null
+    var layoutRef: WorkspaceLayout? = null
+    var showNavigation = true
+    var showDetails = true
 
     fun refreshStatusState(): Array<String> {
         val activeTab = workspaceRef?.let(WorkspacePageState::currentTab) ?: WorkspacePageState.activeTabId
@@ -331,7 +335,7 @@ fun NodeContainerBuilder.workspacePage(context: WorkbenchPageContext) {
         title = "Workspace",
         description = "Tab + navigation + details + status 的工作区布局。支持查询执行、动态 inspector 和多标签操作。",
     ) {
-        workspaceLayout(
+        val layout = workspaceLayout(
             init = {
                 minHeight = 520.0
             },
@@ -342,6 +346,36 @@ fun NodeContainerBuilder.workspacePage(context: WorkbenchPageContext) {
                         subtitle = "Document and query workspace",
                         icon = WorkbenchIcons.Workspace,
                         actions = {
+                            button("Toggle Navigation") {
+                                onAction {
+                                    showNavigation = !showNavigation
+                                    layoutRef?.setNavigationVisible(showNavigation)
+                                    context.viewModel.dispatch(
+                                        WorkbenchAction.UpdateDraft(
+                                            if (showNavigation) {
+                                                "Navigation panel shown"
+                                            } else {
+                                                "Navigation panel hidden"
+                                            },
+                                        ),
+                                    )
+                                }
+                            }
+                            button("Toggle Details") {
+                                onAction {
+                                    showDetails = !showDetails
+                                    layoutRef?.setDetailsVisible(showDetails)
+                                    context.viewModel.dispatch(
+                                        WorkbenchAction.UpdateDraft(
+                                            if (showDetails) {
+                                                "Details panel shown"
+                                            } else {
+                                                "Details panel hidden"
+                                            },
+                                        ),
+                                    )
+                                }
+                            }
                             button("Readme") {
                                 onAction {
                                     workspaceRef?.let { workspace ->
@@ -518,5 +552,7 @@ fun NodeContainerBuilder.workspacePage(context: WorkbenchPageContext) {
                 }
             },
         )
+
+        layoutRef = layout
     }
 }

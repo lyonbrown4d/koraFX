@@ -482,14 +482,14 @@ fun <T> NodeContainerBuilder.virtualList(
     content: VirtualListBuilder<T>.() -> Unit = {},
 ): VirtualList<T> =
     add(
-        dev.korafx.virtuallist.virtualList(
+        VirtualList(
             dataLoader = dataLoader,
             totalCountEstimate = totalCountEstimate,
             pageSize = pageSize,
-            heightMode = heightMode,
+            rowHeightMode = heightMode,
             rowHeight = rowHeight,
-            selectionMode = selectionMode,
-            init = init,
-            content = content,
-        ),
+            initialSelectionMode = selectionMode,
+        ).apply(init).apply {
+            VirtualListBuilder(this).content()
+        },
     )

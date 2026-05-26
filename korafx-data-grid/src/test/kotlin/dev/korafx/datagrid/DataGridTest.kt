@@ -149,6 +149,27 @@ class DataGridTest {
     }
 
     @Test
+    fun `data grid clearSelection clears all selected rows`() {
+        FxTestSupport.runOnFxThread {
+            val rows =
+                listOf(
+                    Row("DSL", "Core", "Ready"),
+                    Row("Theme", "Design", "Review"),
+                )
+            val grid = dataGrid(rows) {
+                selectionMode(SelectionMode.MULTIPLE)
+                readOnlyTextColumn("Name") { it.name }
+            }
+
+            grid.tableView.selectionModel.selectAll()
+            grid.clearSelection()
+
+            assertEquals(emptyList(), grid.selectedItems())
+            assertEquals(null, grid.tableView.selectionModel.selectedItem)
+        }
+    }
+
+    @Test
     fun `data grid toolbar batch action receives selected rows`() {
         FxTestSupport.runOnFxThread {
             val rows = listOf(

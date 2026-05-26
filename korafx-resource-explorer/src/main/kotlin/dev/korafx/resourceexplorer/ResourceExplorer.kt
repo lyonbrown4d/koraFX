@@ -152,6 +152,13 @@ class ResourceExplorer<T> internal constructor(
     fun selectedPathText(separator: String = breadcrumbSeparator): String =
         selectedPath().joinToString(separator) { textOf(it) }
 
+    fun clearSelection() {
+        treeView.selectionModel.clearSelection()
+    }
+
+    fun isEmpty(): Boolean =
+        roots.isEmpty()
+
     fun selectPath(path: Iterable<T>): Boolean {
         val target = findTreeItem(path.toList()) ?: return false
         expandAncestors(target)
@@ -423,6 +430,10 @@ class ResourceExplorerBuilder<T> internal constructor(
 
     fun onSelect(handler: (T?) -> Unit) {
         explorer.onSelect(handler)
+    }
+
+    fun clearSelection() {
+        explorer.clearSelection()
     }
 
     fun rowAction(

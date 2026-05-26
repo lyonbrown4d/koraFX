@@ -111,7 +111,7 @@ fun NodeContainerBuilder.dataGridPage(context: WorkbenchPageContext) {
             }
             toolbarAction("Deselect All") {
                 currentGrid?.let { grid ->
-                    grid.tableView.selectionModel.clearSelection()
+                    grid.clearSelection()
                 }
             }
         }

@@ -283,6 +283,10 @@ class DataGrid<T> internal constructor(
     fun selectedItems(): List<T> =
         tableView.selectionModel.selectedItems.toList()
 
+    fun clearSelection() {
+        tableView.selectionModel.clearSelection()
+    }
+
     fun createDataSnapshot(selectedOnly: Boolean = false): DataGridDataSnapshot<T> {
         val columns = tableView.columns.filter { it.isVisible }
         val rows =
@@ -600,6 +604,10 @@ class DataGridBuilder<T> internal constructor(
 
     fun onSelect(handler: (T?) -> Unit) {
         tableBuilder.onSelect(handler)
+    }
+
+    fun clearSelection() {
+        grid.clearSelection()
     }
 
     fun rowAction(
