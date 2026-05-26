@@ -2166,9 +2166,23 @@ private fun StylesheetBuilder.componentStyles(context: ThemeCssContext) {
         padding(0, 0, spacing.sm, 0)
     }
 
+    rule(".source-editor-status") {
+        fx("background-color", "derive(${colors.surface}, 8%)")
+        fx("border-color", "transparent transparent ${colors.border} transparent")
+        padding(spacing.sm, spacing.md)
+    }
+
     rule(".source-editor-action") {
         ghostControl(context)
         padding(spacing.sm, spacing.lg)
+    }
+
+    rule(".source-editor-status-message") {
+        fx("text-fill", colors.textSecondary)
+    }
+
+    rule(".source-editor-status-badge") {
+        fx("font-weight", "700")
     }
 
     rule(".source-editor-code") {

@@ -5,6 +5,8 @@ import dev.korafx.dsl.NodeContainerBuilder
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.styleClass
 import dev.korafx.dsl.styleClasses
+import javafx.beans.property.ReadOnlyObjectProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.control.Button
@@ -20,6 +22,32 @@ data class SourceDiagnostic(
     val message: String,
     val tone: ComponentTone = ComponentTone.WARNING,
 )
+
+enum class SourceEditorExecutionPhase {
+    IDLE,
+    RUNNING,
+    SUCCESS,
+    ERROR,
+}
+
+data class SourceEditorExecutionState(
+    val phase: SourceEditorExecutionPhase = SourceEditorExecutionPhase.IDLE,
+    val message: String = "Ready",
+    val tone: ComponentTone = when (phase) {
+        SourceEditorExecutionPhase.IDLE -> ComponentTone.INFO
+        SourceEditorExecutionPhase.RUNNING -> ComponentTone.INFO
+        SourceEditorExecutionPhase.SUCCESS -> ComponentTone.SUCCESS
+        SourceEditorExecutionPhase.ERROR -> ComponentTone.DANGER
+    },
+) {
+    fun toBadgeText(): String =
+        when (phase) {
+            SourceEditorExecutionPhase.IDLE -> "Ready"
+            SourceEditorExecutionPhase.RUNNING -> "Running"
+            SourceEditorExecutionPhase.SUCCESS -> "Success"
+            SourceEditorExecutionPhase.ERROR -> "Error"
+        }
+}
 
 class SourceEditor internal constructor(
     title: String?,
@@ -51,6 +79,12 @@ class SourceEditor internal constructor(
     val resultPane: VBox = VBox(8.0)
     val resultHeader: Label = Label("Result")
     val resultContent: VBox = VBox(8.0)
+    val statusBar: HBox = HBox(8.0)
+    val statusBadge: Label = Label(SourceEditorExecutionState().toBadgeText()).apply {
+        styleClass("badge")
+    }
+    val statusLabel: Label = Label(SourceEditorExecutionState().message)
+    private val executionStateValue = SimpleObjectProperty(SourceEditorExecutionState())
 
     val isDirty: Boolean
         get() = editor.isDirty
@@ -113,13 +147,32 @@ class SourceEditor internal constructor(
             }
         }
 
+        statusBar.apply {
+            styleClass("source-editor-status")
+            maxWidth = Double.MAX_VALUE
+            alignment = Pos.CENTER_LEFT
+            children += statusBadge
+            children += statusLabel
+        }
+
         children += toolbar
         children += editor
+        children += statusBar
         children += diagnosticsPane
         children += resultPane
 
+        refreshStatus()
         setDiagnostics(diagnostics)
     }
+
+    val executionState: SourceEditorExecutionState
+        get() = executionStateValue.value
+
+    val executionStateProperty: ReadOnlyObjectProperty<SourceEditorExecutionState>
+        get() = executionStateValue
+
+    val isRunning: Boolean
+        get() = executionState.phase == SourceEditorExecutionPhase.RUNNING
 
     fun setText(
         value: String,
@@ -226,6 +279,65 @@ class SourceEditor internal constructor(
         refreshDiagnosticsVisibility()
     }
 
+    fun setExecutionState(state: SourceEditorExecutionState) {
+        executionStateValue.value = state
+        refreshStatus()
+    }
+
+    fun setStatus(
+        message: String,
+        tone: ComponentTone,
+        phase: SourceEditorExecutionPhase,
+    ) {
+        setExecutionState(
+            SourceEditorExecutionState(
+                phase = phase,
+                message = message,
+                tone = tone,
+            ),
+        )
+    }
+
+    fun markIdle(message: String = "Ready") {
+        setExecutionState(
+            SourceEditorExecutionState(
+                phase = SourceEditorExecutionPhase.IDLE,
+                message = message,
+                tone = ComponentTone.INFO,
+            ),
+        )
+    }
+
+    fun markRunning(message: String = "Running...") {
+        setExecutionState(
+            SourceEditorExecutionState(
+                phase = SourceEditorExecutionPhase.RUNNING,
+                message = message,
+                tone = ComponentTone.INFO,
+            ),
+        )
+    }
+
+    fun markSuccess(message: String = "Completed") {
+        setExecutionState(
+            SourceEditorExecutionState(
+                phase = SourceEditorExecutionPhase.SUCCESS,
+                message = message,
+                tone = ComponentTone.SUCCESS,
+            ),
+        )
+    }
+
+    fun markError(message: String = "Failed") {
+        setExecutionState(
+            SourceEditorExecutionState(
+                phase = SourceEditorExecutionPhase.ERROR,
+                message = message,
+                tone = ComponentTone.DANGER,
+            ),
+        )
+    }
+
     fun setResult(
         node: Node?,
         title: String = "Result",
@@ -279,6 +391,14 @@ class SourceEditor internal constructor(
         diagnosticsPane.isManaged = visible
     }
 
+    private fun refreshStatus() {
+        val state = executionState
+        statusBadge.styleClasses("badge", state.tone.styleClass, "source-editor-status-badge")
+        statusBadge.text = state.toBadgeText()
+        statusLabel.text = state.message
+        statusLabel.styleClass("source-editor-status-message")
+    }
+
     private fun refreshResultVisibility() {
         val visible = resultContent.children.isNotEmpty()
         resultPane.isVisible = visible
@@ -328,6 +448,34 @@ class SourceEditorBuilder internal constructor(
 
     fun onDiagnosticSelected(handler: (SourceDiagnostic) -> Unit) {
         sourceEditor.onDiagnosticSelected(handler)
+    }
+
+    fun markIdle(message: String = "Ready") {
+        sourceEditor.markIdle(message)
+    }
+
+    fun markRunning(message: String = "Running...") {
+        sourceEditor.markRunning(message)
+    }
+
+    fun markSuccess(message: String = "Completed") {
+        sourceEditor.markSuccess(message)
+    }
+
+    fun markError(message: String = "Failed") {
+        sourceEditor.markError(message)
+    }
+
+    fun executionState(state: SourceEditorExecutionState) {
+        sourceEditor.setExecutionState(state)
+    }
+
+    fun status(
+        message: String,
+        tone: ComponentTone = ComponentTone.INFO,
+        phase: SourceEditorExecutionPhase = SourceEditorExecutionPhase.IDLE,
+    ) {
+        sourceEditor.setStatus(message, tone, phase)
     }
 
     fun lineNumbers(visible: Boolean = true) {
@@ -412,6 +560,34 @@ class QueryEditorBuilder internal constructor(
         handler: () -> Unit,
     ): Button =
         delegate.action(text, init, handler)
+
+    fun markIdle(message: String = "Ready") {
+        delegate.markIdle(message)
+    }
+
+    fun markRunning(message: String = "Running...") {
+        delegate.markRunning(message)
+    }
+
+    fun markSuccess(message: String = "Completed") {
+        delegate.markSuccess(message)
+    }
+
+    fun markError(message: String = "Failed") {
+        delegate.markError(message)
+    }
+
+    fun executionState(state: SourceEditorExecutionState) {
+        delegate.executionState(state)
+    }
+
+    fun status(
+        message: String,
+        tone: ComponentTone = ComponentTone.INFO,
+        phase: SourceEditorExecutionPhase = SourceEditorExecutionPhase.IDLE,
+    ) {
+        delegate.status(message, tone, phase)
+    }
 
     fun diagnostics(diagnostics: Iterable<SourceDiagnostic>) {
         delegate.diagnostics(diagnostics)

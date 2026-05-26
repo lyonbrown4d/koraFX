@@ -19,7 +19,27 @@ sourceEditor(
 ) {
   action("Run") { /* execute query */ }
   action("Format") { /* format text */ }
+  markIdle("Ready")
 }
+```
+
+## Query editor workflow
+
+```kotlin
+val editor = queryEditor(
+    text = "select * from modules",
+    onRun = { sql ->
+        editor.markRunning("Running: $sql")
+        editor.setResult(
+            vbox(spacing = 8.0) {
+                label("Demo result")
+                label("Rows: 3")
+            },
+            title = "Execution result",
+        )
+        editor.markSuccess("Query completed")
+    },
+)
 ```
 
 ## Notes

@@ -61,6 +61,36 @@ class SourceEditorTest {
     }
 
     @Test
+    fun `source editor exposes execution state and ready status updates`() {
+        FxTestSupport.runOnFxThread {
+            val editor = sourceEditor(text = "select 1") {
+                markRunning("Executing query")
+            }
+
+            assertEquals(SourceEditorExecutionPhase.RUNNING, editor.executionState.phase)
+            assertEquals("Executing query", editor.statusLabel.text)
+            assertEquals("Running", editor.statusBadge.text)
+            assertTrue("source-editor-status" in editor.statusBar.styleClass)
+            assertTrue("source-editor-status-message" in editor.statusLabel.styleClass)
+            assertTrue("source-editor-status-badge" in editor.statusBadge.styleClass)
+            assertEquals(SourceEditorExecutionPhase.RUNNING, editor.executionState.phase)
+
+            editor.markSuccess("Query done")
+            assertEquals(SourceEditorExecutionPhase.SUCCESS, editor.executionState.phase)
+            assertEquals("Query done", editor.statusLabel.text)
+            assertEquals("Success", editor.statusBadge.text)
+
+            editor.markError("Syntax error")
+            assertEquals(SourceEditorExecutionPhase.ERROR, editor.executionState.phase)
+            assertEquals("Syntax error", editor.statusLabel.text)
+            assertEquals("Error", editor.statusBadge.text)
+
+            editor.markIdle()
+            assertEquals(SourceEditorExecutionPhase.IDLE, editor.executionState.phase)
+        }
+    }
+
+    @Test
     fun `source editor result nodes fill the result slot`() {
         FxTestSupport.runOnFxThread {
             val result = Region()
