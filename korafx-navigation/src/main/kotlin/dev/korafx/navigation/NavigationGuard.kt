@@ -1,6 +1,7 @@
 package dev.korafx.navigation
 
 enum class NavigationType {
+    INITIAL,
     PUSH,
     REPLACE,
     POP,

@@ -31,6 +31,14 @@ interface PathRoute : Route {
         get() = RouteMeta.Empty
 }
 
+interface NestedPathRoute : PathRoute {
+    val parentRouteId: String?
+        get() = null
+
+    val isIndexRoute: Boolean
+        get() = false
+}
+
 data class RouteQuery(
     val values: Map<String, List<String>> = emptyMap(),
 ) {

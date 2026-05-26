@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.kordamp.ikonli.Ikon
 import java.util.concurrent.atomic.AtomicReference
@@ -213,6 +214,30 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
         START(-1.0),
         END(1.0),
     }
+}
+
+enum class NavigationTransitionProfile(
+    val label: String,
+    val resolve: (NavigationType) -> RouteTransition,
+) {
+    Adaptive("Adaptive", { type ->
+        when (type) {
+            NavigationType.INITIAL -> RouteTransition.None
+            NavigationType.PUSH -> RouteTransition.Slide()
+            NavigationType.REPLACE -> RouteTransition.Fade()
+            NavigationType.POP -> RouteTransition.Slide(direction = RouteTransition.SlideDirection.START)
+        }
+    }),
+    PushSlide("Push Slide", { RouteTransition.Slide() }),
+    Fade("Fade", { RouteTransition.Fade() }),
+    Scale("Scale", { RouteTransition.Scale() }),
+    None("None", { RouteTransition.None }),
+}
+
+fun <R : Route> Flow<NavigationState<R>>.routeTransition(
+    profile: NavigationTransitionProfile,
+): Flow<RouteTransition> = map { state ->
+    profile.resolve(state.navigationType)
 }
 
 fun <R : Route> navigationRail(

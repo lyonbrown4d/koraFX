@@ -2,61 +2,165 @@ package dev.korafx.examples.navigationtheme
 
 import dev.korafx.components.actionBar
 import dev.korafx.components.appShell
-import dev.korafx.components.emptyState
-import dev.korafx.components.modalHost
-import dev.korafx.components.ModalAction
-import dev.korafx.components.ModalActionRole
-import dev.korafx.components.ModalHost
 import dev.korafx.components.section
 import dev.korafx.components.toastHost
 import dev.korafx.components.ToastHost
 import dev.korafx.components.ToastTone
-import dev.korafx.dsl.ghostButton
-import dev.korafx.dsl.hbox
+import dev.korafx.dsl.button
+import dev.korafx.dsl.bindDisable
+import dev.korafx.dsl.bindText
 import dev.korafx.dsl.comboBox
+import dev.korafx.dsl.label
+import dev.korafx.dsl.hbox
+import dev.korafx.dsl.panel
 import dev.korafx.dsl.menuButton
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.paddingAll
+import dev.korafx.dsl.scrollPane
+import dev.korafx.dsl.sidebar
+import dev.korafx.dsl.stateText
 import dev.korafx.dsl.styleClasses
+import dev.korafx.dsl.tabPane
+import dev.korafx.dsl.textArea
+import dev.korafx.dsl.textField
 import dev.korafx.dsl.toolbar
 import dev.korafx.dsl.vbox
-import dev.korafx.navigation.Navigator
-import dev.korafx.navigation.PageInstancePolicy
-import dev.korafx.navigation.Route
-import dev.korafx.navigation.RouteTransition
-import dev.korafx.navigation.navigationRail
-import dev.korafx.navigation.routeHost
+import dev.korafx.dsl.ghostButton
 import dev.korafx.framework.theme.BuiltInThemes
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.SceneThemeController
 import dev.korafx.framework.theme.ThemeManager
+import dev.korafx.framework.theme.ThemeStyleClass
+import dev.korafx.navigation.NavigationDecision
+import dev.korafx.navigation.Navigator
+import dev.korafx.navigation.PageInstancePolicy
+import dev.korafx.navigation.PathRoute
+import dev.korafx.navigation.Route
+import dev.korafx.navigation.RouteMeta
+import dev.korafx.navigation.RoutePattern
+import dev.korafx.navigation.NavigationTransitionProfile
+import dev.korafx.navigation.bindContentWithTransition
+import dev.korafx.navigation.routeButton
+import dev.korafx.navigation.routeHost
+import dev.korafx.navigation.routeMeta
 import javafx.application.Application
 import javafx.geometry.Insets
-import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.Scene
+import javafx.scene.control.Label
+import javafx.scene.control.TextField
 import javafx.stage.Stage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+
+private data class DemoRoute(
+    override val id: String,
+    override val title: String,
+    override val path: String,
+    val description: String,
+    val docResource: String,
+    val sourceResource: String,
+    val section: RouteSection,
+    override val meta: RouteMeta = RouteMeta.Empty,
+) : PathRoute {
+    companion object {
+        val Overview = DemoRoute(
+            id = "overview",
+            title = "Overview",
+            path = "/",
+            description = "Route + theme + transition 的能力总览。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/overview.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/overview.kt",
+            section = RouteSection.Core,
+            meta = routeMeta("level" to "core"),
+        )
+
+        val PathRouting = DemoRoute(
+            id = "path-routing",
+            title = "Path Routing",
+            path = "/routes/:projectId/:section?",
+            description = "支持动态参数、可选参数和 query/hash 的完整路径导航。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/path-routing.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/path-routing.kt",
+            section = RouteSection.Core,
+        )
+
+        val History = DemoRoute(
+            id = "history",
+            title = "History",
+            path = "/history",
+            description = "后退/前进栈与 replace、popToRoot 的交互效果。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/history.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/history.kt",
+            section = RouteSection.Advanced,
+        )
+
+        val Guards = DemoRoute(
+            id = "guards",
+            title = "Navigation Guards",
+            path = "/guards",
+            description = "同步/异步 Guard 与可选重定向规则。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/guards.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/guards.kt",
+            section = RouteSection.Advanced,
+        )
+
+        val RouterHost = DemoRoute(
+            id = "router-host",
+            title = "Router Host",
+            path = "/router/:layout?",
+            description = "layout + outlet 的子树渲染方式，支持多级共享 shell。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/router-host.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/router-host.kt",
+            section = RouteSection.Advanced,
+        )
+
+        val StateRestoration = DemoRoute(
+            id = "state",
+            title = "State Restoration",
+            path = "/state/:scope?",
+            description = "按路由 location 键控的状态持久化与恢复。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/state-restoration.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/state-restoration.kt",
+            section = RouteSection.Advanced,
+        )
+
+        val Transitions = DemoRoute(
+            id = "transitions",
+            title = "Animation",
+            path = "/transitions",
+            description = "基于 navigation action 的转场策略。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/transitions.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/transitions.kt",
+            section = RouteSection.Advanced,
+        )
+
+        val all: List<DemoRoute> = listOf(
+            Overview,
+            PathRouting,
+            History,
+            Guards,
+            RouterHost,
+            StateRestoration,
+            Transitions,
+        )
+
+        fun bySection(section: RouteSection): List<DemoRoute> =
+            all.filter { it.section == section }
+    }
+}
+
+private enum class RouteSection(val label: String) {
+    Core("核心能力"),
+    Advanced("高级能力"),
+}
 
 fun main(args: Array<String>) {
     Application.launch(NavigationThemeApp::class.java, *args)
-}
-
-private enum class DemoRoute(
-    override val id: String,
-    override val title: String,
-) : Route {
-    Dashboard("dashboard", "Dashboard"),
-    Tasks("tasks", "Tasks"),
-    Settings("settings", "Settings");
-
-    companion object {
-        val all: List<DemoRoute>
-            get() = entries.toList()
-    }
 }
 
 class NavigationThemeApp : Application() {
@@ -64,75 +168,65 @@ class NavigationThemeApp : Application() {
     private val themeManager = ThemeManager()
     private val themeController = SceneThemeController(themeManager)
     private val notifications = ToastHost()
-    private val modals = ModalHost()
-    private val transitionMode = MutableStateFlow<TransitionMode>(TransitionMode.Fade)
+    private val blockRouterDemo = MutableStateFlow(true)
+    private val transitionPreset = MutableStateFlow(NavigationTransitionProfile.Adaptive)
     private val navigator = Navigator(
-        initialRoute = DemoRoute.Dashboard,
+        initialRoute = DemoRoute.Overview,
         routes = DemoRoute.all,
         pageInstancePolicy = PageInstancePolicy.KEEP_ALIVE,
     )
+    private val transitionByState = combine(
+        navigator.state,
+        transitionPreset,
+    ) { state, profile ->
+        profile.resolve(state.navigationType)
+    }
+
+    init {
+        navigator.beforeEach { context ->
+            if (context.to.route.id == DemoRoute.RouterHost.id && blockRouterDemo.value) {
+                NavigationDecision.Block("Router Host 演示当前被守卫拦截。可在 Guards 中关闭后再进入。")
+            } else {
+                NavigationDecision.Allow
+            }
+        }
+    }
 
     override fun start(stage: Stage) {
         val root = appShell {
-            topBar {
-                toolbar {
-                    label("KoraFX Navigation + Theme") {
-                        styleClasses("headline")
-                    }
-                    spacer()
-                    ghostButton("Next Theme") {
-                        onAction {
-                            nextTheme()
-                        }
-                    }
-                    menuButton(
-                        text = "Themes",
-                        content = {
-                            BuiltInThemes.all.forEach { theme ->
-                                actionItem(theme.displayName) {
-                                    setTheme(theme)
-                                }
-                            }
-                        },
-                    )
-                    comboBox(
-                        items = TransitionMode.entries.toList(),
-                        init = {
-                            prefWidth = 210.0
-                        },
-                    ) {
-                        render { it.label }
-                        onSelect { mode ->
-                            transitionMode.value = mode ?: TransitionMode.Fade
-                        }
-                        select(transitionMode.value)
-                    }
-                }
-            }
-            navigation {
-                navigationRail(uiScope, navigator)
-            }
+            topBar { topToolbar() }
+            navigation { moduleNavigation() }
             content {
                 routeHost(
                     scope = uiScope,
                     navigator = navigator,
-                    transition = transitionMode.map { it.transition },
+                    transition = transitionByState,
                     init = {
-                        paddingAll(24.0)
+                        paddingAll(20.0)
                     },
                 ) { route ->
                     routeContent(route)
                 }
             }
+            details {
+                tabPane {
+                    tab("文档", closable = false) {
+                        documentationPane()
+                    }
+                    tab("源码", closable = false) {
+                        sourcePane()
+                    }
+                    tab("路由状态", closable = false) {
+                        stateSnapshotPane()
+                    }
+                }
+            }
             overlay {
                 toastHost(uiScope, notifications)
             }
-            overlay(alignment = Pos.CENTER, margin = Insets.EMPTY) {
-                modalHost(uiScope, modals)
-            }
         }
 
-        val scene = Scene(root, 920.0, 560.0)
+        val scene = Scene(root, 1320.0, 820.0)
         themeController.bind(scene)
 
         stage.title = "KoraFX Navigation Theme"
@@ -141,102 +235,536 @@ class NavigationThemeApp : Application() {
     }
 
     private fun routeContent(route: DemoRoute): Node =
-        vbox(
-            spacing = 18.0,
-            init = {
-                padding = Insets(0.0)
-            },
-        ) {
+        vbox(spacing = 16.0) {
             section(
                 title = route.title,
-                description = "This page is rendered by routeHost and selected by navigationRail.",
+                description = route.description,
             ) {
                 when (route) {
-                    DemoRoute.Dashboard -> dashboardContent()
-                    DemoRoute.Tasks -> tasksContent()
-                    DemoRoute.Settings -> settingsContent()
+                    DemoRoute.Overview -> buildOverview()
+                    DemoRoute.PathRouting -> buildPathRouting()
+                    DemoRoute.History -> buildHistory()
+                    DemoRoute.Guards -> buildGuards()
+                    DemoRoute.RouterHost -> buildRouterHost()
+                    DemoRoute.StateRestoration -> buildStateRestoration()
+                    DemoRoute.Transitions -> buildTransitions()
                 }
             }
         }
 
-    private fun dev.korafx.dsl.VBoxBuilder.dashboardContent() {
-        label("Dashboard content stays as plain JavaFX nodes.")
-        hbox(spacing = 12.0) {
-            label("Active route")
-            label(DemoRoute.Dashboard.id) {
-                styleClasses("muted")
+    private fun topToolbar() = toolbar {
+            label("KoraFX Navigation + Theme") {
+                styleClasses("headline")
             }
-        }
-        actionBar(alignEnd = false) {
-            button("Open Tasks") {
-                onAction {
-                    navigator.navigate(DemoRoute.Tasks)
-                    notifications.show(
-                        message = "Opened Tasks route.",
-                        tone = ToastTone.INFO,
-                    )
-                }
-            }
-        }
-    }
+            spacer()
 
-    private fun dev.korafx.dsl.VBoxBuilder.tasksContent() {
-        label("Task list")
-        vbox(spacing = 8.0) {
-            listOf("Wire navigation", "Bind scene theme", "Keep route pages alive").forEach { task ->
-                label("- $task")
+            button("返回") {
+                onAction { navigator.back() }
+                bindDisable(
+                    uiScope,
+                    navigator.state.map { state -> state.backStack.isEmpty() },
+                )
             }
-        }
-        actionBar(alignEnd = false) {
-            button("Open Settings") {
-                onAction {
-                    navigator.navigate(DemoRoute.Settings)
-                    notifications.show(
-                        message = "Opened Settings route.",
-                        tone = ToastTone.INFO,
-                    )
-                }
+            button("前进") {
+                onAction { navigator.forward() }
+                bindDisable(
+                    uiScope,
+                    navigator.state.map { state -> state.forwardStack.isEmpty() },
+                )
             }
-        }
-    }
+            button("Home") {
+                onAction { navigator.navigate(DemoRoute.Overview.id) }
+            }
 
-    private fun dev.korafx.dsl.VBoxBuilder.settingsContent() {
-        emptyState(
-            title = "Settings",
-            message = "Open an in-scene modal rendered by modalHost.",
-            actionText = "Open Settings",
-            onAction = {
-                openSettingsModal()
+            menuButton(
+                text = "Theme",
+                content = {
+                    BuiltInThemes.all.forEach { theme ->
+                        actionItem(theme.displayName) {
+                            setTheme(theme)
+                        }
+                    }
+                },
+            )
+            ghostButton("Next Theme") {
+                onAction { nextTheme() }
+            }
+
+            comboBox(
+                items = NavigationTransitionProfile.entries.toList(),
+                init = {
+                    prefWidth = 190.0
+                },
+            ) {
+                render { it.label }
+                onSelect { profile ->
+                    transitionPreset.value = profile ?: NavigationTransitionProfile.Adaptive
+                }
+                select(transitionPreset.value)
+            }
+        }
+
+
+    private fun moduleNavigation() =
+        scrollPane(
+            init = {
+                isFitToWidth = true
+                prefWidth = 270.0
+                minWidth = 220.0
+                maxWidth = 360.0
             },
-        )
+        ) {
+            content {
+                sidebar(width = 250.0, spacing = 12.0) {
+                    label("Navigation Routes") {
+                        styleClasses(ThemeStyleClass.Headline)
+                    }
+                    RouteSection.entries.forEach { section ->
+                        label(section.label) {
+                            styleClasses(ThemeStyleClass.Muted)
+                        }
+                        DemoRoute.bySection(section).forEach { route ->
+                            routeButton(
+                                scope = uiScope,
+                                navigator = navigator,
+                                route = route,
+                            ) {
+                                maxWidth = Double.MAX_VALUE
+                            }
+                        }
+                    }
+
+                    section("Quick Actions") {
+                        button("随机跳转") {
+                            onAction {
+                                navigator.navigatePath("/routes/${(1000..9999).random()}/files")
+                            }
+                        }
+                        button("清理历史") {
+                            onAction {
+                                navigator.clearNavigationHistory()
+                                notifications.show(
+                                    message = "导航历史已清空。",
+                                    tone = ToastTone.INFO,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    private fun documentationPane() =
+        scrollPane(
+            init = {
+                isFitToWidth = true
+            },
+        ) {
+            content {
+                panel(spacing = 12.0, padding = 14.0) {
+                    label("文档") {
+                        styleClasses(ThemeStyleClass.Headline)
+                    }
+                }.also { container ->
+                    container.bindContentWithTransition(
+                        scope = uiScope,
+                        state = navigator.state,
+                        transition = transitionByState,
+                    ) { state ->
+                        markdownDocument(state.currentRoute.documentation())
+                    }
+                }
+            }
+        }
+
+    private fun sourcePane() =
+        scrollPane(
+            init = {
+                isFitToWidth = true
+            },
+        ) {
+            content {
+                panel(spacing = 12.0, padding = 14.0) {
+                    label("源码片段") {
+                        styleClasses(ThemeStyleClass.Headline)
+                    }
+                    val source = textArea {
+                        isEditable = false
+                        isWrapText = false
+                        prefRowCount = 24
+                        this.styleClass += "source-editor-code"
+                    }
+                    source.bindText(
+                        uiScope,
+                        navigator.state.map { state -> state.currentRoute.sourceCode() }.distinctUntilChanged(),
+                    )
+                }
+            }
+        }
+
+    private fun stateSnapshotPane() =
+        scrollPane(
+            init = {
+                isFitToWidth = true
+            },
+        ) {
+            content {
+                panel(spacing = 14.0, padding = 14.0) {
+                    label("当前导航状态") {
+                        styleClasses(ThemeStyleClass.Headline)
+                    }
+                    label("Current route").also { label ->
+                        label.stateText(uiScope, navigator.state) { state ->
+                            "Current route: ${state.currentRoute.title}"
+                        }
+                    }
+                    label("Current path").also { label ->
+                        label.stateText(uiScope, navigator.state) { state ->
+                            "Current path: ${state.currentLocation.fullPath}"
+                        }
+                    }
+                    label("Navigation type").also { label ->
+                        label.stateText(uiScope, navigator.state) { state ->
+                            "Navigation type: ${state.navigationType.name}"
+                        }
+                    }
+                    label("Back stack").also { label ->
+                        label.stateText(uiScope, navigator.state) { state ->
+                            "Back stack: ${state.backStack.size}"
+                        }
+                    }
+                    label("Forward stack").also { label ->
+                        label.stateText(uiScope, navigator.state) { state ->
+                            "Forward stack: ${state.forwardStack.size}"
+                        }
+                    }
+                    actionBar(alignEnd = false) {
+                        button("Can Navigate") {
+                            onAction {
+                                val decision = navigator.canNavigate(DemoRoute.Overview.id)
+                                val message =
+                                    when (decision) {
+                                        is NavigationDecision.Allow -> "允许导航到 Overview"
+                                        is NavigationDecision.Redirect -> "重定向到: ${decision.path ?: decision.routeId}"
+                                        is NavigationDecision.Block -> decision.reason ?: "Navigation blocked"
+                                    }
+                                notifications.show(
+                                    message = message,
+                                    tone = ToastTone.INFO,
+                                )
+                            }
+                        }
+                        button("Can Navigate Path /routes/42/files") {
+                            onAction {
+                                val decision = navigator.canNavigatePath("/routes/42/files")
+                                if (decision == null) {
+                                    notifications.show(
+                                        message = "No route can match /routes/42/files",
+                                        tone = ToastTone.WARNING,
+                                    )
+                                } else {
+                                    notifications.show(
+                                        message = when (decision) {
+                                            is NavigationDecision.Allow -> "Path 路由可导航"
+                                            is NavigationDecision.Redirect -> "Redirect to ${decision.path}"
+                                            is NavigationDecision.Block -> decision.reason ?: "blocked"
+                                        },
+                                        tone = ToastTone.INFO,
+                                    )
+                                }
+                            }
+                        }
+                        button("Pop To Root") {
+                            onAction {
+                                if (navigator.popToRoot()) {
+                                    notifications.show(
+                                        message = "已回到起始路由",
+                                        tone = ToastTone.SUCCESS,
+                                    )
+                                } else {
+                                    notifications.show(
+                                        message = "已经在起始路由",
+                                        tone = ToastTone.INFO,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    private fun buildOverview() {
+        section("功能速览") {
+            actionBar(alignEnd = false) {
+                button("Path Routing") { onAction { navigator.navigate(DemoRoute.PathRouting.id) } }
+                button("History") { onAction { navigator.navigate(DemoRoute.History.id) } }
+                button("Guards") { onAction { navigator.navigate(DemoRoute.Guards.id) } }
+                button("Transitions") { onAction { navigator.navigate(DemoRoute.Transitions.id) } }
+            }
+        }
+
+        section("运行时能力") {
+            label("1) 支持 routeId 与 pathRoute")
+            label("2) Back/Forward 历史栈")
+            label("3) Guard 与 async guard")
+            label("4) routerHost layouts/outlets")
+            label("5) 路由级状态持久化与文档化示例")
+        }
     }
 
-    private fun openSettingsModal() {
-        modals.show(
-            title = "Workspace settings",
-            message = "This modal is rendered inside appShell.overlay without taking over application lifecycle.",
-            actions = listOf(
-                ModalAction("Cancel"),
-                ModalAction(
-                    text = "Apply",
-                    role = ModalActionRole.PRIMARY,
-                    onAction = {
+    private fun buildPathRouting() {
+        var projectInput: TextField? = null
+        var sectionInput: TextField? = null
+        var tabInput: TextField? = null
+
+        section("路径导航") {
+            hbox(spacing = 8.0) {
+                projectInput = textField("101")
+                sectionInput = textField("overview")
+                tabInput = textField("files")
+                button("Go by path") {
+                    onAction {
+                        val project = projectInput?.text?.trim()?.takeIf(String::isNotEmpty) ?: "101"
+                        val section = sectionInput?.text?.trim()?.takeIf(String::isNotEmpty) ?: "overview"
+                        val tab = tabInput?.text?.trim()?.takeIf(String::isNotEmpty)
+                        val fullPath =
+                            if (tab == null) {
+                                RoutePattern.build("/routes/$project/$section")
+                            } else {
+                                RoutePattern.build("/routes/$project/$section", query = mapOf("tab" to tab))
+                            }
+                        navigator.navigatePath(fullPath)
+                    }
+                }
+            }
+            section("当前匹配") {
+                label("fullPath:").stateText(uiScope, navigator.state) { it.currentLocation.fullPath }
+                label("params:").stateText(uiScope, navigator.state) {
+                    it.currentLocation.params.entries.joinToString {
+                        "${it.key}=${it.value}"
+                    }.ifBlank { "无" }
+                }
+                label("query:").stateText(uiScope, navigator.state) {
+                    if (it.currentLocation.query.values.isEmpty()) {
+                        "无"
+                    } else {
+                        it.currentLocation.query.asQueryMap()
+                            .entries.joinToString { (key, values) -> "$key=${values.joinToString(",")}" }
+                    }
+                }
+                label("hash:").stateText(uiScope, navigator.state) {
+                    it.currentLocation.hash ?: "无"
+                }
+            }
+            actionBar(alignEnd = false) {
+                button("加 query") {
+                    onAction {
+                        val next = navigator.currentLocation.withQuery("tab" to "overview", "sort" to "name")
+                        navigator.navigatePath(next)
+                    }
+                }
+                button("加 hash") {
+                    onAction {
+                        val next = navigator.currentLocation.withHash("line-12")
+                        navigator.navigatePath(next)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun buildHistory() {
+        section("Back/Forward + Replace") {
+            actionBar(alignEnd = false) {
+                button("Push: /routes/${(10..99).random()}/history") {
+                    onAction {
+                        navigator.navigatePath("/routes/${(10..99).random()}/history")
+                    }
+                }
+                button("Push: /state") {
+                    onAction {
+                        navigator.navigatePath("/state")
+                    }
+                }
+                button("Replace: /history") {
+                    onAction {
+                        navigator.replacePath("/history")
+                    }
+                }
+                button("Back") {
+                    onAction { navigator.back() }
+                    bindDisable(
+                        uiScope,
+                        navigator.state.map { state -> state.backStack.isEmpty() },
+                    )
+                }
+                button("Forward") {
+                    onAction { navigator.forward() }
+                    bindDisable(
+                        uiScope,
+                        navigator.state.map { state -> state.forwardStack.isEmpty() },
+                    )
+                }
+            }
+        }
+
+        section("历史面板") {
+            label("Back stack").stateText(uiScope, navigator.state) { it.backStack.joinToString(" -> ") { state ->
+                state.route.id
+            } }
+            label("Forward stack").stateText(uiScope, navigator.state) { it.forwardStack.joinToString(" -> ") { state ->
+                state.route.id
+            } }
+        }
+        section("高级动作") {
+            actionBar(alignEnd = false) {
+                button("PopToRoot") {
+                    onAction {
+                        if (navigator.popToRoot()) {
+                            notifications.show(message = "已返回起始页", tone = ToastTone.INFO)
+                        } else {
+                            notifications.show(message = "当前已是起始页", tone = ToastTone.INFO)
+                        }
+                    }
+                }
+                button("Clear history") {
+                    onAction {
+                        navigator.clearNavigationHistory()
+                        notifications.show(message = "历史栈已清空", tone = ToastTone.INFO)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun buildGuards() {
+        section("Guard 示例") {
+            val statusLabel: Label =
+                label("Guard 状态：Router Host 已放行")
+            statusLabel.stateText(uiScope, blockRouterDemo) {
+                if (it) "Guard 状态：Router Host 被拦截" else "Guard 状态：Router Host 已放行"
+            }
+            actionBar(alignEnd = false) {
+                button("开启 Guard") {
+                    onAction { blockRouterDemo.value = true }
+                }
+                button("关闭 Guard") {
+                    onAction { blockRouterDemo.value = false }
+                }
+                button("尝试去 RouterHost") {
+                    onAction {
+                        when (val decision = navigator.canNavigate(DemoRoute.RouterHost.id)) {
+                            is NavigationDecision.Allow -> {
+                                navigator.navigate(DemoRoute.RouterHost)
+                            }
+                            is NavigationDecision.Redirect -> {
+                                notifications.show(
+                                    message = "重定向：${decision.routeId ?: decision.path}",
+                                    tone = ToastTone.INFO,
+                                )
+                            }
+                            is NavigationDecision.Block -> {
+                                notifications.show(
+                                    message = decision.reason ?: "navigation blocked",
+                                    tone = ToastTone.WARNING,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            statusLabel
+        }
+
+        section("守卫思路") {
+            label("Guard 在同步/异步路径上都可返回 Allow / Block / Redirect。")
+            label("建议在权限判断/未保存检查/登录态恢复上集中挂在 navigator.beforeEach。")
+        }
+    }
+
+    private fun buildRouterHost() {
+        section("如何理解 RouterHost") {
+            hbox(spacing = 8.0) {
+                button("打开 Router Host 示例") {
+                    onAction { navigator.navigatePath("/router/project") }
+                }
+                button("打开子布局示例") {
+                    onAction { navigator.navigatePath("/router/dashboard") }
+                }
+            }
+            label("当前示例中 routeHost 已用于主内容切换。")
+            label("RouterHost 适合需要 layout + shared shell + 多 outlet 的场景。")
+        }
+    }
+
+    private fun buildStateRestoration() {
+        var note: TextField? = null
+        section("按 location 保存任意状态") {
+            note = textField {
+                promptText = "当前路由 path 维度存储一段文本"
+            }
+            actionBar(alignEnd = false) {
+                button("Save") {
+                    onAction {
+                        navigator.saveState("demo-note", note?.text?.trim().orEmpty())
                         notifications.show(
-                            message = "Settings saved.",
+                            message = "已保存到 location = ${navigator.currentLocation.fullPath}",
                             tone = ToastTone.SUCCESS,
                         )
-                    },
-                ),
-            ),
-        ) {
-            label("Current theme")
-            label(themeManager.currentTheme().displayName) {
-                styleClasses("muted")
+                    }
+                }
+                button("Load") {
+                    onAction {
+                        note?.text = navigator.restoredState<String>("demo-note") ?: ""
+                    }
+                }
             }
-            label("Available built-in themes")
-            BuiltInThemes.all.forEach { theme ->
-                label("- ${theme.displayName}") {
-                    styleClasses("muted")
+            label("当前 location:").stateText(uiScope, navigator.state) {
+                it.currentLocation.fullPath
+            }
+            label("恢复值:").stateText(uiScope, navigator.state) {
+                navigator.restoredState<String>("demo-note", it.currentLocation) ?: "空"
+            }
+        }
+    }
+
+    private fun buildTransitions() {
+        section("转场策略") {
+            label("NavigationType 说明：")
+            vbox(spacing = 6.0) {
+                label("- INITIAL：首次加载 / create")
+                label("- PUSH：新路由入栈")
+                label("- POP：后退/前进")
+                label("- REPLACE：同级替换")
+            }
+            actionBar(alignEnd = false) {
+                        button("Adaptive") {
+                    onAction { transitionPreset.value = NavigationTransitionProfile.Adaptive }
+                }
+                button("Push Slide") {
+                    onAction { transitionPreset.value = NavigationTransitionProfile.PushSlide }
+                }
+                button("Fade") {
+                    onAction { transitionPreset.value = NavigationTransitionProfile.Fade }
+                }
+                button("Scale") {
+                    onAction { transitionPreset.value = NavigationTransitionProfile.Scale }
+                }
+            }
+            actionBar(alignEnd = false) {
+                button("Push") {
+                    onAction { navigator.navigatePath("/routes/${(1000..2000).random()}/overview") }
+                }
+                button("Replace") {
+                    onAction { navigator.replace(DemoRoute.Overview) }
+                }
+                button("Pop") {
+                    onAction { navigator.back() }
+                    bindDisable(
+                        uiScope,
+                        navigator.state.map { state -> state.backStack.isEmpty() },
+                    )
                 }
             }
         }
@@ -244,34 +772,41 @@ class NavigationThemeApp : Application() {
 
     private fun nextTheme() {
         themeManager.nextTheme()
-        notifyThemeChanged()
-    }
-
-    private fun setTheme(theme: KoraTheme) {
-        themeManager.setTheme(theme)
-        notifyThemeChanged()
-    }
-
-    private fun notifyThemeChanged() {
         notifications.show(
             message = "Theme switched to ${themeManager.currentTheme().displayName}.",
             tone = ToastTone.SUCCESS,
         )
     }
 
-    private enum class TransitionMode(
-        val label: String,
-        val transition: RouteTransition,
-    ) {
-        None("None", RouteTransition.None),
-        Fade("Fade", RouteTransition.Fade()),
-        SlideRight("Slide Right", RouteTransition.Slide()),
-        SlideLeft("Slide Left", RouteTransition.Slide(direction = RouteTransition.SlideDirection.START)),
-        Scale("Scale", RouteTransition.Scale()),
+    private fun setTheme(theme: KoraTheme) {
+        themeManager.setTheme(theme)
+        notifications.show(
+            message = "Theme switched to ${theme.displayName}.",
+            tone = ToastTone.SUCCESS,
+        )
     }
 
     override fun stop() {
         uiScope.cancel()
         themeController.dispose()
+    }
+}
+
+private fun DemoRoute.documentation(): String = routeResourceText(docResource, fallback = "# Missing documentation\n")
+
+private fun DemoRoute.sourceCode(): String = routeResourceText(sourceResource, fallback = "// Missing source snippet\n")
+
+private val routeDocCache = linkedMapOf<String, String>()
+
+private fun routeResourceText(
+    resource: String,
+    fallback: String,
+): String {
+    return routeDocCache.getOrPut(resource) {
+        NavigationThemeApp::class.java.classLoader
+            .getResourceAsStream(resource)
+            ?.bufferedReader()
+            ?.readText()
+            ?: fallback
     }
 }

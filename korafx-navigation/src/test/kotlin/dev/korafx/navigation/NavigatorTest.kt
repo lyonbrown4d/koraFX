@@ -137,6 +137,22 @@ class NavigatorTest {
     }
 
     @Test
+    fun `nested path routes inherit parent path segments`() {
+        val navigator = Navigator(
+            initialRoute = NestedPathRouteSpec.Root,
+            routes = NestedPathRouteSpec.all,
+        )
+
+        assertTrue(navigator.navigatePath("/workspace"))
+        assertEquals(NestedPathRouteSpec.Workspace, navigator.currentRoute)
+
+        assertTrue(navigator.navigatePath("/workspace/users/42"))
+        assertEquals(NestedPathRouteSpec.WorkspaceSection, navigator.currentRoute)
+        assertEquals("42", navigator.currentLocation.params["userId"])
+        assertEquals("/workspace/users/42", navigator.currentLocation.path)
+    }
+
+    @Test
     fun `path matcher prefers more specific routes over declaration order`() {
         val navigator = Navigator(
             initialRoute = PathTestRoute.Home,
@@ -210,6 +226,29 @@ class NavigatorTest {
 
         assertTrue(navigator.navigatePath("/admin"))
         assertEquals(PathTestRoute.Login, navigator.currentRoute)
+    }
+
+    @Test
+    fun `navigation can precheck target route by id or path`() {
+        val navigator = Navigator(
+            initialRoute = PathTestRoute.Home,
+            routes = PathTestRoute.all,
+        )
+
+        assertEquals("allow", when (navigator.canNavigate(PathTestRoute.Project.id)) {
+            is NavigationDecision.Allow -> "allow"
+            is NavigationDecision.Redirect -> "redirect"
+            is NavigationDecision.Block -> "block"
+        })
+
+        when (val decision = navigator.canNavigate("missing-route")) {
+            is NavigationDecision.Block -> assertEquals("Unknown route 'missing-route'.", decision.reason)
+            else -> throw AssertionError("Expected block decision.")
+        }
+
+        assertTrue(navigator.canNavigatePath("/projects/99") is NavigationDecision.Allow)
+
+        assertNull(navigator.canNavigatePath("/i/definitely/do/not/exist"))
     }
 
     @Test
@@ -406,8 +445,49 @@ class NavigatorTest {
             )
             val Login = PathTestRoute("login", "Login", "/login")
 
-            val all: List<PathTestRoute>
+        val all: List<PathTestRoute>
                 get() = listOf(Home, Project, ProjectSettings, Files, LocalizedWorkspace, Settings, Admin, Login)
+        }
+    }
+
+    private data class NestedPathRouteSpec(
+        override val id: String,
+        override val title: String,
+        override val path: String,
+        override val parentRouteId: String? = null,
+        override val isIndexRoute: Boolean = false,
+    ) : dev.korafx.navigation.NestedPathRoute {
+        override val meta: RouteMeta = RouteMeta.Empty
+
+        companion object {
+            val Root = NestedPathRouteSpec(
+                id = "nested-root",
+                title = "Nested Root",
+                path = "/",
+            )
+            val Workspace = NestedPathRouteSpec(
+                id = "nested-workspace",
+                title = "Workspace",
+                path = "workspace",
+                parentRouteId = Root.id,
+            )
+            val WorkspaceIndex = NestedPathRouteSpec(
+                id = "nested-workspace-index",
+                title = "Workspace Index",
+                path = "",
+                parentRouteId = Workspace.id,
+                isIndexRoute = true,
+            )
+            val WorkspaceSection = NestedPathRouteSpec(
+                id = "nested-workspace-section",
+                title = "Workspace Section",
+                path = "users/:userId",
+                parentRouteId = Workspace.id,
+                isIndexRoute = false,
+            )
+
+            val all: List<NestedPathRouteSpec>
+                get() = listOf(Root, Workspace, WorkspaceIndex, WorkspaceSection)
         }
     }
 }
