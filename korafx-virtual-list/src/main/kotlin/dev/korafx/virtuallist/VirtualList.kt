@@ -1,117 +1,18 @@
 package dev.korafx.virtuallist
 
-import dev.korafx.dsl.NodeContainerBuilder
 import javafx.application.Platform
 import javafx.beans.value.ChangeListener
-import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.geometry.Orientation
 import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
-import javafx.scene.control.SelectionMode
 import javafx.scene.control.ScrollBar
-import javafx.scene.layout.HBox
-import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import javafx.util.Callback
 import java.util.concurrent.Executors
 import kotlin.math.max
-
-typealias VirtualListDataLoader<T> = (offset: Long, limit: Int) -> Collection<T>
-typealias VirtualListErrorHandler = (Throwable) -> Unit
-
-data class VirtualListLoadState(
-    val isLoading: Boolean,
-    val isAtEnd: Boolean,
-    val itemCount: Int,
-    val hasError: Boolean,
-)
-
-enum class VirtualListHeightMode {
-    FIXED,
-    DYNAMIC,
-}
-
-enum class VirtualSelectionMode {
-    SINGLE,
-    MULTIPLE,
-}
-
-class VirtualListSelectionModel<T>(
-    private val listView: ListView<T>,
-) {
-    var mode: VirtualSelectionMode
-        get() =
-            when (listView.selectionModel.selectionMode) {
-                SelectionMode.SINGLE -> VirtualSelectionMode.SINGLE
-                else -> VirtualSelectionMode.MULTIPLE
-            }
-        set(value) {
-            listView.selectionModel.selectionMode =
-                when (value) {
-                    VirtualSelectionMode.SINGLE -> SelectionMode.SINGLE
-                    VirtualSelectionMode.MULTIPLE -> SelectionMode.MULTIPLE
-                }
-        }
-
-    val selectedItem: T?
-        get() = listView.selectionModel.selectedItem
-
-    val selectedItems: List<T>
-        get() = listView.selectionModel.selectedItems.toList()
-
-    val selectedIndices: List<Int>
-        get() = listView.selectionModel.selectedIndices.toList()
-
-    fun clearSelection() {
-        listView.selectionModel.clearSelection()
-    }
-
-    fun select(index: Int) {
-        listView.selectionModel.select(index)
-    }
-
-    fun select(item: T) {
-        listView.selectionModel.select(item)
-    }
-
-    fun onSelect(handler: (List<T>) -> Unit) {
-        listView.selectionModel.selectedItems.addListener(
-            ListChangeListener {
-                handler(selectedItems)
-            },
-        )
-    }
-}
-
-class VirtualListItemRendererScope<T>(
-    val item: T,
-    private val container: HBox = HBox(8.0),
-) {
-    internal fun root(): Node = container
-
-    fun label(
-        text: String,
-        init: Label.() -> Unit = {},
-    ): Label =
-        Label(text).apply(init).also {
-            container.children += it
-        }
-
-    fun text(value: Any?): Label = label(value?.toString().orEmpty())
-
-    fun node(node: Node): Node =
-        node.also {
-            container.children += it
-        }
-
-    fun region(init: Region.() -> Unit = {}): Region =
-        Region().apply(init).also {
-            container.children += it
-        }
-}
 
 class VirtualList<T>(
     private val dataLoader: VirtualListDataLoader<T>,
@@ -390,106 +291,3 @@ class VirtualList<T>(
             }
     }
 }
-
-class VirtualListBuilder<T> internal constructor(
-    private val list: VirtualList<T>,
-) {
-    fun pageSize(size: Int) {
-        list.setPageSize(size)
-    }
-
-    fun loadingPlaceholder(node: Node) {
-        list.setLoadingPlaceholder(node)
-    }
-
-    fun emptyPlaceholder(node: Node) {
-        list.setEmptyPlaceholder(node)
-    }
-
-    fun errorPlaceholder(node: Node) {
-        list.setErrorPlaceholder(node)
-    }
-
-    fun heightMode(
-        mode: VirtualListHeightMode,
-        fixedHeight: Double = 34.0,
-    ) {
-        list.setRowHeightMode(mode, fixedHeight)
-    }
-
-    fun fixedHeight(height: Double) {
-        list.setRowHeightMode(VirtualListHeightMode.FIXED, height)
-    }
-
-    fun dynamicHeight() {
-        list.setRowHeightMode(VirtualListHeightMode.DYNAMIC)
-    }
-
-    fun selectionMode(mode: VirtualSelectionMode) {
-        list.selectionModel.mode = mode
-    }
-
-    fun item(renderer: VirtualListItemRendererScope<T>.() -> Unit) {
-        list.setItemRendererFromScope(renderer)
-    }
-
-    fun itemOf(renderer: (T) -> Node) {
-        list.setItemRenderer(renderer)
-    }
-
-    fun onError(handler: VirtualListErrorHandler) {
-        list.onError(handler)
-    }
-
-    fun onSelect(handler: (List<T>) -> Unit) {
-        list.onSelect(handler)
-    }
-
-    fun loadMore() {
-        list.loadMore()
-    }
-}
-
-fun <T> virtualList(
-    dataLoader: VirtualListDataLoader<T>,
-    totalCountEstimate: (() -> Int?)? = null,
-    pageSize: Int = 50,
-    heightMode: VirtualListHeightMode = VirtualListHeightMode.FIXED,
-    rowHeight: Double = 34.0,
-    selectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
-    init: VirtualList<T>.() -> Unit = {},
-    content: VirtualListBuilder<T>.() -> Unit = {},
-): VirtualList<T> =
-    VirtualList(
-        dataLoader = dataLoader,
-        totalCountEstimate = totalCountEstimate,
-        pageSize = pageSize,
-        rowHeightMode = heightMode,
-        rowHeight = rowHeight,
-        initialSelectionMode = selectionMode,
-    ).apply(init).apply {
-        VirtualListBuilder(this).content()
-    }
-
-fun <T> NodeContainerBuilder.virtualList(
-    dataLoader: VirtualListDataLoader<T>,
-    totalCountEstimate: (() -> Int?)? = null,
-    pageSize: Int = 50,
-    heightMode: VirtualListHeightMode = VirtualListHeightMode.FIXED,
-    rowHeight: Double = 34.0,
-    selectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
-    init: VirtualList<T>.() -> Unit = {},
-    content: VirtualListBuilder<T>.() -> Unit = {},
-): VirtualList<T> =
-    add(
-        VirtualList(
-            dataLoader = dataLoader,
-            totalCountEstimate = totalCountEstimate,
-            pageSize = pageSize,
-            rowHeightMode = heightMode,
-            rowHeight = rowHeight,
-            initialSelectionMode = selectionMode,
-        ).apply(init).apply {
-            VirtualListBuilder(this).content()
-        },
-    )

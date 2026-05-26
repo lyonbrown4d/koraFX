@@ -7,46 +7,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapNotNull
 
-interface Route {
-    val id: String
-    val title: String
-}
-
-enum class PageInstancePolicy {
-    RECREATE,
-    KEEP_ALIVE,
-    SINGLETON_IN_WINDOW,
-}
-
-data class NavigationState<R : Route>(
-    val currentRoute: R,
-    val routes: List<R>,
-    val pageInstancePolicy: PageInstancePolicy,
-    val currentLocation: NavigationLocation<R>,
-    val previousLocation: NavigationLocation<R>? = null,
-    val navigationType: NavigationType = NavigationType.INITIAL,
-    val backStack: List<NavigationLocation<R>> = emptyList(),
-    val forwardStack: List<NavigationLocation<R>> = emptyList(),
-)
-
 class Navigator<R : Route>(
     initialRoute: R,
     routes: List<R>,
     pageInstancePolicy: PageInstancePolicy = PageInstancePolicy.RECREATE,
 ) {
-    private val routeList = routes.toList()
-    private val routeById = routeList.associateBy(Route::id)
-    private val routePathById = resolveRoutePaths(routeById)
-    private val guards = mutableListOf<NavigationGuard<R>>()
-    private val suspendGuards = mutableListOf<SuspendNavigationGuard<R>>()
-    private val enterGuards = linkedMapOf<String, MutableList<NavigationGuard<R>>>()
-    private val leaveGuards = linkedMapOf<String, MutableList<NavigationGuard<R>>>()
-    private val suspendEnterGuards = linkedMapOf<String, MutableList<SuspendNavigationGuard<R>>>()
-    private val suspendLeaveGuards = linkedMapOf<String, MutableList<SuspendNavigationGuard<R>>>()
+    internal val routeList = routes.toList()
+    internal val routeById = routeList.associateBy(Route::id)
+    internal val routePathById = resolveRoutePaths(routeById)
+    internal val guards = mutableListOf<NavigationGuard<R>>()
+    internal val suspendGuards = mutableListOf<SuspendNavigationGuard<R>>()
+    internal val enterGuards = linkedMapOf<String, MutableList<NavigationGuard<R>>>()
+    internal val leaveGuards = linkedMapOf<String, MutableList<NavigationGuard<R>>>()
+    internal val suspendEnterGuards = linkedMapOf<String, MutableList<SuspendNavigationGuard<R>>>()
+    internal val suspendLeaveGuards = linkedMapOf<String, MutableList<SuspendNavigationGuard<R>>>()
+
     @PublishedApi
     internal val restoredStates = linkedMapOf<String, MutableMap<String, Any?>>()
+
     private val resultStreams = linkedMapOf<String, MutableSharedFlow<Any?>>()
-    private val stateStore = MutableStateStore(
+
+    internal val stateStore = MutableStateStore(
         NavigationState(
             currentRoute = initialRoute,
             routes = routeList,
@@ -189,98 +170,35 @@ class Navigator<R : Route>(
         navigateRoute(route, replace = false)
     }
 
-    fun navigate(routeId: String): Boolean {
-        val target = routes.firstOrNull { it.id == routeId } ?: return false
-        return navigateRoute(target, replace = false)
-    }
+    fun navigate(routeId: String): Boolean = navigateRouteId(routeId, replace = false)
 
-    fun navigatePath(path: String): Boolean {
-        val target = matchPath(path) ?: return false
-        return navigateToLocation(target, replace = false, type = NavigationType.PUSH)
-    }
+    fun navigatePath(path: String): Boolean = navigatePath(path, replace = false)
 
-    suspend fun navigateAsync(route: R): Boolean =
-        navigateRouteAsync(route, replace = false)
+    suspend fun navigateAsync(route: R): Boolean = navigateRouteAsync(route, replace = false)
 
-    suspend fun navigateAsync(routeId: String): Boolean {
-        val target = routes.firstOrNull { it.id == routeId } ?: return false
-        return navigateRouteAsync(target, replace = false)
-    }
+    suspend fun navigateAsync(routeId: String): Boolean = navigateRouteIdAsync(routeId, replace = false)
 
-    suspend fun navigatePathAsync(path: String): Boolean {
-        val target = matchPath(path) ?: return false
-        return navigateToLocationAsync(target, replace = false, type = NavigationType.PUSH)
-    }
+    suspend fun navigatePathAsync(path: String): Boolean = navigatePathAsync(path, replace = false)
 
-    fun replace(route: R): Boolean =
-        navigateRoute(route, replace = true)
+    fun replace(route: R): Boolean = navigateRoute(route, replace = true)
 
-    fun replace(routeId: String): Boolean {
-        val target = routes.firstOrNull { it.id == routeId } ?: return false
-        return navigateRoute(target, replace = true)
-    }
+    fun replace(routeId: String): Boolean = navigateRouteId(routeId, replace = true)
 
-    fun replacePath(path: String): Boolean {
-        val target = matchPath(path) ?: return false
-        return navigateToLocation(target, replace = true, type = NavigationType.REPLACE)
-    }
+    fun replacePath(path: String): Boolean = navigatePath(path, replace = true)
 
-    suspend fun replaceAsync(route: R): Boolean =
-        navigateRouteAsync(route, replace = true)
+    suspend fun replaceAsync(route: R): Boolean = navigateRouteAsync(route, replace = true)
 
-    suspend fun replaceAsync(routeId: String): Boolean {
-        val target = routes.firstOrNull { it.id == routeId } ?: return false
-        return navigateRouteAsync(target, replace = true)
-    }
+    suspend fun replaceAsync(routeId: String): Boolean = navigateRouteIdAsync(routeId, replace = true)
 
-    suspend fun replacePathAsync(path: String): Boolean {
-        val target = matchPath(path) ?: return false
-        return navigateToLocationAsync(target, replace = true, type = NavigationType.REPLACE)
-    }
+    suspend fun replacePathAsync(path: String): Boolean = navigatePathAsync(path, replace = true)
 
-    fun back(): Boolean {
-        val current = stateStore.currentState
-        val target = current.backStack.lastOrNull() ?: return false
-        return navigatePop(
-            target = target,
-            nextBackStack = current.backStack.dropLast(1),
-            nextForwardStack = current.forwardStack + current.currentLocation,
-            type = NavigationType.POP,
-        )
-    }
+    fun back(): Boolean = navigateBack()
 
-    fun forward(): Boolean {
-        val current = stateStore.currentState
-        val target = current.forwardStack.lastOrNull() ?: return false
-        return navigatePop(
-            target = target,
-            nextBackStack = current.backStack + current.currentLocation,
-            nextForwardStack = current.forwardStack.dropLast(1),
-            type = NavigationType.POP,
-        )
-    }
+    fun forward(): Boolean = navigateForward()
 
-    suspend fun backAsync(): Boolean {
-        val current = stateStore.currentState
-        val target = current.backStack.lastOrNull() ?: return false
-        return navigatePopAsync(
-            target = target,
-            nextBackStack = current.backStack.dropLast(1),
-            nextForwardStack = current.forwardStack + current.currentLocation,
-            type = NavigationType.POP,
-        )
-    }
+    suspend fun backAsync(): Boolean = navigateBackAsync()
 
-    suspend fun forwardAsync(): Boolean {
-        val current = stateStore.currentState
-        val target = current.forwardStack.lastOrNull() ?: return false
-        return navigatePopAsync(
-            target = target,
-            nextBackStack = current.backStack + current.currentLocation,
-            nextForwardStack = current.forwardStack.dropLast(1),
-            type = NavigationType.POP,
-        )
-    }
+    suspend fun forwardAsync(): Boolean = navigateForwardAsync()
 
     fun clearNavigationHistory() {
         stateStore.update { state ->
@@ -293,364 +211,33 @@ class Navigator<R : Route>(
         }
     }
 
-    fun popToRoot(): Boolean {
-        var moved = false
-        while (back()) {
-            moved = true
-        }
-        return moved
-    }
+    fun popToRoot(): Boolean = navigatePopToRoot()
 
-    suspend fun popToRootAsync(): Boolean {
-        var moved = false
-        while (backAsync()) {
-            moved = true
-        }
-        return moved
-    }
+    suspend fun popToRootAsync(): Boolean = navigatePopToRootAsync()
 
-    fun canNavigate(route: R, replace: Boolean = false): NavigationDecision<R> {
-        val target = routes.firstOrNull { it.id == route.id } ?: return NavigationDecision.Block(
-            "Unknown route '${route.id}'.",
-        )
-        val type = if (replace) NavigationType.REPLACE else NavigationType.PUSH
-        return navigationDecision(stateStore.currentState.currentLocation, target.toLocation(routePathById), type)
-    }
+    fun canNavigate(route: R, replace: Boolean = false): NavigationDecision<R> =
+        canNavigateRoute(route, replace)
 
     fun canNavigate(routeId: String, replace: Boolean = false): NavigationDecision<R> =
-        routes.firstOrNull { it.id == routeId }?.let { route ->
+        routeList.firstOrNull { it.id == routeId }?.let { route ->
             canNavigate(route, replace)
         } ?: NavigationDecision.Block("Unknown route '$routeId'.")
 
-    fun canNavigatePath(path: String, replace: Boolean = false): NavigationDecision<R>? {
-        val target = matchPath(path) ?: return null
-        val type = if (replace) NavigationType.REPLACE else NavigationType.PUSH
-        return navigationDecision(stateStore.currentState.currentLocation, target, type)
-    }
+    fun canNavigatePath(path: String, replace: Boolean = false): NavigationDecision<R>? =
+        canNavigateRoutePath(path, replace)
 
-    suspend fun canNavigateAsync(route: R, replace: Boolean = false): NavigationDecision<R> {
-        val target = routes.firstOrNull { it.id == route.id } ?: return NavigationDecision.Block(
-            "Unknown route '${route.id}'.",
-        )
-        val type = if (replace) NavigationType.REPLACE else NavigationType.PUSH
-        return navigateDecisionAsync(stateStore.currentState.currentLocation, target.toLocation(routePathById), type)
-    }
+    suspend fun canNavigateAsync(route: R, replace: Boolean = false): NavigationDecision<R> =
+        canNavigateRouteAsync(route, replace)
 
     suspend fun canNavigateAsync(routeId: String, replace: Boolean = false): NavigationDecision<R> =
-        routes.firstOrNull { it.id == routeId }?.let { route ->
+        routeList.firstOrNull { it.id == routeId }?.let { route ->
             canNavigateAsync(route, replace)
         } ?: NavigationDecision.Block("Unknown route '$routeId'.")
 
-    suspend fun canNavigatePathAsync(path: String, replace: Boolean = false): NavigationDecision<R>? {
-        val target = matchPath(path) ?: return null
-        val type = if (replace) NavigationType.REPLACE else NavigationType.PUSH
-        return navigateDecisionAsync(stateStore.currentState.currentLocation, target, type)
-    }
+    suspend fun canNavigatePathAsync(path: String, replace: Boolean = false): NavigationDecision<R>? =
+        canNavigateRoutePathAsync(path, replace)
 
-    fun matchPath(path: String): NavigationLocation<R>? =
-        routes
-            .asSequence()
-            .mapIndexedNotNull { index, route ->
-                RoutePattern.match(route.compiledPath(routePathById), path)?.let { match ->
-                    RouteMatchCandidate(
-                        index = index,
-                        match = match,
-                        location = route.toLocation(match),
-                    )
-                }
-            }
-            .maxWithOrNull(
-                compareBy<RouteMatchCandidate<R>> { candidate -> candidate.match.score }
-                    .thenByDescending { candidate -> candidate.index },
-            )
-            ?.location
-
-    private fun navigateRoute(
-        route: R,
-        replace: Boolean,
-    ): Boolean {
-        val target = routes.firstOrNull { it.id == route.id } ?: return false
-        val type = if (replace) NavigationType.REPLACE else NavigationType.PUSH
-        return navigateToLocation(target.toLocation(routePathById), replace = replace, type = type)
-    }
-
-    private suspend fun navigateRouteAsync(
-        route: R,
-        replace: Boolean,
-    ): Boolean {
-        val target = routes.firstOrNull { it.id == route.id } ?: return false
-        val type = if (replace) NavigationType.REPLACE else NavigationType.PUSH
-        return navigateToLocationAsync(target.toLocation(routePathById), replace = replace, type = type)
-    }
-
-    private fun navigateToLocation(
-        target: NavigationLocation<R>,
-        replace: Boolean,
-        type: NavigationType,
-        redirectDepth: Int = 0,
-    ): Boolean {
-        if (redirectDepth > MAX_REDIRECTS) {
-            return false
-        }
-
-        val current = stateStore.currentState
-        when (val decision = guardDecision(current.currentLocation, target, type)) {
-            NavigationDecision.Allow -> Unit
-            is NavigationDecision.Block -> return false
-            is NavigationDecision.Redirect -> {
-                return navigateRedirect(decision, redirectDepth + 1)
-            }
-        }
-
-        stateStore.update { state ->
-            state.copy(
-                currentRoute = target.route,
-                currentLocation = target,
-                previousLocation = state.currentLocation,
-                navigationType = type,
-                backStack = if (replace) state.backStack else state.backStack + state.currentLocation,
-                forwardStack = emptyList(),
-            )
-        }
-        return true
-    }
-
-    private fun navigatePop(
-        target: NavigationLocation<R>,
-        nextBackStack: List<NavigationLocation<R>>,
-        nextForwardStack: List<NavigationLocation<R>>,
-        type: NavigationType,
-    ): Boolean {
-        val current = stateStore.currentState
-        when (val decision = guardDecision(current.currentLocation, target, type)) {
-            NavigationDecision.Allow -> Unit
-            is NavigationDecision.Block -> return false
-            is NavigationDecision.Redirect -> return navigateRedirect(decision, redirectDepth = 1)
-        }
-
-        stateStore.update { state ->
-            state.copy(
-                currentRoute = target.route,
-                currentLocation = target,
-                previousLocation = state.currentLocation,
-                navigationType = type,
-                backStack = nextBackStack,
-                forwardStack = nextForwardStack,
-            )
-        }
-        return true
-    }
-
-    private suspend fun navigateToLocationAsync(
-        target: NavigationLocation<R>,
-        replace: Boolean,
-        type: NavigationType,
-        redirectDepth: Int = 0,
-    ): Boolean {
-        if (redirectDepth > MAX_REDIRECTS) {
-            return false
-        }
-
-        val current = stateStore.currentState
-        when (val decision = guardDecisionAsync(current.currentLocation, target, type)) {
-            NavigationDecision.Allow -> Unit
-            is NavigationDecision.Block -> return false
-            is NavigationDecision.Redirect -> {
-                return navigateRedirectAsync(decision, redirectDepth + 1)
-            }
-        }
-
-        stateStore.update { state ->
-            state.copy(
-                currentRoute = target.route,
-                currentLocation = target,
-                previousLocation = state.currentLocation,
-                backStack = if (replace) state.backStack else state.backStack + state.currentLocation,
-                forwardStack = emptyList(),
-            )
-        }
-        return true
-    }
-
-    private suspend fun navigatePopAsync(
-        target: NavigationLocation<R>,
-        nextBackStack: List<NavigationLocation<R>>,
-        nextForwardStack: List<NavigationLocation<R>>,
-        type: NavigationType,
-    ): Boolean {
-        val current = stateStore.currentState
-        when (val decision = guardDecisionAsync(current.currentLocation, target, type)) {
-            NavigationDecision.Allow -> Unit
-            is NavigationDecision.Block -> return false
-            is NavigationDecision.Redirect -> return navigateRedirectAsync(decision, redirectDepth = 1)
-        }
-
-        stateStore.update { state ->
-            state.copy(
-                currentRoute = target.route,
-                currentLocation = target,
-                previousLocation = state.currentLocation,
-                navigationType = type,
-                backStack = nextBackStack,
-                forwardStack = nextForwardStack,
-            )
-        }
-        return true
-    }
-
-    private fun guardDecision(
-        from: NavigationLocation<R>,
-        to: NavigationLocation<R>,
-        type: NavigationType,
-    ): NavigationDecision<R> {
-        val context = NavigationGuardContext(
-            from = from,
-            to = to,
-            type = type,
-        )
-
-        evaluateGuards(leaveGuards[from.route.id].orEmpty(), context)?.let { decision ->
-            return decision
-        }
-        evaluateGuards(guards, context)?.let { decision ->
-            return decision
-        }
-        evaluateGuards(enterGuards[to.route.id].orEmpty(), context)?.let { decision ->
-            return decision
-        }
-
-        return NavigationDecision.Allow
-    }
-
-    private fun navigationDecision(
-        from: NavigationLocation<R>,
-        to: NavigationLocation<R>,
-        type: NavigationType,
-    ): NavigationDecision<R> = guardDecision(from, to, type)
-
-    private suspend fun guardDecisionAsync(
-        from: NavigationLocation<R>,
-        to: NavigationLocation<R>,
-        type: NavigationType,
-    ): NavigationDecision<R> {
-        val syncDecision = guardDecision(from, to, type)
-        if (syncDecision !is NavigationDecision.Allow) {
-            return syncDecision
-        }
-
-        val context = NavigationGuardContext(
-            from = from,
-            to = to,
-            type = type,
-        )
-
-        evaluateSuspendGuards(suspendLeaveGuards[from.route.id].orEmpty(), context)?.let { decision ->
-            return decision
-        }
-        evaluateSuspendGuards(suspendGuards, context)?.let { decision ->
-            return decision
-        }
-        evaluateSuspendGuards(suspendEnterGuards[to.route.id].orEmpty(), context)?.let { decision ->
-            return decision
-        }
-
-        return NavigationDecision.Allow
-    }
-
-    private suspend fun navigateDecisionAsync(
-        from: NavigationLocation<R>,
-        to: NavigationLocation<R>,
-        type: NavigationType,
-    ): NavigationDecision<R> = guardDecisionAsync(from, to, type)
-
-    private fun evaluateGuards(
-        routeGuards: List<NavigationGuard<R>>,
-        context: NavigationGuardContext<R>,
-    ): NavigationDecision<R>? {
-        routeGuards.forEach { guard ->
-            when (val decision = guard(context)) {
-                NavigationDecision.Allow -> Unit
-                is NavigationDecision.Block -> return decision
-                is NavigationDecision.Redirect -> return decision
-            }
-        }
-
-        return null
-    }
-
-    private suspend fun evaluateSuspendGuards(
-        routeGuards: List<SuspendNavigationGuard<R>>,
-        context: NavigationGuardContext<R>,
-    ): NavigationDecision<R>? {
-        routeGuards.forEach { guard ->
-            when (val decision = guard(context)) {
-                NavigationDecision.Allow -> Unit
-                is NavigationDecision.Block -> return decision
-                is NavigationDecision.Redirect -> return decision
-            }
-        }
-
-        return null
-    }
-
-    private fun navigateRedirect(
-        decision: NavigationDecision.Redirect<R>,
-        redirectDepth: Int,
-    ): Boolean {
-        if (redirectDepth > MAX_REDIRECTS) {
-            return false
-        }
-
-        val target =
-            decision.path?.let(::matchPath)
-                ?: decision.routeId?.let { routeId -> routes.firstOrNull { it.id == routeId }?.toLocation(routePathById) }
-                ?: return false
-        return navigateToLocation(
-            target = target,
-            replace = decision.replace,
-            type = if (decision.replace) NavigationType.REPLACE else NavigationType.PUSH,
-            redirectDepth = redirectDepth,
-        )
-    }
-
-    private suspend fun navigateRedirectAsync(
-        decision: NavigationDecision.Redirect<R>,
-        redirectDepth: Int,
-    ): Boolean {
-        if (redirectDepth > MAX_REDIRECTS) {
-            return false
-        }
-
-        val target =
-            decision.path?.let(::matchPath)
-                ?: decision.routeId?.let { routeId -> routes.firstOrNull { it.id == routeId }?.toLocation(routePathById) }
-                ?: return false
-        return navigateToLocationAsync(
-            target = target,
-            replace = decision.replace,
-            type = if (decision.replace) NavigationType.REPLACE else NavigationType.PUSH,
-            redirectDepth = redirectDepth,
-        )
-    }
-
-    private fun R.toLocation(routePathById: Map<String, String>): NavigationLocation<R> {
-        val parsed = RoutePattern.parseLocation(compiledPath(routePathById))
-        return toLocation(parsed)
-    }
-
-    private fun R.compiledPath(routePathById: Map<String, String>): String =
-        if (this is PathRoute) routePathById[id] ?: routePath() else routePath()
-
-    private fun R.toLocation(match: RouteMatch): NavigationLocation<R> =
-        NavigationLocation(
-            route = this,
-            path = match.path,
-            fullPath = match.fullPath,
-            params = match.params,
-            query = match.query,
-            hash = match.hash,
-            meta = routeMeta(),
-        )
+    fun matchPath(path: String): NavigationLocation<R>? = matchRoutePath(path)
 
     @PublishedApi
     internal fun resultStream(key: String): MutableSharedFlow<Any?> {
@@ -665,92 +252,7 @@ class Navigator<R : Route>(
         }
     }
 
-    private fun requireRouteId(routeId: String) {
-        require(routeList.any { route -> route.id == routeId }) {
-            "Route guard references unknown route '$routeId'."
-        }
-    }
-
-    private fun <G> addRouteGuard(
-        store: MutableMap<String, MutableList<G>>,
-        routeId: String,
-        guard: G,
-    ): AutoCloseable {
-        requireRouteId(routeId)
-        val routeGuards = store.getOrPut(routeId) { mutableListOf() }
-        routeGuards += guard
-        return AutoCloseable {
-            routeGuards -= guard
-            if (routeGuards.isEmpty()) {
-                store -= routeId
-            }
-        }
-    }
-
-    private fun validateNestedRoutes(routes: Map<String, R>) {
-        routes.values.forEach { route ->
-            val nested = route as? NestedPathRoute ?: return@forEach
-            val parent = nested.parentRouteId ?: return@forEach
-            require(parent in routes) {
-                "Nested route '${route.id}' references unknown parent '$parent'."
-            }
-        }
-    }
-
-    private fun resolveRoutePaths(routes: Map<String, R>): Map<String, String> {
-        val cache = linkedMapOf<String, String>()
-        val visiting = linkedSetOf<String>()
-
-        fun resolve(routeId: String): String {
-            cache[routeId]?.let { return it }
-            val route = routes[routeId]
-                ?: error("Route '$routeId' is not registered.")
-            if (!visiting.add(route.id)) {
-                error("Detected circular nested route hierarchy at '${route.id}'.")
-            }
-
-            val resolved = when (route) {
-                is NestedPathRoute -> {
-                    val ownPath = route.path
-                    val parentId = route.parentRouteId
-                    if (parentId == null) {
-                        RoutePattern.normalize(ownPath)
-                    } else if (route.isIndexRoute) {
-                        resolve(parentId)
-                    } else {
-                        val parentRoute = routes[parentId]
-                            ?: error("Nested route '${route.id}' references unknown parent '$parentId'.")
-                        val parentPath = resolve(parentRoute.id)
-                        val normalizedParent = RoutePattern.normalize(parentPath)
-                        if (ownPath.startsWith("/")) {
-                            RoutePattern.normalize(ownPath)
-                        } else {
-                            val segment = ownPath.trim().trimStart('/').trimEnd('/')
-                            if (segment.isBlank()) {
-                                parentPath
-                            } else if (normalizedParent == "/") {
-                                "/$segment"
-                            } else {
-                                "$normalizedParent/$segment"
-                            }
-                        }
-                    }
-                }
-                else -> (route as? PathRoute)?.path ?: route.id
-            }
-
-            visiting.remove(route.id)
-            cache[route.id] = resolved
-            return resolved
-        }
-
-        routes.keys.forEach(::resolve)
-        return cache.toMap()
-    }
-
     companion object {
-        private const val MAX_REDIRECTS = 8
-
         fun <R : Route> fromPath(
             initialPath: String,
             routes: List<R>,
@@ -769,9 +271,3 @@ class Navigator<R : Route>(
         }
     }
 }
-
-private data class RouteMatchCandidate<R : Route>(
-    val index: Int,
-    val match: RouteMatch,
-    val location: NavigationLocation<R>,
-)

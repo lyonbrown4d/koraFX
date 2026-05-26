@@ -5,37 +5,6 @@ import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 
-data class GraphMetadata(
-    val values: MutableMap<String, String> = LinkedHashMap(),
-) {
-    fun set(
-        key: String,
-        value: String,
-    ): String? = values.put(key, value)
-
-    fun get(key: String): String? = values[key]
-
-    fun remove(key: String): String? = values.remove(key)
-}
-
-data class GraphNode(
-    val id: String,
-    var label: String,
-    var x: Double,
-    var y: Double,
-    var width: Double = 140.0,
-    var height: Double = 64.0,
-    val metadata: MutableMap<String, String> = LinkedHashMap(),
-)
-
-data class GraphEdge(
-    val id: String,
-    val sourceId: String,
-    val targetId: String,
-    var label: String? = null,
-    val metadata: MutableMap<String, String> = LinkedHashMap(),
-)
-
 class Graph(
     initialNodes: Iterable<GraphNode> = emptyList(),
     initialEdges: Iterable<GraphEdge> = emptyList(),
@@ -79,66 +48,22 @@ class Graph(
     private var edgeSequence = 0
 
     init {
-        initialNodes.forEach {
-            addNode(
-                id = it.id,
-                label = it.label,
-                x = it.x,
-                y = it.y,
-                width = it.width,
-                height = it.height,
-                metadata = it.metadata,
-            )
-        }
-        initialEdges.forEach {
-            addEdge(
-                sourceId = it.sourceId,
-                targetId = it.targetId,
-                id = it.id,
-                label = it.label,
-                metadata = it.metadata,
-            )
-        }
+        initialNodes.forEach { addNodeCopy(it) }
+        initialEdges.forEach { addEdgeCopy(it) }
     }
 
-    fun clearSelectionAndConnections() {
-        clearSelection()
-        cancelConnection()
-    }
+    fun clearSelectionAndConnections() { clearSelection(); cancelConnection() }
 
     fun reset(
         nodes: Iterable<GraphNode>,
         edges: Iterable<GraphEdge>,
     ) {
         clear()
-        nodes.forEach {
-            addNode(
-                id = it.id,
-                label = it.label,
-                x = it.x,
-                y = it.y,
-                width = it.width,
-                height = it.height,
-                metadata = it.metadata,
-            )
-        }
-        edges.forEach {
-            addEdge(
-                sourceId = it.sourceId,
-                targetId = it.targetId,
-                id = it.id,
-                label = it.label,
-                metadata = it.metadata,
-            )
-        }
+        nodes.forEach { addNodeCopy(it) }
+        edges.forEach { addEdgeCopy(it) }
     }
 
-    fun setMetadata(
-        key: String,
-        value: String,
-    ) {
-        metadata.set(key, value)
-    }
+    fun setMetadata(key: String, value: String) { metadata.set(key, value) }
 
     fun nodeOf(id: String): GraphNode? =
         _nodes.firstOrNull { it.id == id }
@@ -209,9 +134,7 @@ class Graph(
         }
     }
 
-    fun removeNodeById(id: String) {
-        nodeOf(id)?.let(::removeNode)
-    }
+    fun removeNodeById(id: String) { nodeOf(id)?.let(::removeNode) }
 
     fun addEdge(
         source: GraphNode,
@@ -259,9 +182,7 @@ class Graph(
         }
     }
 
-    fun removeEdgeById(id: String) {
-        edgeOf(id)?.let(::removeEdge)
-    }
+    fun removeEdgeById(id: String) { edgeOf(id)?.let(::removeEdge) }
 
     fun selectNode(node: GraphNode?) {
         val selected = node?.takeIf { _nodes.contains(it) }
@@ -285,10 +206,7 @@ class Graph(
         }
     }
 
-    fun clearSelection() {
-        _selectedNode.set(null)
-        _selectedEdge.set(null)
-    }
+    fun clearSelection() { _selectedNode.set(null); _selectedEdge.set(null) }
 
     fun beginConnectionFrom(node: GraphNode) {
         if (_nodes.contains(node)) {
@@ -296,9 +214,7 @@ class Graph(
         }
     }
 
-    fun cancelConnection() {
-        _connectingFrom.set(null)
-    }
+    fun cancelConnection() { _connectingFrom.set(null) }
 
     fun connect(
         source: GraphNode,
@@ -367,38 +283,9 @@ class Graph(
         selectedEdgeProperty.addListener { _, _, edge -> handler(edge) }
     }
 
-    private fun nextNodeId(requested: String): String {
-        val base = if (requested.isBlank()) "node-${++nodeSequence}" else requested
-        return ensureUnique(base) { candidate -> nodeOf(candidate) != null }
-    }
+    private fun nextNodeId(requested: String): String =
+        nextGraphId(requested, { "node-${++nodeSequence}" }) { candidate -> nodeOf(candidate) != null }
 
-    private fun nextEdgeId(requested: String): String {
-        val base = if (requested.isBlank()) "edge-${++edgeSequence}" else requested
-        return ensureUnique(base) { candidate -> edgeOf(candidate) != null }
-    }
-
-    private fun ensureUnique(
-        base: String,
-        exists: (String) -> Boolean,
-    ): String {
-        if (!exists(base)) {
-            return base
-        }
-
-        var candidate = base
-        var suffix = 2
-        if (candidate.contains("-")) {
-            val split = candidate.lastIndexOf('-')
-            val number = candidate.substring(split + 1).toIntOrNull()
-            if (number != null) {
-                candidate = candidate.substring(0, split)
-                suffix = number + 1
-            }
-        }
-
-        while (exists("${candidate}-$suffix")) {
-            suffix += 1
-        }
-        return "${candidate}-$suffix"
-    }
+    private fun nextEdgeId(requested: String): String =
+        nextGraphId(requested, { "edge-${++edgeSequence}" }) { candidate -> edgeOf(candidate) != null }
 }

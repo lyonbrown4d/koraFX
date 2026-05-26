@@ -1,16 +1,13 @@
 package dev.korafx.virtuallist
 
-import dev.korafx.dsl.NodeContainerBuilder
 import javafx.application.Platform
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.value.ChangeListener
-import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.geometry.Orientation
 import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollBar
-import javafx.scene.control.SelectionMode
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
@@ -18,63 +15,6 @@ import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import java.util.concurrent.Executors
 import kotlin.math.max
-
-typealias VirtualTableDataLoader<T> = (offset: Long, limit: Int) -> Collection<T>
-typealias VirtualTableErrorHandler = (Throwable) -> Unit
-
-data class VirtualTableLoadState(
-    val isLoading: Boolean,
-    val isAtEnd: Boolean,
-    val rowCount: Int,
-    val hasError: Boolean,
-)
-
-class VirtualTableSelectionModel<T>(
-    private val tableView: TableView<T>,
-) {
-    var mode: VirtualSelectionMode
-        get() =
-            when (tableView.selectionModel.selectionMode) {
-                SelectionMode.SINGLE -> VirtualSelectionMode.SINGLE
-                else -> VirtualSelectionMode.MULTIPLE
-            }
-        set(value) {
-            tableView.selectionModel.selectionMode =
-                when (value) {
-                    VirtualSelectionMode.SINGLE -> SelectionMode.SINGLE
-                    VirtualSelectionMode.MULTIPLE -> SelectionMode.MULTIPLE
-                }
-        }
-
-    val selectedItem: T?
-        get() = tableView.selectionModel.selectedItem
-
-    val selectedItems: List<T>
-        get() = tableView.selectionModel.selectedItems.toList()
-
-    val selectedIndices: List<Int>
-        get() = tableView.selectionModel.selectedIndices.toList()
-
-    fun clearSelection() {
-        tableView.selectionModel.clearSelection()
-    }
-
-    fun select(index: Int) {
-        tableView.selectionModel.select(index)
-    }
-
-    fun select(item: T) {
-        tableView.selectionModel.select(item)
-    }
-
-    fun onSelect(handler: (List<T>) -> Unit) {
-        tableView.selectionModel.selectedItems.addListener(
-            ListChangeListener {
-                handler(selectedItems)
-            },
-        )
-    }
-}
 
 class VirtualTable<T>(
     private val dataLoader: VirtualTableDataLoader<T>,
@@ -127,9 +67,7 @@ class VirtualTable<T>(
         requestNextPage()
     }
 
-    fun setPageSize(size: Int) {
-        pageSizeValue = max(1, size)
-    }
+    fun setPageSize(size: Int) { pageSizeValue = max(1, size) }
 
     fun setLoadingPlaceholder(node: Node) {
         loadingPlaceholder = node
@@ -146,17 +84,11 @@ class VirtualTable<T>(
         refreshPlaceholder()
     }
 
-    fun onError(handler: VirtualTableErrorHandler) {
-        errorHandlers += handler
-    }
+    fun onError(handler: VirtualTableErrorHandler) { errorHandlers += handler }
 
-    fun onSelect(handler: (List<T>) -> Unit) {
-        selectionModel.onSelect(handler)
-    }
+    fun onSelect(handler: (List<T>) -> Unit) { selectionModel.onSelect(handler) }
 
-    fun loadMore() {
-        requestNextPage()
-    }
+    fun loadMore() { requestNextPage() }
 
     fun reload() {
         requestEpoch++
@@ -170,9 +102,7 @@ class VirtualTable<T>(
         }
     }
 
-    fun clearColumns() {
-        tableView.columns.clear()
-    }
+    fun clearColumns() { tableView.columns.clear() }
 
     fun <R> column(
         title: String,
@@ -366,109 +296,3 @@ class VirtualTable<T>(
             }
     }
 }
-
-class VirtualTableBuilder<T> internal constructor(
-    private val table: VirtualTable<T>,
-) {
-    fun pageSize(size: Int) {
-        table.setPageSize(size)
-    }
-
-    fun loadingPlaceholder(node: Node) {
-        table.setLoadingPlaceholder(node)
-    }
-
-    fun emptyPlaceholder(node: Node) {
-        table.setEmptyPlaceholder(node)
-    }
-
-    fun errorPlaceholder(node: Node) {
-        table.setErrorPlaceholder(node)
-    }
-
-    fun selectionMode(mode: VirtualSelectionMode) {
-        table.selectionModel.mode = mode
-    }
-
-    fun constrainedResize() {
-        table.tableView.columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
-    }
-
-    fun clearColumns() {
-        table.clearColumns()
-    }
-
-    fun <R> column(
-        title: String,
-        valueOf: (T) -> R,
-        init: TableColumn<T, R>.() -> Unit = {},
-    ): TableColumn<T, R> = table.column(title, valueOf, init)
-
-    fun textColumn(
-        title: String,
-        valueOf: (T) -> Any?,
-        init: TableColumn<T, String>.() -> Unit = {},
-    ): TableColumn<T, String> = table.textColumn(title, valueOf, init)
-
-    fun <R> columnText(
-        title: String,
-        valueOf: (T) -> R,
-        render: (R) -> String,
-        init: TableColumn<T, R>.() -> Unit = {},
-    ): TableColumn<T, R> = table.columnText(title, valueOf, render, init)
-
-    fun <R> columnNode(
-        title: String,
-        valueOf: (T) -> R,
-        init: TableColumn<T, R>.() -> Unit = {},
-        content: (R) -> Node,
-    ): TableColumn<T, R> = table.columnNode(title, valueOf, init, content)
-
-    fun onError(handler: VirtualTableErrorHandler) {
-        table.onError(handler)
-    }
-
-    fun onSelect(handler: (List<T>) -> Unit) {
-        table.onSelect(handler)
-    }
-
-    fun loadMore() {
-        table.loadMore()
-    }
-}
-
-fun <T> virtualTable(
-    dataLoader: VirtualTableDataLoader<T>,
-    totalCountEstimate: (() -> Int?)? = null,
-    pageSize: Int = 50,
-    selectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
-    init: VirtualTable<T>.() -> Unit = {},
-    columns: VirtualTableBuilder<T>.() -> Unit = {},
-): VirtualTable<T> =
-    VirtualTable(
-        dataLoader = dataLoader,
-        totalCountEstimate = totalCountEstimate,
-        pageSize = pageSize,
-        initialSelectionMode = selectionMode,
-    ).apply(init).apply {
-        VirtualTableBuilder(this).columns()
-    }
-
-fun <T> NodeContainerBuilder.virtualTable(
-    dataLoader: VirtualTableDataLoader<T>,
-    totalCountEstimate: (() -> Int?)? = null,
-    pageSize: Int = 50,
-    selectionMode: VirtualSelectionMode = VirtualSelectionMode.MULTIPLE,
-    init: VirtualTable<T>.() -> Unit = {},
-    columns: VirtualTableBuilder<T>.() -> Unit = {},
-): VirtualTable<T> =
-    add(
-        dev.korafx.virtuallist.virtualTable(
-            dataLoader = dataLoader,
-            totalCountEstimate = totalCountEstimate,
-            pageSize = pageSize,
-            selectionMode = selectionMode,
-            init = init,
-            columns = columns,
-        ),
-    )

@@ -20,7 +20,6 @@ class DataGridTest {
         var owner: String,
         val status: String,
     )
-
     @Test
     fun `data grid configures shell and delegates table columns`() {
         FxTestSupport.runOnFxThread {
@@ -52,7 +51,6 @@ class DataGridTest {
             assertIs<Button>(grid.toolbar.children.last())
         }
     }
-
     @Test
     fun `data grid filters rows through search index`() {
         FxTestSupport.runOnFxThread {

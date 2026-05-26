@@ -1,9 +1,7 @@
 package dev.korafx.devtools
 
-import dev.korafx.dsl.rectangle
 import dev.korafx.dsl.scene
 import dev.korafx.dsl.splitPane
-import dev.korafx.dsl.stackPane
 import dev.korafx.dsl.stage
 import dev.korafx.dsl.styleClass
 import dev.korafx.framework.KoraApplication
@@ -11,7 +9,6 @@ import dev.korafx.framework.theme.SceneThemeController
 import dev.korafx.framework.theme.ThemeStyleClass
 import javafx.application.Platform
 import javafx.event.EventHandler
-import javafx.geometry.Orientation
 import javafx.scene.Parent
 import javafx.scene.control.SplitPane
 import javafx.scene.input.KeyEvent
@@ -19,14 +16,6 @@ import javafx.scene.layout.Region
 import javafx.scene.layout.StackPane
 import javafx.stage.Stage
 import kotlinx.coroutines.Job
-
-internal interface DevtoolsActions {
-    fun startPicking()
-
-    fun clearSelection()
-
-    fun setPlacement(placement: KoraDevtoolsPlacement)
-}
 
 internal class KoraDevtoolsController(
     private val app: KoraApplication,
@@ -42,7 +31,7 @@ internal class KoraDevtoolsController(
     private var devtoolsRoot: Parent? = null
     private var originalRoot: Parent? = null
     private var themeController: SceneThemeController? = null
-    private var frameRateOverlay: FrameRateOverlay? = null
+    private val frameRateOverlay = DevtoolsFrameRateOverlayController(spec)
     private val jobs = mutableListOf<Job>()
     private val inspector = InProcessInspector(
         scene = app.scene,
@@ -149,7 +138,7 @@ internal class KoraDevtoolsController(
         }
 
         val currentRoot = app.scene.root
-        val host = createInspectedHost()
+        val host = createDevtoolsInspectedHost()
         val shell = createShell { currentRoot }.apply {
             styleClass("korafx-devtools-docked")
             if (this is Region) {
@@ -189,8 +178,8 @@ internal class KoraDevtoolsController(
         app.scene.root = container
         host.children.setAll(currentRoot)
         highlighter.renderIn(host)
-        installFrameRateOverlay(host)
-        container.setDividerPositions(currentPlacement.initialDivider(app.scene.width, app.scene.height))
+        frameRateOverlay.install(host)
+        container.setDividerPositions(currentPlacement.initialDivider(spec, app.scene.width, app.scene.height))
     }
 
     private fun closeDocked() {
@@ -201,7 +190,7 @@ internal class KoraDevtoolsController(
         inspectedHost?.children?.clear()
         highlighter.limitTo(null)
         highlighter.renderIn(null)
-        uninstallFrameRateOverlay()
+        frameRateOverlay.uninstall(inspectedHost)
         container.items.clear()
         if (root != null && app.scene.root === container) {
             app.scene.root = root
@@ -270,14 +259,14 @@ internal class KoraDevtoolsController(
             return
         }
 
-        val host = createInspectedHost()
+        val host = createDevtoolsInspectedHost()
         originalRoot = currentRoot
         inspectedHost = host
         app.scene.root = host
         host.children.setAll(currentRoot)
         highlighter.limitTo(host)
         highlighter.renderIn(host)
-        installFrameRateOverlay(host)
+        frameRateOverlay.install(host)
     }
 
     private fun restoreWindowOverlay() {
@@ -285,7 +274,7 @@ internal class KoraDevtoolsController(
         val root = originalRoot
         highlighter.limitTo(null)
         highlighter.renderIn(null)
-        uninstallFrameRateOverlay()
+        frameRateOverlay.uninstall(inspectedHost)
         host?.children?.clear()
         if (host != null && root != null && app.scene.root === host) {
             app.scene.root = root
@@ -293,37 +282,6 @@ internal class KoraDevtoolsController(
         inspectedHost = null
         devtoolsRoot = null
         originalRoot = null
-    }
-
-    private fun createInspectedHost(): StackPane =
-        stackPane(
-            init = {
-                styleClass("korafx-devtools-inspected-host")
-                isPickOnBounds = false
-                val host = this
-                clip = rectangle {
-                    widthProperty().bind(host.widthProperty())
-                    heightProperty().bind(host.heightProperty())
-                }
-            },
-        ) {}
-
-    private fun installFrameRateOverlay(host: StackPane) {
-        if (!spec.showFpsOverlay || frameRateOverlay != null) {
-            return
-        }
-
-        FrameRateOverlay().also { overlay ->
-            frameRateOverlay = overlay
-            host.attachFrameRateOverlay(overlay)
-        }
-    }
-
-    private fun uninstallFrameRateOverlay() {
-        val overlay = frameRateOverlay ?: return
-        overlay.stop()
-        inspectedHost?.children?.remove(overlay.node)
-        frameRateOverlay = null
     }
 
     private fun createShell(inspectedRoot: () -> Parent = ::inspectedRoot): Parent =
@@ -339,30 +297,4 @@ internal class KoraDevtoolsController(
 
     private fun inspectedRoot(): Parent =
         originalRoot ?: app.scene.root
-
-    private fun KoraDevtoolsPlacement.dockOrientation(): Orientation =
-        when (this) {
-            KoraDevtoolsPlacement.BOTTOM -> Orientation.VERTICAL
-            KoraDevtoolsPlacement.LEFT,
-            KoraDevtoolsPlacement.RIGHT,
-            KoraDevtoolsPlacement.WINDOW,
-            -> Orientation.HORIZONTAL
-        }
-
-    private fun KoraDevtoolsPlacement.initialDivider(
-        sceneWidth: Double,
-        sceneHeight: Double,
-    ): Double =
-        when (this) {
-            KoraDevtoolsPlacement.LEFT ->
-                (spec.dockWidth / sceneWidth.validSize()).coerceIn(0.15, 0.85)
-            KoraDevtoolsPlacement.RIGHT ->
-                ((sceneWidth.validSize() - spec.dockWidth) / sceneWidth.validSize()).coerceIn(0.15, 0.85)
-            KoraDevtoolsPlacement.BOTTOM ->
-                ((sceneHeight.validSize() - spec.dockHeight) / sceneHeight.validSize()).coerceIn(0.15, 0.85)
-            KoraDevtoolsPlacement.WINDOW -> 0.5
-        }
-
-    private fun Double.validSize(): Double =
-        takeIf { it.isFinite() && it > 0.0 } ?: 1.0
 }

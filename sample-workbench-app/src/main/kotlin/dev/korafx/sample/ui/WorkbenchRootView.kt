@@ -1,59 +1,34 @@
 package dev.korafx.sample.ui
 
 import dev.korafx.commandpalette.commandPalette
-import dev.korafx.components.ComponentTone
+import dev.korafx.components.ToastHost
 import dev.korafx.components.appShell
 import dev.korafx.components.appToolbar
-import dev.korafx.components.badge
-import dev.korafx.components.chip
 import dev.korafx.components.emptyState
 import dev.korafx.components.pageHeader
-import dev.korafx.components.section
 import dev.korafx.components.setKoraIcon
 import dev.korafx.components.statusBar
 import dev.korafx.components.statusItem
 import dev.korafx.dsl.NodeContainerBuilder
 import dev.korafx.dsl.bindSelectedItem
 import dev.korafx.dsl.comboBox
-import dev.korafx.dsl.growVertical
 import dev.korafx.dsl.ghostButton
-import dev.korafx.dsl.fragment
-import dev.korafx.dsl.hbox
+import dev.korafx.dsl.growVertical
+import dev.korafx.dsl.label
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.panel
 import dev.korafx.dsl.scrollPane
 import dev.korafx.dsl.stateList
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.tabPane
-import dev.korafx.dsl.vbox
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.ThemeStyleClass
-import dev.korafx.navigation.RouteTransition
 import dev.korafx.navigation.bindContentWithTransition
-import dev.korafx.navigation.routeButton
 import dev.korafx.sample.di.WorkbenchAppGraph
-import dev.korafx.sample.domain.ModuleCategory
-import dev.korafx.sample.domain.SourceSnippet
 import dev.korafx.sample.navigation.WorkbenchRoute
 import dev.korafx.sample.ui.pages.WorkbenchPageContext
-import dev.korafx.sample.ui.pages.commandPalettePage
-import dev.korafx.sample.ui.pages.componentsPage
-import dev.korafx.sample.ui.pages.dataGridPage
-import dev.korafx.sample.ui.pages.dslPage
-import dev.korafx.sample.ui.pages.frameworkPage
-import dev.korafx.sample.ui.pages.graphEditorPage
-import dev.korafx.sample.ui.pages.inspectorPage
-import dev.korafx.sample.ui.pages.mvvmPage
-import dev.korafx.sample.ui.pages.navigationPage
-import dev.korafx.sample.ui.pages.overviewPage
-import dev.korafx.sample.ui.pages.resourceExplorerPage
-import dev.korafx.sample.ui.pages.sourceEditorPage
-import dev.korafx.sample.ui.pages.themePage
-import dev.korafx.sample.ui.pages.virtualListPage
-import dev.korafx.sample.ui.pages.workspacePage
 import dev.korafx.sample.viewmodel.WorkbenchAction
 import dev.korafx.sample.viewmodel.WorkbenchState
-import dev.korafx.sourceeditor.codeEditor
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +43,7 @@ class WorkbenchRootView(
     private val navigator = graph.navigator
     private val viewModel = graph.viewModel
     private val commandPaletteHost = graph.commandPaletteHost
-    private val transitionMode = MutableStateFlow<TransitionMode>(TransitionMode.Fade)
+    private val transitionMode = MutableStateFlow(WorkbenchTransitionMode.Fade)
     private val pageContext = WorkbenchPageContext(
         uiScope = graph.uiScope,
         catalog = graph.catalog,
@@ -89,7 +64,7 @@ class WorkbenchRootView(
             },
         ) {
             topBar { this@WorkbenchRootView.topBar() }
-            navigation { moduleSidebar() }
+            navigation { workbenchModuleSidebar(uiScope, navigator) }
             content { mainContent() }
             details {
                 detailsPane().apply {
@@ -171,74 +146,19 @@ class WorkbenchRootView(
                 }
 
                 comboBox(
-                    items = TransitionMode.entries.toList(),
+                    items = WorkbenchTransitionMode.entries.toList(),
                     init = {
                         prefWidth = 180.0
                     },
                 ) {
                     render { it.label }
                     onSelect { mode ->
-                        transitionMode.value = mode ?: TransitionMode.Fade
+                        transitionMode.value = mode ?: WorkbenchTransitionMode.Fade
                     }
                     select(transitionMode.value)
                 }
             },
         )
-
-    private fun moduleSidebar() =
-        scrollPane(
-            init = {
-                prefWidth = 300.0
-                minWidth = 220.0
-                maxWidth = 480.0
-                isFitToWidth = true
-            },
-        ) {
-            content {
-                vbox(
-                    spacing = 12.0,
-                    init = {
-                        styleClass += "korafx-workbench-module-nav"
-                    },
-                ) {
-                    label("Modules") {
-                        styleClasses(ThemeStyleClass.Headline)
-                    }
-
-                    add(
-                        routeButton(
-                            scope = uiScope,
-                            navigator = navigator,
-                            route = WorkbenchRoute.Overview,
-                            text = "Overview",
-                        ) {
-                            maxWidth = Double.MAX_VALUE
-                        },
-                    )
-
-                    ModuleCategory.entries.forEach { category ->
-                        label(category.title) {
-                            styleClasses(ThemeStyleClass.Muted)
-                        }
-
-                        WorkbenchRoute.moduleRoutes
-                            .filter { route -> WorkbenchRoute.findModule(route.id)?.category == category }
-                            .forEach { route ->
-                                add(
-                                    routeButton(
-                                        scope = uiScope,
-                                        navigator = navigator,
-                                        route = route,
-                                        text = route.title,
-                                    ) {
-                                        maxWidth = Double.MAX_VALUE
-                                    },
-                                )
-                            }
-                    }
-                }
-            }
-        }
 
     private fun showcasePane() =
         scrollPane(
@@ -323,7 +243,7 @@ class WorkbenchRootView(
                         state = viewModel.state,
                         transition = transitionMode.map { it.transition },
                     ) { state ->
-                        renderSourceCode(state)
+                        renderWorkbenchSourceCode(state)
                     }
                 }
             }
@@ -348,79 +268,7 @@ class WorkbenchRootView(
             },
         )
 
-        if (module != null) {
-            hbox(spacing = 10.0) {
-                badge(module.category.title, ComponentTone.INFO)
-                module.tags.take(4).forEach { tag ->
-                    chip(tag, ComponentTone.NEUTRAL)
-                }
-            }
-        }
-
-        renderRoute(state)
-    }
-
-    private fun NodeContainerBuilder.renderRoute(state: WorkbenchState) {
-        when (state.currentRouteId) {
-            WorkbenchRoute.Framework.id -> frameworkPage(pageContext)
-            WorkbenchRoute.Dsl.id -> dslPage(pageContext)
-            WorkbenchRoute.Mvvm.id -> mvvmPage(pageContext, state)
-            WorkbenchRoute.Theme.id -> themePage(pageContext)
-            WorkbenchRoute.Navigation.id -> navigationPage(pageContext, state)
-            WorkbenchRoute.Components.id -> componentsPage(pageContext)
-            WorkbenchRoute.SourceEditor.id -> sourceEditorPage(pageContext)
-            WorkbenchRoute.DataGrid.id -> dataGridPage(pageContext)
-            WorkbenchRoute.ResourceExplorer.id -> resourceExplorerPage(pageContext)
-            WorkbenchRoute.Workspace.id -> workspacePage(pageContext)
-            WorkbenchRoute.InspectorPanel.id -> inspectorPage(pageContext)
-            WorkbenchRoute.CommandPalette.id -> commandPalettePage(pageContext)
-            WorkbenchRoute.GraphEditor.id -> graphEditorPage()
-            WorkbenchRoute.VirtualList.id -> virtualListPage()
-            else -> overviewPage(pageContext, state)
-        }
-    }
-
-    private fun NodeContainerBuilder.renderSourceCode(state: WorkbenchState) {
-        val snippets = state.sourceSnippets.ifEmpty {
-            listOf(
-                SourceSnippet(
-                    title = "Navigate to module",
-                    language = "kotlin",
-                    code = """viewModel.dispatch(WorkbenchAction.NavigateModule("${state.currentRouteId}"))""",
-                    description = "Every module in the left rail is a typed KoraFX route.",
-                ),
-            )
-        }
-
-        snippets.forEach { snippet ->
-            section(
-                title = snippet.title,
-                description = snippet.description.takeIf { it.isNotBlank() },
-                padding = 12.0,
-            ) {
-                codeEditor(
-                    title = "${snippet.id}.${snippet.language}",
-                    text = snippet.code,
-                    language = snippet.language,
-                    readOnly = true,
-                    showSearch = true,
-                    wrapText = false,
-                    init = {
-                        prefHeight = 220.0
-                        maxWidth = Double.MAX_VALUE
-                    },
-                )
-            }
-        }
-    }
-
-    private enum class TransitionMode(
-        val label: String,
-        val transition: RouteTransition,
-    ) {
-        None("None", RouteTransition.None),
-        Fade("Fade", RouteTransition.Fade()),
-        Slide("Slide", RouteTransition.Slide()),
-        Scale("Scale", RouteTransition.Scale()),
+        renderWorkbenchModuleBadges(module)
+        renderWorkbenchRoute(state, pageContext)
     }
 }

@@ -90,7 +90,7 @@ object RoutePattern {
             }
             hash?.takeIf(String::isNotBlank)?.let {
                 append("#")
-                append(encodeFragment(it))
+                append(encode(it))
             }
         }
     }
@@ -317,8 +317,6 @@ object RoutePattern {
     private fun encodeSplat(value: String): String =
         encode(value).replace("%2F", "/")
 
-    private fun encodeFragment(value: String): String = encode(value)
-
     private fun encode(value: String): String =
         URLEncoder.encode(value, StandardCharsets.UTF_8)
             .replace("+", "%20")
@@ -331,8 +329,3 @@ object RoutePattern {
     private const val ROOT_SCORE = 1
     private const val SPLAT_SCORE = -100
 }
-
-private data class SegmentMatch(
-    val params: Map<String, String>,
-    val score: Int,
-)
