@@ -22,9 +22,9 @@ import dev.korafx.dsl.hbox
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.panel
 import dev.korafx.dsl.scrollPane
-import dev.korafx.dsl.splitPane
 import dev.korafx.dsl.stateList
 import dev.korafx.dsl.styleClasses
+import dev.korafx.dsl.tabPane
 import dev.korafx.dsl.vbox
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.ThemeStyleClass
@@ -53,9 +53,7 @@ import dev.korafx.sample.viewmodel.WorkbenchAction
 import dev.korafx.sample.viewmodel.WorkbenchState
 import dev.korafx.sourceeditor.codeEditor
 import javafx.geometry.Insets
-import javafx.geometry.Orientation
 import javafx.geometry.Pos
-import javafx.scene.control.SplitPane
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class WorkbenchRootView(
@@ -87,7 +85,14 @@ class WorkbenchRootView(
             },
         ) {
             topBar { this@WorkbenchRootView.topBar() }
+            navigation { moduleSidebar() }
             content { mainContent() }
+            details {
+                detailsPane().apply {
+                    minWidth = 360.0
+                    prefWidth = 440.0
+                }
+            }
             footer { statusFooter() }
             overlay(alignment = Pos.CENTER, margin = Insets.EMPTY) {
                 commandPalette(commandPaletteHost) {
@@ -97,31 +102,24 @@ class WorkbenchRootView(
         }
 
     private fun mainContent() =
-        splitPane(
-            orientation = Orientation.HORIZONTAL,
+        scrollPane(
             init = {
-                setDividerPositions(0.24)
-                minWidth = 760.0
-                minHeight = 520.0
+                isFitToWidth = true
             },
         ) {
-            val sidebar = moduleSidebar()
-            val workArea =
-                splitPane(
-                    orientation = Orientation.VERTICAL,
-                    init = {
-                        setDividerPositions(0.64)
-                        minWidth = 420.0
-                    },
-                ) {
-                    add(showcasePane())
-                    add(docsAndSourcePane())
-                }
+            content {
+                showcasePane()
+            }
+        }
 
-            SplitPane.setResizableWithParent(sidebar, false)
-            SplitPane.setResizableWithParent(workArea, true)
-            add(sidebar)
-            add(workArea)
+    private fun detailsPane() =
+        tabPane {
+            tab("Documentation", closable = false) {
+                documentationPane()
+            }
+            tab("Source", closable = false) {
+                sourceCodePane()
+            }
         }
 
     private fun statusFooter() =
@@ -246,27 +244,6 @@ class WorkbenchRootView(
                     container.bindContent(uiScope, viewModel.state) { state ->
                         renderShowcase(state)
                     }
-                }
-            }
-        }
-
-    private fun docsAndSourcePane() =
-        scrollPane(
-            init = {
-                isFitToWidth = true
-                minHeight = 180.0
-                maxWidth = Double.MAX_VALUE
-            },
-        ) {
-            content {
-                splitPane(
-                    orientation = Orientation.HORIZONTAL,
-                    init = {
-                        setDividerPositions(0.5)
-                    },
-                ) {
-                    add(documentationPane())
-                    add(sourceCodePane())
                 }
             }
         }
