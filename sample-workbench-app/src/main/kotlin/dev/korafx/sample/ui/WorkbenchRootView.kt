@@ -13,11 +13,11 @@ import dev.korafx.components.setKoraIcon
 import dev.korafx.components.statusBar
 import dev.korafx.components.statusItem
 import dev.korafx.dsl.NodeContainerBuilder
-import dev.korafx.dsl.bindContent
 import dev.korafx.dsl.bindSelectedItem
 import dev.korafx.dsl.comboBox
 import dev.korafx.dsl.growVertical
 import dev.korafx.dsl.ghostButton
+import dev.korafx.dsl.fragment
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.panel
@@ -26,6 +26,8 @@ import dev.korafx.dsl.stateList
 import dev.korafx.dsl.styleClasses
 import dev.korafx.dsl.tabPane
 import dev.korafx.dsl.vbox
+import dev.korafx.dsl.state.collectLatestIn
+import dev.korafx.dsl.FragmentBuilder
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.ThemeStyleClass
 import dev.korafx.navigation.routeButton
@@ -52,8 +54,16 @@ import dev.korafx.sample.ui.pages.workspacePage
 import dev.korafx.sample.viewmodel.WorkbenchAction
 import dev.korafx.sample.viewmodel.WorkbenchState
 import dev.korafx.sourceeditor.codeEditor
+import javafx.animation.Animation
+import javafx.animation.FadeTransition
+import javafx.application.Platform
 import javafx.geometry.Insets
 import javafx.geometry.Pos
+import javafx.scene.layout.Pane
+import javafx.util.Duration
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class WorkbenchRootView(
@@ -241,7 +251,7 @@ class WorkbenchRootView(
                 ) {
                 }.also { container ->
                     container.growVertical()
-                    container.bindContent(uiScope, viewModel.state) { state ->
+                    container.bindContentWithFade(uiScope, viewModel.state) { state ->
                         renderShowcase(state)
                     }
                 }
@@ -267,7 +277,7 @@ class WorkbenchRootView(
                     }
                 }.also { container ->
                     container.growVertical()
-                    container.bindContent(uiScope, viewModel.state) { state ->
+                    container.bindContentWithFade(uiScope, viewModel.state) { state ->
                         markdownDocument(state.document)
                     }
                 }
@@ -293,7 +303,7 @@ class WorkbenchRootView(
                     }
                 }.also { container ->
                     container.growVertical()
-                    container.bindContent(uiScope, viewModel.state) { state ->
+                    container.bindContentWithFade(uiScope, viewModel.state) { state ->
                         renderSourceCode(state)
                     }
                 }
@@ -381,6 +391,56 @@ class WorkbenchRootView(
                         maxWidth = Double.MAX_VALUE
                     },
                 )
+            }
+        }
+    }
+
+    private fun <T> Pane.bindContentWithFade(
+        scope: CoroutineScope,
+        flow: Flow<T>,
+        durationMs: Double = 170.0,
+        content: FragmentBuilder.(T) -> Unit,
+    ): Job {
+        var transition: Animation? = null
+
+        return flow.collectLatestIn(scope) { value ->
+            Platform.runLater {
+                transition?.let {
+                    it.stop()
+                    opacity = 1.0
+                }
+
+                val nextChildren = fragment {
+                    content(value)
+                }
+
+                if (children.isEmpty()) {
+                    children.setAll(nextChildren)
+                    opacity = 1.0
+                    return@runLater
+                }
+
+                if (nextChildren.size == children.size && children.withIndex().all { (index, child) -> child === nextChildren[index] }) {
+                    return@runLater
+                }
+
+                val fadeOut = FadeTransition(Duration.millis(durationMs), this).apply {
+                    fromValue = 1.0
+                    toValue = 0.0
+                }
+
+                fadeOut.setOnFinished {
+                    children.setAll(nextChildren)
+                    val fadeIn = FadeTransition(Duration.millis(durationMs), this).apply {
+                        fromValue = 0.0
+                        toValue = 1.0
+                    }
+                    transition = fadeIn
+                    fadeIn.playFromStart()
+                }
+
+                transition = fadeOut
+                fadeOut.playFromStart()
             }
         }
     }
