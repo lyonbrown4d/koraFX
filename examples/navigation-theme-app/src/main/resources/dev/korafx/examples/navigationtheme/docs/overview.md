@@ -9,6 +9,7 @@
 - `routeHost` 与 `routerHost` 的切换模式
 - 路由级状态持久化（按 location key）
 - 转场动画（`RouteTransition`）
+- `routeDataHost`（异步数据加载 + loading/error/revalidate）
 
 建议：
 

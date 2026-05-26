@@ -59,6 +59,8 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
         onFinished: () -> Unit,
     ): Animation?
 
+    abstract fun withDuration(durationMs: Double): RouteTransition
+
     internal fun resetHost(host: Pane) {
         host.opacity = 1.0
         host.translateX = 0.0
@@ -73,9 +75,13 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
             swapContent: () -> Unit,
             onFinished: () -> Unit,
         ): Animation? = null
+
+        override fun withDuration(durationMs: Double): RouteTransition = this
     }
 
     class Fade(durationMs: Double = 190.0) : RouteTransition(durationMs) {
+        override fun withDuration(durationMs: Double): RouteTransition = Fade(durationMs.coerceAtLeast(20.0))
+
         override fun createAnimation(
             host: Pane,
             swapContent: () -> Unit,
@@ -107,6 +113,12 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
         private val distance: Double = 28.0,
         private val direction: SlideDirection = SlideDirection.END,
     ) : RouteTransition(durationMs) {
+        override fun withDuration(durationMs: Double): RouteTransition = Slide(
+            durationMs = durationMs.coerceAtLeast(20.0),
+            distance = distance,
+            direction = direction,
+        )
+
         override fun createAnimation(
             host: Pane,
             swapContent: () -> Unit,
@@ -152,6 +164,11 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
         durationMs: Double = 220.0,
         private val scaleFrom: Double = 0.985,
     ) : RouteTransition(durationMs) {
+        override fun withDuration(durationMs: Double): RouteTransition = Scale(
+            durationMs = durationMs.coerceAtLeast(20.0),
+            scaleFrom = scaleFrom,
+        )
+
         override fun createAnimation(
             host: Pane,
             swapContent: () -> Unit,
@@ -203,6 +220,8 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
     class Custom(
         private val factory: (Pane, () -> Unit, () -> Unit) -> Animation?,
     ) : RouteTransition(0.0) {
+        override fun withDuration(durationMs: Double): RouteTransition = this
+
         override fun createAnimation(
             host: Pane,
             swapContent: () -> Unit,
@@ -213,6 +232,19 @@ sealed class RouteTransition(val durationMs: Double = 170.0) {
     enum class SlideDirection(val offset: Double) {
         START(-1.0),
         END(1.0),
+    }
+}
+
+fun RouteTransition.scaleDuration(factor: Double): RouteTransition {
+    val safeFactor = factor.coerceIn(0.1, 5.0)
+    if (safeFactor == 1.0) {
+        return this
+    }
+
+    return when (this) {
+        is RouteTransition.Custom -> this
+        is RouteTransition.None -> this
+        else -> withDuration(durationMs * safeFactor)
     }
 }
 

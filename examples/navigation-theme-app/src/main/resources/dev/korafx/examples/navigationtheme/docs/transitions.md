@@ -11,9 +11,11 @@
 
 1. 通过顶部下拉框切换 Profile（Adaptive / PushSlide / Fade / Scale）
 2. `routeHost` 接收 `Flow<RouteTransition>`，在路由变化时自动过渡
-3. 也可直接对单次导航传入自定义 `RouteTransition`
+3. 可在转场面板中关闭动画，或调节速度倍率（0.5~2.0）
+4. 也可直接对单次导航传入自定义 `RouteTransition`
 
 ### 建议
 
 - `Adaptive` 使用不同导航动作映射不同动画，最贴近产品端交互。
+- `duration` 通过乘数缩放（0.5~2.0）动态调整，适配不同交互节奏。
 - 复杂页面可在页面级别再包一层局部动画，避免大面积重绘。

@@ -9,12 +9,14 @@ import dev.korafx.components.ToastTone
 import dev.korafx.dsl.button
 import dev.korafx.dsl.bindDisable
 import dev.korafx.dsl.bindText
+import dev.korafx.dsl.checkBox
 import dev.korafx.dsl.comboBox
 import dev.korafx.dsl.label
 import dev.korafx.dsl.hbox
 import dev.korafx.dsl.panel
 import dev.korafx.dsl.menuButton
 import dev.korafx.dsl.onAction
+import dev.korafx.dsl.slider
 import dev.korafx.dsl.paddingAll
 import dev.korafx.dsl.scrollPane
 import dev.korafx.dsl.sidebar
@@ -26,6 +28,8 @@ import dev.korafx.dsl.textField
 import dev.korafx.dsl.toolbar
 import dev.korafx.dsl.vbox
 import dev.korafx.dsl.ghostButton
+import dev.korafx.components.errorState
+import dev.korafx.components.loadingState
 import dev.korafx.framework.theme.BuiltInThemes
 import dev.korafx.framework.theme.KoraTheme
 import dev.korafx.framework.theme.SceneThemeController
@@ -39,7 +43,11 @@ import dev.korafx.navigation.Route
 import dev.korafx.navigation.RouteMeta
 import dev.korafx.navigation.RoutePattern
 import dev.korafx.navigation.NavigationTransitionProfile
+import dev.korafx.navigation.RouteDataController
+import dev.korafx.navigation.RouteTransition
+import dev.korafx.navigation.scaleDuration
 import dev.korafx.navigation.bindContentWithTransition
+import dev.korafx.navigation.routeDataHost
 import dev.korafx.navigation.routeButton
 import dev.korafx.navigation.routeHost
 import dev.korafx.navigation.routeMeta
@@ -52,6 +60,7 @@ import javafx.scene.control.TextField
 import javafx.stage.Stage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -139,6 +148,16 @@ private data class DemoRoute(
             section = RouteSection.Advanced,
         )
 
+        val RouteData = DemoRoute(
+            id = "route-data",
+            title = "Route Data",
+            path = "/route-data",
+            description = "路由级异步数据加载与 loading/error/revalidate。",
+            docResource = "dev/korafx/examples/navigationtheme/docs/route-data.md",
+            sourceResource = "dev/korafx/examples/navigationtheme/snippets/route-data.kt",
+            section = RouteSection.Advanced,
+        )
+
         val all: List<DemoRoute> = listOf(
             Overview,
             PathRouting,
@@ -146,6 +165,7 @@ private data class DemoRoute(
             Guards,
             RouterHost,
             StateRestoration,
+            RouteData,
             Transitions,
         )
 
@@ -170,6 +190,8 @@ class NavigationThemeApp : Application() {
     private val notifications = ToastHost()
     private val blockRouterDemo = MutableStateFlow(true)
     private val transitionPreset = MutableStateFlow(NavigationTransitionProfile.Adaptive)
+    private val transitionEnabled = MutableStateFlow(true)
+    private val transitionDurationScale = MutableStateFlow(1.0)
     private val navigator = Navigator(
         initialRoute = DemoRoute.Overview,
         routes = DemoRoute.all,
@@ -178,8 +200,14 @@ class NavigationThemeApp : Application() {
     private val transitionByState = combine(
         navigator.state,
         transitionPreset,
-    ) { state, profile ->
-        profile.resolve(state.navigationType)
+        transitionEnabled,
+        transitionDurationScale,
+    ) { state, profile, enabled, duration ->
+        if (!enabled) {
+            RouteTransition.None
+        } else {
+            profile.resolve(state.navigationType).scaleDuration(duration)
+        }
     }
 
     init {
@@ -247,6 +275,7 @@ class NavigationThemeApp : Application() {
                     DemoRoute.Guards -> buildGuards()
                     DemoRoute.RouterHost -> buildRouterHost()
                     DemoRoute.StateRestoration -> buildStateRestoration()
+                    DemoRoute.RouteData -> buildRouteData()
                     DemoRoute.Transitions -> buildTransitions()
                 }
             }
@@ -500,6 +529,7 @@ class NavigationThemeApp : Application() {
                 button("Path Routing") { onAction { navigator.navigate(DemoRoute.PathRouting.id) } }
                 button("History") { onAction { navigator.navigate(DemoRoute.History.id) } }
                 button("Guards") { onAction { navigator.navigate(DemoRoute.Guards.id) } }
+                button("Route Data") { onAction { navigator.navigate(DemoRoute.RouteData.id) } }
                 button("Transitions") { onAction { navigator.navigate(DemoRoute.Transitions.id) } }
             }
         }
@@ -514,9 +544,9 @@ class NavigationThemeApp : Application() {
     }
 
     private fun buildPathRouting() {
-        var projectInput: TextField? = null
-        var sectionInput: TextField? = null
-        var tabInput: TextField? = null
+        lateinit var projectInput: TextField
+        lateinit var sectionInput: TextField
+        lateinit var tabInput: TextField
 
         section("路径导航") {
             hbox(spacing = 8.0) {
@@ -525,9 +555,9 @@ class NavigationThemeApp : Application() {
                 tabInput = textField("files")
                 button("Go by path") {
                     onAction {
-                        val project = projectInput?.text?.trim()?.takeIf(String::isNotEmpty) ?: "101"
-                        val section = sectionInput?.text?.trim()?.takeIf(String::isNotEmpty) ?: "overview"
-                        val tab = tabInput?.text?.trim()?.takeIf(String::isNotEmpty)
+                        val project = projectInput.text.trim().takeIf(String::isNotEmpty) ?: "101"
+                        val section = sectionInput.text.trim().takeIf(String::isNotEmpty) ?: "overview"
+                        val tab = tabInput.text.trim().takeIf(String::isNotEmpty)
                         val fullPath =
                             if (tab == null) {
                                 RoutePattern.build("/routes/$project/$section")
@@ -699,7 +729,7 @@ class NavigationThemeApp : Application() {
     }
 
     private fun buildStateRestoration() {
-        var note: TextField? = null
+        lateinit var note: TextField
         section("按 location 保存任意状态") {
             note = textField {
                 promptText = "当前路由 path 维度存储一段文本"
@@ -707,7 +737,7 @@ class NavigationThemeApp : Application() {
             actionBar(alignEnd = false) {
                 button("Save") {
                     onAction {
-                        navigator.saveState("demo-note", note?.text?.trim().orEmpty())
+                        navigator.saveState("demo-note", note.text.trim().ifEmpty { "" })
                         notifications.show(
                             message = "已保存到 location = ${navigator.currentLocation.fullPath}",
                             tone = ToastTone.SUCCESS,
@@ -716,7 +746,7 @@ class NavigationThemeApp : Application() {
                 }
                 button("Load") {
                     onAction {
-                        note?.text = navigator.restoredState<String>("demo-note") ?: ""
+                        note.text = navigator.restoredState<String>("demo-note") ?: ""
                     }
                 }
             }
@@ -725,6 +755,58 @@ class NavigationThemeApp : Application() {
             }
             label("恢复值:").stateText(uiScope, navigator.state) {
                 navigator.restoredState<String>("demo-note", it.currentLocation) ?: "空"
+            }
+        }
+    }
+
+    private fun buildRouteData() {
+        val controller = RouteDataController()
+
+        section("routeDataHost 场景化演示") {
+            actionBar(alignEnd = false) {
+                button("正常加载") {
+                    onAction { navigator.navigatePath("/route-data") }
+                }
+                button("延迟 1.5 秒") {
+                    onAction { navigator.navigatePath("/route-data?delay=1500") }
+                }
+                button("模拟错误") {
+                    onAction { navigator.navigatePath("/route-data?mode=error") }
+                }
+                button("Revalidate") {
+                    onAction { controller.revalidate() }
+                }
+            }
+
+            routeDataHost(
+                scope = uiScope,
+                navigator = navigator,
+                controller = controller,
+                cache = true,
+                init = {
+                    paddingAll(4.0)
+                },
+                load = { context ->
+                    val delayMs = context.query.int("delay") ?: 300
+                    delay(delayMs.coerceIn(80, 3000).toLong())
+                    if (context.query["mode"] == "error") {
+                        throw IllegalStateException("mock loader error")
+                    }
+                    "load-ok:${context.location.fullPath}:${System.currentTimeMillis()}"
+                },
+                loading = { context ->
+                    loadingState("Loading ${context.route.title}...")
+                },
+                failed = { context, error ->
+                    errorState(
+                        title = "${context.route.title} 加载失败",
+                        message = error.message.orEmpty(),
+                    )
+                },
+            ) { _, value ->
+                vbox(10.0) {
+                    label(value)
+                }
             }
         }
     }
@@ -750,6 +832,35 @@ class NavigationThemeApp : Application() {
                 }
                 button("Scale") {
                     onAction { transitionPreset.value = NavigationTransitionProfile.Scale }
+                }
+                button("None") {
+                    onAction { transitionPreset.value = NavigationTransitionProfile.None }
+                }
+            }
+
+            section("转场参数") {
+                hbox(spacing = 12.0) {
+                    checkBox("启用转场") {
+                        isSelected = transitionEnabled.value
+                        selectedProperty().addListener { _, _, selected ->
+                            transitionEnabled.value = selected
+                        }
+                    }
+                    slider(
+                        min = 0.5,
+                        max = 2.0,
+                        value = transitionDurationScale.value,
+                        init = {
+                            prefWidth = 210.0
+                            valueProperty().addListener { _, _, value ->
+                                transitionDurationScale.value = value.toDouble()
+                            }
+                        },
+                    )
+                    label("x1.0")
+                    label("当前倍率：").stateText(uiScope, transitionDurationScale) {
+                        "x${"%.2f".format(it)}"
+                    }
                 }
             }
             actionBar(alignEnd = false) {
