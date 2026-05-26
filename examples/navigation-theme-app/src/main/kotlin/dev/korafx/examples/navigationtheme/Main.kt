@@ -13,6 +13,7 @@ import dev.korafx.components.ToastHost
 import dev.korafx.components.ToastTone
 import dev.korafx.dsl.ghostButton
 import dev.korafx.dsl.hbox
+import dev.korafx.dsl.comboBox
 import dev.korafx.dsl.menuButton
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.paddingAll
@@ -22,6 +23,7 @@ import dev.korafx.dsl.vbox
 import dev.korafx.navigation.Navigator
 import dev.korafx.navigation.PageInstancePolicy
 import dev.korafx.navigation.Route
+import dev.korafx.navigation.RouteTransition
 import dev.korafx.navigation.navigationRail
 import dev.korafx.navigation.routeHost
 import dev.korafx.framework.theme.BuiltInThemes
@@ -36,6 +38,8 @@ import javafx.scene.Scene
 import javafx.stage.Stage
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 fun main(args: Array<String>) {
     Application.launch(NavigationThemeApp::class.java, *args)
@@ -61,6 +65,7 @@ class NavigationThemeApp : Application() {
     private val themeController = SceneThemeController(themeManager)
     private val notifications = ToastHost()
     private val modals = ModalHost()
+    private val transitionMode = MutableStateFlow<TransitionMode>(TransitionMode.Fade)
     private val navigator = Navigator(
         initialRoute = DemoRoute.Dashboard,
         routes = DemoRoute.all,
@@ -90,6 +95,18 @@ class NavigationThemeApp : Application() {
                             }
                         },
                     )
+                    comboBox(
+                        items = TransitionMode.entries.toList(),
+                        init = {
+                            prefWidth = 210.0
+                        },
+                    ) {
+                        render { it.label }
+                        onSelect { mode ->
+                            transitionMode.value = mode ?: TransitionMode.Fade
+                        }
+                        select(transitionMode.value)
+                    }
                 }
             }
             navigation {
@@ -99,6 +116,7 @@ class NavigationThemeApp : Application() {
                 routeHost(
                     scope = uiScope,
                     navigator = navigator,
+                    transition = transitionMode.map { it.transition },
                     init = {
                         paddingAll(24.0)
                     },
@@ -239,6 +257,17 @@ class NavigationThemeApp : Application() {
             message = "Theme switched to ${themeManager.currentTheme().displayName}.",
             tone = ToastTone.SUCCESS,
         )
+    }
+
+    private enum class TransitionMode(
+        val label: String,
+        val transition: RouteTransition,
+    ) {
+        None("None", RouteTransition.None),
+        Fade("Fade", RouteTransition.Fade()),
+        SlideRight("Slide Right", RouteTransition.Slide()),
+        SlideLeft("Slide Left", RouteTransition.Slide(direction = RouteTransition.SlideDirection.START)),
+        Scale("Scale", RouteTransition.Scale()),
     }
 
     override fun stop() {

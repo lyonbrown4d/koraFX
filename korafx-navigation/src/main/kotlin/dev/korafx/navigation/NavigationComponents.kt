@@ -35,9 +35,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import org.kordamp.ikonli.Ikon
+import java.util.concurrent.atomic.AtomicReference
 
 data class NavigationRailItem<R : Route>(
     val route: R,
@@ -381,10 +383,31 @@ fun <R : Route> routeHost(
     transition: RouteTransition = RouteTransition.None,
     init: StackPane.() -> Unit = {},
     content: (route: R) -> Node,
+): StackPane = routeHost(
+    scope = scope,
+    navigator = navigator,
+    transition = flowOf(transition),
+    init = init,
+    content = content,
+)
+
+fun <R : Route> routeHost(
+    scope: CoroutineScope,
+    navigator: Navigator<R>,
+    transition: Flow<RouteTransition>,
+    init: StackPane.() -> Unit = {},
+    content: (route: R) -> Node,
 ): StackPane {
     val cache = linkedMapOf<String, Node>()
     val host = StackPane().apply(init)
     val transitionHost = ContentTransitionHost()
+    val activeTransition = AtomicReference<RouteTransition>(RouteTransition.None)
+
+    scope.launch {
+        transition.collectLatest { nextTransition ->
+            activeTransition.set(nextTransition)
+        }
+    }
 
     navigator.state.collectLatestIn(scope) { state ->
         runOnFxThread {
@@ -397,7 +420,11 @@ fun <R : Route> routeHost(
                     -> cache.getOrPut(route.id) { content(route) }
                 }
 
-            transitionHost.render(host, node, transition)
+            transitionHost.render(
+                host,
+                node,
+                activeTransition.get(),
+            )
         }
     }
 
@@ -410,17 +437,42 @@ fun <R : Route> routerHost(
     transition: RouteTransition = RouteTransition.None,
     init: StackPane.() -> Unit = {},
     content: RouterHostBuilder<R>.() -> Unit,
+): StackPane = routerHost(
+    scope = scope,
+    navigator = navigator,
+    transition = flowOf(transition),
+    init = init,
+    content = content,
+)
+
+fun <R : Route> routerHost(
+    scope: CoroutineScope,
+    navigator: Navigator<R>,
+    transition: Flow<RouteTransition>,
+    init: StackPane.() -> Unit = {},
+    content: RouterHostBuilder<R>.() -> Unit,
 ): StackPane {
     val graph = RouterHostBuilder<R>().apply(content).build()
-    val renderer = RouterHostRenderer(graph, transition)
+    val renderer = RouterHostRenderer(graph)
     val host = StackPane().apply {
         styleClass("router-host")
         init()
     }
+    val activeTransition = AtomicReference<RouteTransition>(RouteTransition.None)
+
+    scope.launch {
+        transition.collectLatest { nextTransition ->
+            activeTransition.set(nextTransition)
+        }
+    }
 
     navigator.state.collectLatestIn(scope) { state ->
         runOnFxThread {
-            renderer.render(host, state)
+            renderer.render(
+                host = host,
+                state = state,
+                transition = activeTransition.get(),
+            )
         }
     }
 
@@ -898,7 +950,6 @@ internal data class RouterLayoutInstance(
 
 internal class RouterHostRenderer<R : Route>(
     private val graph: RouterHostGraph<R>,
-    private val transition: RouteTransition,
 ) {
     private val pageCache = linkedMapOf<String, Node>()
     private val layoutCache = linkedMapOf<Any, RouterLayoutInstance>()
@@ -908,6 +959,7 @@ internal class RouterHostRenderer<R : Route>(
     fun render(
         host: StackPane,
         state: NavigationState<R>,
+        transition: RouteTransition = RouteTransition.None,
     ) {
         val route = state.currentRoute
         val location = state.currentLocation
