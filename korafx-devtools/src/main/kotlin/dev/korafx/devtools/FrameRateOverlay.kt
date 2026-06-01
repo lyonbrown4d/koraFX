@@ -15,6 +15,21 @@ internal data class FrameRateSnapshot(
     val sampleCount: Int,
 )
 
+internal object FrameRateSnapshotBus {
+    @Volatile
+    private var latest: FrameRateSnapshot? = null
+
+    fun record(snapshot: FrameRateSnapshot) {
+        latest = snapshot
+    }
+
+    fun snapshot(): FrameRateSnapshot? = latest
+
+    fun reset() {
+        latest = null
+    }
+}
+
 internal class FpsMeter(
     private val sampleWindow: Int = DefaultSampleWindow,
 ) {
@@ -112,9 +127,11 @@ internal class FrameRateOverlay(
     fun stop() {
         timer.stop()
         meter.reset()
+        FrameRateSnapshotBus.reset()
     }
 
     fun render(snapshot: FrameRateSnapshot) {
+        FrameRateSnapshotBus.record(snapshot)
         fpsLabel.text = "${snapshot.currentFps.roundToInt()} FPS"
         frameTimeLabel.text = "avg ${String.format(Locale.US, "%.1f", snapshot.averageFrameMillis)} ms"
     }

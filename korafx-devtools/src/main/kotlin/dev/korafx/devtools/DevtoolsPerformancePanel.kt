@@ -51,6 +51,8 @@ internal fun createDevtoolsPerformancePanel(
 
         details.text =
             snapshot.renderReport(
+                frameRateLabel = messages.frameRate,
+                avgFrameTimeLabel = messages.avgFrameTime,
                 topRoutes = topRoutesLimit[0],
                 topRoutesLabel = messages.topRoutes,
                 recentSamplesLimit = recentSamplesLimit[0],
@@ -177,12 +179,20 @@ internal fun createDevtoolsPerformancePanel(
 }
 
 private fun RouteRenderMetricsSnapshot.renderReport(
+    frameRateLabel: String,
+    avgFrameTimeLabel: String,
     topRoutes: Int,
     topRoutesLabel: String,
     recentSamplesLimit: Int,
     recentSamplesLabel: String,
 ): String =
     buildString {
+        val frameRate = FrameRateSnapshotBus.snapshot()
+        if (frameRate != null) {
+            appendLine("$frameRateLabel = ${frameRate.currentFps.formatFps()} (samples: ${frameRate.sampleCount})")
+            appendLine("$avgFrameTimeLabel = ${frameRate.averageFrameMillis.formatMs()} ms")
+            appendLine()
+        }
         appendLine("Total render count = $totalRenderCount")
         appendLine("Cache hits = $cacheHitCount")
         appendLine("Cache misses = $cacheMissCount")
@@ -226,6 +236,9 @@ private fun RouteRenderMetricsSnapshot.renderReport(
 
 private fun Double.formatMs(): String =
     String.format(Locale.US, "%.2f", this)
+
+private fun Double.formatFps(): String =
+    String.format(Locale.US, "%.1f", this)
 
 private fun Double.formatPercent(): String =
     String.format(Locale.US, "%.2f%%", this)
