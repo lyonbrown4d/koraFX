@@ -9,9 +9,11 @@ import javafx.scene.control.Label
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
 import javafx.scene.control.ScrollBar
+import javafx.scene.control.Skin
 import javafx.scene.layout.VBox
 import javafx.util.Callback
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 class VirtualList<T>(
@@ -42,6 +44,8 @@ class VirtualList<T>(
     private val loadTriggerRatio = 0.87
     private var verticalScrollBar: ScrollBar? = null
     private var verticalScrollListener: ChangeListener<Number>? = null
+    private var skinListener: ChangeListener<Skin<*>?>? = null
+    private var disposed = false
 
     val listView: ListView<T> = ListView<T>()
     val selectionModel: VirtualListSelectionModel<T> = VirtualListSelectionModel(listView)
@@ -125,6 +129,10 @@ class VirtualList<T>(
     }
 
     fun reload() {
+        if (disposed) {
+            return
+        }
+
         requestEpoch++
         reachedEnd = false
         loading = false
@@ -166,11 +174,13 @@ class VirtualList<T>(
     }
 
     private fun attachScrollListener() {
-        listView.skinProperty().addListener { _, _, skin ->
+        val listener = ChangeListener<Skin<*>?> { _, _, skin ->
             if (skin != null) {
                 maybeAttachScrollListener()
             }
         }
+        skinListener = listener
+        listView.skinProperty().addListener(listener)
         maybeAttachScrollListener()
     }
 
@@ -207,6 +217,10 @@ class VirtualList<T>(
     }
 
     private fun requestNextPage() {
+        if (disposed) {
+            return
+        }
+
         if (!canLoadMore()) {
             return
         }
@@ -221,7 +235,7 @@ class VirtualList<T>(
             try {
                 val batch = dataLoader(offset.toLong(), pageSizeValue).toList()
                 Platform.runLater {
-                    if (!isCurrentEpoch(epoch)) {
+                    if (disposed || !isCurrentEpoch(epoch)) {
                         return@runLater
                     }
 
@@ -232,7 +246,7 @@ class VirtualList<T>(
                 }
             } catch (error: Throwable) {
                 Platform.runLater {
-                    if (!isCurrentEpoch(epoch)) {
+                    if (disposed || !isCurrentEpoch(epoch)) {
                         return@runLater
                     }
 
@@ -282,6 +296,10 @@ class VirtualList<T>(
     private fun isCurrentEpoch(epoch: Int): Boolean = epoch == requestEpoch
 
     private fun refreshPlaceholder() {
+        if (disposed) {
+            return
+        }
+
         listView.placeholder =
             when {
                 lastError != null && items.isEmpty() -> errorPlaceholder
@@ -289,5 +307,35 @@ class VirtualList<T>(
                 items.isEmpty() -> emptyPlaceholder
                 else -> null
             }
+    }
+
+    fun dispose() {
+        if (disposed) {
+            return
+        }
+
+        disposed = true
+        loading = false
+        requestEpoch++
+
+        skinListener?.let { listener ->
+            listView.skinProperty().removeListener(listener)
+        }
+        skinListener = null
+
+        verticalScrollBar?.let { bar ->
+            verticalScrollListener?.let { bar.valueProperty().removeListener(it) }
+        }
+        verticalScrollBar = null
+        verticalScrollListener = null
+
+        executor.shutdownNow()
+        if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+            executor.shutdownNow()
+        }
+
+        lastError = null
+        items.clear()
+        listView.placeholder = null
     }
 }

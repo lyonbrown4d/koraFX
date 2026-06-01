@@ -8,12 +8,14 @@ import javafx.geometry.Orientation
 import javafx.scene.Node
 import javafx.scene.control.Label
 import javafx.scene.control.ScrollBar
+import javafx.scene.control.Skin
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
 import javafx.scene.layout.StackPane
 import javafx.scene.layout.VBox
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 class VirtualTable<T>(
@@ -39,6 +41,8 @@ class VirtualTable<T>(
     private val loadTriggerRatio = 0.87
     private var verticalScrollBar: ScrollBar? = null
     private var verticalScrollListener: ChangeListener<Number>? = null
+    private var skinListener: ChangeListener<Skin<*>?>? = null
+    private var disposed = false
 
     val tableView: TableView<T> = TableView<T>()
     val selectionModel: VirtualTableSelectionModel<T> = VirtualTableSelectionModel(tableView)
@@ -91,6 +95,10 @@ class VirtualTable<T>(
     fun loadMore() { requestNextPage() }
 
     fun reload() {
+        if (disposed) {
+            return
+        }
+
         requestEpoch++
         reachedEnd = false
         loading = false
@@ -171,11 +179,13 @@ class VirtualTable<T>(
         }
 
     private fun attachScrollListener() {
-        tableView.skinProperty().addListener { _, _, skin ->
+        val listener = ChangeListener<Skin<*>?> { _, _, skin ->
             if (skin != null) {
                 maybeAttachScrollListener()
             }
         }
+        skinListener = listener
+        tableView.skinProperty().addListener(listener)
         maybeAttachScrollListener()
     }
 
@@ -212,6 +222,10 @@ class VirtualTable<T>(
     }
 
     private fun requestNextPage() {
+        if (disposed) {
+            return
+        }
+
         if (!canLoadMore()) {
             return
         }
@@ -226,7 +240,7 @@ class VirtualTable<T>(
             try {
                 val batch = dataLoader(offset.toLong(), pageSizeValue).toList()
                 Platform.runLater {
-                    if (!isCurrentEpoch(epoch)) {
+                    if (disposed || !isCurrentEpoch(epoch)) {
                         return@runLater
                     }
 
@@ -237,7 +251,7 @@ class VirtualTable<T>(
                 }
             } catch (error: Throwable) {
                 Platform.runLater {
-                    if (!isCurrentEpoch(epoch)) {
+                    if (disposed || !isCurrentEpoch(epoch)) {
                         return@runLater
                     }
 
@@ -287,6 +301,10 @@ class VirtualTable<T>(
     private fun isCurrentEpoch(epoch: Int): Boolean = epoch == requestEpoch
 
     private fun refreshPlaceholder() {
+        if (disposed) {
+            return
+        }
+
         tableView.placeholder =
             when {
                 lastError != null && items.isEmpty() -> errorPlaceholder
@@ -294,5 +312,35 @@ class VirtualTable<T>(
                 items.isEmpty() -> emptyPlaceholder
                 else -> null
             }
+    }
+
+    fun dispose() {
+        if (disposed) {
+            return
+        }
+
+        disposed = true
+        loading = false
+        requestEpoch++
+
+        skinListener?.let { listener ->
+            tableView.skinProperty().removeListener(listener)
+        }
+        skinListener = null
+
+        verticalScrollBar?.let { bar ->
+            verticalScrollListener?.let { bar.valueProperty().removeListener(it) }
+        }
+        verticalScrollBar = null
+        verticalScrollListener = null
+
+        executor.shutdownNow()
+        if (!executor.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+            executor.shutdownNow()
+        }
+
+        lastError = null
+        items.clear()
+        tableView.placeholder = null
     }
 }

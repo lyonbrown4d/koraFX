@@ -2,15 +2,33 @@ package dev.korafx.navigation
 
 import dev.korafx.dsl.styleClass
 import javafx.scene.Node
+import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
+import java.util.LinkedHashMap
 
 internal class RouterHostRenderer<R : Route>(
     private val graph: RouterHostGraph<R>,
 ) {
-    private val pageCache = linkedMapOf<String, Node>()
+    private val pageCache = object : LinkedHashMap<String, Node>(RouterHostPageCacheSize, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Node>): Boolean {
+            if (size <= RouterHostPageCacheSize) {
+                return false
+            }
+
+            detachFromParent(eldest.value)
+            return true
+        }
+    }
     private val layoutCache = linkedMapOf<Any, RouterLayoutInstance>()
     private val transitionHost = ContentTransitionHost()
     private var activeNode: Node? = null
+
+    private fun detachFromParent(node: Node) {
+        val parent = node.parent
+        if (parent is Pane && parent.children.contains(node)) {
+            parent.children.remove(node)
+        }
+    }
 
     fun render(
         host: StackPane,
@@ -136,3 +154,5 @@ internal class RouterHostRenderer<R : Route>(
         }
     }
 }
+
+private const val RouterHostPageCacheSize = 64

@@ -30,6 +30,7 @@ fun <R : Route, T> routeDataHost(
     controller: RouteDataController = RouteDataController(),
     cache: Boolean = false,
     cacheKey: (context: RouterViewContext<R>) -> Any = { context -> context.location.fullPath },
+    cacheSize: Int = RouteDataCacheSize,
     load: suspend (context: RouterViewContext<R>) -> T,
     loading: (context: RouterViewContext<R>) -> Node = { context ->
         loadingState("Loading ${context.route.title}...")
@@ -46,7 +47,12 @@ fun <R : Route, T> routeDataHost(
         styleClass("route-data-host")
         init()
     }
-    val dataCache = linkedMapOf<Any, T>()
+    val resolvedCacheSize = cacheSize.coerceAtLeast(1)
+    val boundedCache = object : LinkedHashMap<Any, T>(resolvedCacheSize, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Any, T>): Boolean {
+            return size > resolvedCacheSize
+        }
+    }
 
     navigator.state.collectLatestIn(scope) { state ->
         val context = RouterViewContext(
@@ -56,7 +62,7 @@ fun <R : Route, T> routeDataHost(
 
         controller.requests.onStart { emit(RouteDataRequest.Initial) }.collectLatest { request ->
             val key = cacheKey(context)
-            val cachedValue = dataCache[key]
+                val cachedValue = boundedCache[key]
 
             if (cache && request != RouteDataRequest.Revalidate && cachedValue != null) {
                 runNavigationOnFxThread {
@@ -72,7 +78,7 @@ fun <R : Route, T> routeDataHost(
             try {
                 val value = load(context)
                 if (cache) {
-                    dataCache[key] = value
+                    boundedCache[key] = value
                 }
                 runNavigationOnFxThread {
                     host.children.setAll(content(context, value))
@@ -106,6 +112,8 @@ internal enum class RouteDataRequest {
     Initial,
     Revalidate,
 }
+
+private const val RouteDataCacheSize = 64
 
 fun <R : Route, T> routeStateHost(
     scope: CoroutineScope,

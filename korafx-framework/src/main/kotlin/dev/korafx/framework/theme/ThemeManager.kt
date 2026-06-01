@@ -11,7 +11,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
+import java.nio.file.Path
 import java.nio.file.Files
+import java.util.LinkedHashMap
 
 object BuiltInThemes {
     private val desktopTypography = TypographyTokens(
@@ -254,7 +256,22 @@ class SceneThemeController(
     private val themeManager: ThemeManager,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.JavaFx)
-    private val cache = linkedMapOf<String, String>()
+    private val stylesheetCache = object : LinkedHashMap<String, Path>(
+        SceneThemeCacheSize,
+        0.75f,
+        true,
+    ) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Path>): Boolean {
+            if (size <= SceneThemeCacheSize) {
+                return false
+            }
+
+            runCatching {
+                Files.deleteIfExists(eldest.value)
+            }
+            return true
+        }
+    }
 
     fun bind(scene: Scene) {
         if (!scene.root.styleClass.contains(ThemeStyleClass.Root)) {
@@ -263,23 +280,31 @@ class SceneThemeController(
 
         scope.launch {
             themeManager.theme.collectLatest { theme ->
-                val stylesheetUri = cache.getOrPut(theme.cacheKey()) { writeStylesheet(theme) }
-                scene.stylesheets.setAll(stylesheetUri)
+                val stylesheetUri = stylesheetCache.getOrPut(theme.cacheKey()) { writeStylesheet(theme) }
+                stylesheetUri.toFile().deleteOnExit()
+                scene.stylesheets.setAll(stylesheetUri.toUri().toString())
             }
         }
     }
 
-    private fun writeStylesheet(theme: KoraTheme): String {
+    private fun writeStylesheet(theme: KoraTheme): Path {
         val file = Files.createTempFile("korafx-${theme.id}-", ".css")
         Files.writeString(file, ThemeStylesheetFactory.render(theme))
-        file.toFile().deleteOnExit()
-        return file.toUri().toString()
+        return file
     }
 
     fun dispose() {
         scope.cancel()
+        stylesheetCache.values.forEach { path ->
+            runCatching {
+                Files.deleteIfExists(path)
+            }
+        }
+        stylesheetCache.clear()
     }
 }
 
 private fun KoraTheme.cacheKey(): String =
     "${id}:${tokens.hashCode()}"
+
+private const val SceneThemeCacheSize = 16
