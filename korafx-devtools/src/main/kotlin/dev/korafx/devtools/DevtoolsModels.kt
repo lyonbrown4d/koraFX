@@ -41,6 +41,8 @@ internal fun KoraDevtoolsPanel.toRoute(messages: DevtoolsMessages): DevtoolsRout
             DevtoolsRoute("navigation", messages.navigation, this, BootstrapIcons.SIGNPOST_SPLIT)
         KoraDevtoolsPanel.Theme ->
             DevtoolsRoute("theme", messages.theme, this, BootstrapIcons.PALETTE)
+        KoraDevtoolsPanel.Performance ->
+            DevtoolsRoute("performance", messages.performance, this, BootstrapIcons.SPEEDOMETER2)
     }
 
 internal data class DevtoolsMessages(
@@ -52,6 +54,7 @@ internal data class DevtoolsMessages(
     val inspector: String,
     val navigation: String,
     val theme: String,
+    val performance: String,
     val dockLeft: String,
     val dockRight: String,
     val dockBottom: String,
@@ -76,6 +79,7 @@ internal data class DevtoolsMessages(
     val backStack: String,
     val forwardStack: String,
     val noNodeSelected: String,
+    val noPerformanceData: String,
     val nodeType: String,
     val nodeId: String,
     val nodeStyleClass: String,
@@ -122,6 +126,7 @@ internal data class DevtoolsMessages(
                 inspector = "Inspector",
                 navigation = "Navigation",
                 theme = "Theme",
+                performance = "Performance",
                 dockLeft = "Left",
                 dockRight = "Right",
                 dockBottom = "Bottom",
@@ -146,6 +151,7 @@ internal data class DevtoolsMessages(
                 backStack = "backStack",
                 forwardStack = "forwardStack",
                 noNodeSelected = "No node selected.",
+                noPerformanceData = "No render metrics yet.",
                 nodeType = "type",
                 nodeId = "id",
                 nodeStyleClass = "styleClass",
@@ -173,6 +179,7 @@ internal data class DevtoolsMessages(
                 inspector = "检查器",
                 navigation = "导航",
                 theme = "主题",
+                performance = "性能",
                 dockLeft = "左侧",
                 dockRight = "右侧",
                 dockBottom = "底部",
@@ -197,6 +204,7 @@ internal data class DevtoolsMessages(
                 backStack = "后退栈",
                 forwardStack = "前进栈",
                 noNodeSelected = "未选择节点。",
+                noPerformanceData = "尚无渲染指标数据。",
                 nodeType = "类型",
                 nodeId = "id",
                 nodeStyleClass = "样式类",

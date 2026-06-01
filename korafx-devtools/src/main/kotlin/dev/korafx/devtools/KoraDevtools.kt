@@ -46,6 +46,7 @@ class KoraDevtoolsBuilder {
                     KoraDevtoolsPanel.Inspector,
                     KoraDevtoolsPanel.Navigation,
                     KoraDevtoolsPanel.Theme,
+                    KoraDevtoolsPanel.Performance,
                 )
             }.toList(),
         )
@@ -68,6 +69,10 @@ class KoraDevtoolsPanelsBuilder {
 
     fun theme() {
         panels += KoraDevtoolsPanel.Theme
+    }
+
+    fun performance() {
+        panels += KoraDevtoolsPanel.Performance
     }
 
     internal fun build(): Set<KoraDevtoolsPanel> = panels
@@ -93,6 +98,7 @@ sealed class KoraDevtoolsPanel(
     data object Inspector : KoraDevtoolsPanel("Inspector")
     data object Navigation : KoraDevtoolsPanel("Navigation")
     data object Theme : KoraDevtoolsPanel("Theme")
+    data object Performance : KoraDevtoolsPanel("Performance")
 }
 
 internal data class KoraDevtoolsSpec(

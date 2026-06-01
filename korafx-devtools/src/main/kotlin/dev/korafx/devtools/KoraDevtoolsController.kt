@@ -4,6 +4,8 @@ import dev.korafx.dsl.scene
 import dev.korafx.dsl.splitPane
 import dev.korafx.dsl.stage
 import dev.korafx.dsl.styleClass
+import dev.korafx.navigation.RouteRenderMetricsCollector
+import dev.korafx.navigation.routeRenderMetricsBus
 import dev.korafx.framework.KoraApplication
 import dev.korafx.framework.theme.SceneThemeController
 import dev.korafx.framework.theme.ThemeStyleClass
@@ -23,6 +25,7 @@ internal class KoraDevtoolsController(
     private val messages: DevtoolsMessages,
     private val selection: DevtoolsSelectionModel,
     private val highlighter: NodeHighlighter,
+    private val metricsCollector: RouteRenderMetricsCollector,
 ) : DevtoolsActions {
     private var stage: Stage? = null
     private var currentPlacement: KoraDevtoolsPlacement = spec.placement
@@ -103,6 +106,7 @@ internal class KoraDevtoolsController(
     }
 
     private fun open() {
+        routeRenderMetricsBus.install(metricsCollector)
         when (currentPlacement) {
             KoraDevtoolsPlacement.LEFT,
             KoraDevtoolsPlacement.RIGHT,
@@ -113,6 +117,7 @@ internal class KoraDevtoolsController(
     }
 
     private fun close() {
+        routeRenderMetricsBus.install(null)
         inspector.stopPicking()
         when (currentPlacement) {
             KoraDevtoolsPlacement.LEFT,

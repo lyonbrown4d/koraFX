@@ -29,6 +29,7 @@ internal class DevtoolsPanels(
             KoraDevtoolsPanel.Inspector -> createInspectorPanel()
             KoraDevtoolsPanel.Navigation -> createDevtoolsNavigationPanel(app, messages, jobSink)
             KoraDevtoolsPanel.Theme -> createDevtoolsThemePanel(app, messages, jobSink)
+            KoraDevtoolsPanel.Performance -> createDevtoolsPerformancePanel(app, messages, jobSink)
         }
 
     private fun createSceneGraphPanel(): Node {

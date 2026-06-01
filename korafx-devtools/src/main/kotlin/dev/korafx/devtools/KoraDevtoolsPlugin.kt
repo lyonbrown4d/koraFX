@@ -2,6 +2,7 @@ package dev.korafx.devtools
 
 import dev.korafx.framework.KoraApplication
 import dev.korafx.framework.KoraApplicationPlugin
+import dev.korafx.navigation.RouteRenderMetricsCollector
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -41,6 +42,7 @@ private fun devtoolsModule(
     single { DevtoolsMessages.forLanguage(spec.language) }
     single { DevtoolsSelectionModel() }
     single { NodeHighlighter(app.stage) }
+    single { RouteRenderMetricsCollector() }
     single {
         KoraDevtoolsController(
             app = get(),
@@ -48,6 +50,7 @@ private fun devtoolsModule(
             messages = get(),
             selection = get(),
             highlighter = get(),
+            metricsCollector = get(),
         )
     }
 }
