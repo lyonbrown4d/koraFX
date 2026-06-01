@@ -1,6 +1,7 @@
 package dev.korafx.devtools
 
 import dev.korafx.dsl.borderPane
+import dev.korafx.dsl.checkBox
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.textArea
 import dev.korafx.framework.KoraApplication
@@ -13,13 +14,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
+import dev.korafx.dsl.intSpinner
+import dev.korafx.dsl.label
 import java.util.Locale
+import kotlin.math.max
 
 internal fun createDevtoolsPerformancePanel(
     app: KoraApplication,
     messages: DevtoolsMessages,
     jobSink: (Job) -> Unit,
 ): Node {
+    val autoRefreshState = booleanArrayOf(true)
+    val refreshIntervalMs = intArrayOf(500)
+    val topRoutesLimit = intArrayOf(12)
     val details = textArea {
         isEditable = false
         isWrapText = false
@@ -32,33 +39,85 @@ internal fun createDevtoolsPerformancePanel(
             return
         }
 
-        details.text = snapshot.renderReport()
+        details.text = snapshot.renderReport(topRoutesLimit[0], messages.topRoutes)
+    }
+
+    fun refresh() {
+        render(routeRenderMetricsBus.snapshot())
+    }
+
+    val autoRefresh = checkBox(messages.autoRefresh) {
+        isSelected = true
+        selectedProperty().addListener { _, _, selected ->
+            autoRefreshState[0] = selected
+            if (!selected) {
+                refresh()
+            }
+        }
+    }
+
+    val refreshInterval = intSpinner(
+        min = 100,
+        max = 5000,
+        initialValue = refreshIntervalMs[0],
+        amountToStepBy = 100,
+    ) {
+        isEditable = true
+        prefWidth = 72.0
+        valueProperty().addListener { _, _, value ->
+            val nextValue = value?.let { max(100, it) } ?: refreshIntervalMs[0]
+            refreshIntervalMs[0] = nextValue
+            refresh()
+        }
+    }
+
+    val topRoutes = intSpinner(
+        min = 3,
+        max = 200,
+        initialValue = topRoutesLimit[0],
+        amountToStepBy = 1,
+    ) {
+        isEditable = true
+        prefWidth = 56.0
+        valueProperty().addListener { _, _, value ->
+            val nextValue = value?.coerceAtLeast(1) ?: topRoutesLimit[0]
+            topRoutesLimit[0] = nextValue
+            refresh()
+        }
     }
 
     jobSink(
         app.uiScope.launch {
             while (isActive) {
-                render(routeRenderMetricsBus.snapshot())
-                delay(500)
+                if (autoRefreshState[0]) {
+                    render(routeRenderMetricsBus.snapshot())
+                }
+                delay(refreshIntervalMs[0].toLong())
             }
         },
     )
-    render(routeRenderMetricsBus.snapshot())
+    refresh()
 
     return borderPane {
         top {
             devtoolsToolbar(messages.performance) {
+                add(autoRefresh)
+                add(label(messages.refreshIntervalMs))
+                add(refreshInterval)
+                add(label(messages.topRoutes))
+                add(topRoutes)
+                spacer()
                 button(messages.refresh) {
                     setKoraIcon(BootstrapIcons.ARROW_CLOCKWISE)
                     onAction {
-                        render(routeRenderMetricsBus.snapshot())
+                        refresh()
                     }
                 }
                 button(messages.clear) {
                     setKoraIcon(BootstrapIcons.X_CIRCLE)
                     onAction {
                         routeRenderMetricsBus.reset()
-                        render(routeRenderMetricsBus.snapshot())
+                        refresh()
                     }
                 }
             }
@@ -67,7 +126,7 @@ internal fun createDevtoolsPerformancePanel(
     }
 }
 
-private fun RouteRenderMetricsSnapshot.renderReport(): String =
+private fun RouteRenderMetricsSnapshot.renderReport(topRoutes: Int, topRoutesLabel: String): String =
     buildString {
         appendLine("Total render count = $totalRenderCount")
         appendLine("Cache hits = $cacheHitCount")
@@ -82,9 +141,12 @@ private fun RouteRenderMetricsSnapshot.renderReport(): String =
         appendLine("Last route = ${lastRouteTitle ?: "-"}")
         appendLine("Last route id = ${lastRouteId ?: "-"}")
         appendLine()
-        appendLine("Top routes")
+        appendLine("$topRoutesLabel (${
+            routeSummaries
+                .size
+        })")
         routeSummaries
-            .take(12)
+            .take(topRoutes.coerceAtLeast(1))
             .forEachIndexed { index, summary ->
                 appendLine("${index + 1}. ${summary.routeTitle} (${summary.routePath})")
                 appendLine("    id = ${summary.routeId}")
