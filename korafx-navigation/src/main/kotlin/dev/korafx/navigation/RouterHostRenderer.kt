@@ -1,24 +1,26 @@
 package dev.korafx.navigation
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.RemovalListener
 import dev.korafx.dsl.styleClass
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
-import java.util.LinkedHashMap
+import javafx.application.Platform
 
 internal class RouterHostRenderer<R : Route>(
     private val graph: RouterHostGraph<R>,
 ) {
-    private val pageCache = object : LinkedHashMap<String, Node>(RouterHostPageCacheSize, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Node>): Boolean {
-            if (size <= RouterHostPageCacheSize) {
-                return false
-            }
-
-            detachFromParent(eldest.value)
-            return true
-        }
-    }
+    private val pageCache = Caffeine.newBuilder()
+        .maximumSize(RouterHostPageCacheSize.toLong())
+        .removalListener(
+            RemovalListener<String, Node> { _, node, _ ->
+                if (node != null) {
+                    Platform.runLater { detachFromParent(node) }
+                }
+            },
+        )
+        .build<String, Node>()
     private val layoutCache = linkedMapOf<Any, RouterLayoutInstance>()
     private val transitionHost = ContentTransitionHost()
     private var activeNode: Node? = null
@@ -150,7 +152,7 @@ internal class RouterHostRenderer<R : Route>(
             PageInstancePolicy.RECREATE -> content(context)
             PageInstancePolicy.KEEP_ALIVE,
             PageInstancePolicy.SINGLETON_IN_WINDOW,
-            -> pageCache.getOrPut("${location.fullPath}@$outletName") { content(context) }
+            -> pageCache.get("${location.fullPath}@$outletName") { content(context) }
         }
     }
 }

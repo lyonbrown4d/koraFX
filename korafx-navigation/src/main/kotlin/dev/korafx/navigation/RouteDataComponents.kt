@@ -3,6 +3,8 @@
 
 package dev.korafx.navigation
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import dev.korafx.components.emptyState
 import dev.korafx.components.errorState
 import dev.korafx.components.loadingState
@@ -23,7 +25,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onStart
 
-fun <R : Route, T> routeDataHost(
+fun <R : Route, T : Any> routeDataHost(
     scope: CoroutineScope,
     navigator: Navigator<R>,
     init: StackPane.() -> Unit = {},
@@ -48,10 +50,12 @@ fun <R : Route, T> routeDataHost(
         init()
     }
     val resolvedCacheSize = cacheSize.coerceAtLeast(1)
-    val boundedCache = object : LinkedHashMap<Any, T>(resolvedCacheSize, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Any, T>): Boolean {
-            return size > resolvedCacheSize
-        }
+    val boundedCache: Cache<Any, T>? = if (cache) {
+        Caffeine.newBuilder()
+            .maximumSize(resolvedCacheSize.toLong())
+            .build()
+    } else {
+        null
     }
 
     navigator.state.collectLatestIn(scope) { state ->
@@ -62,7 +66,7 @@ fun <R : Route, T> routeDataHost(
 
         controller.requests.onStart { emit(RouteDataRequest.Initial) }.collectLatest { request ->
             val key = cacheKey(context)
-                val cachedValue = boundedCache[key]
+            val cachedValue = boundedCache?.getIfPresent(key)
 
             if (cache && request != RouteDataRequest.Revalidate && cachedValue != null) {
                 runNavigationOnFxThread {
@@ -78,7 +82,7 @@ fun <R : Route, T> routeDataHost(
             try {
                 val value = load(context)
                 if (cache) {
-                    boundedCache[key] = value
+                    boundedCache?.put(key, value)
                 }
                 runNavigationOnFxThread {
                     host.children.setAll(content(context, value))

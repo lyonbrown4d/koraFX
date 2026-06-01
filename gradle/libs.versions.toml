@@ -9,6 +9,7 @@ ikonli = "12.4.0"
 maven-publish = "0.36.0"
 dotenv = "4.0.0"
 testfx = "4.0.18"
+caffeine = "3.2.2"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test" }
@@ -22,6 +23,7 @@ ikonli-javafx = { module = "org.kordamp.ikonli:ikonli-javafx", version.ref = "ik
 ikonli-bootstrapicons-pack = { module = "org.kordamp.ikonli:ikonli-bootstrapicons-pack", version.ref = "ikonli" }
 testfx-core = { module = "org.testfx:testfx-core", version.ref = "testfx" }
 testfx-junit5 = { module = "org.testfx:testfx-junit5", version.ref = "testfx" }
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

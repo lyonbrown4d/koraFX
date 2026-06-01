@@ -3,8 +3,11 @@
 
 package dev.korafx.navigation
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.RemovalListener
 import dev.korafx.dsl.state.collectLatestIn
 import dev.korafx.dsl.styleClass
+import javafx.application.Platform
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import javafx.scene.layout.StackPane
@@ -14,7 +17,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicReference
-import java.util.LinkedHashMap
 
 fun <R : Route> routeHost(
     scope: CoroutineScope,
@@ -44,16 +46,17 @@ fun <R : Route> routeHost(
         }
     }
 
-    val cache = object : LinkedHashMap<String, Node>(RouteHostCacheSize, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Node>): Boolean {
-            if (size <= RouteHostCacheSize) {
-                return false
-            }
+    val cache = Caffeine.newBuilder()
+        .maximumSize(RouteHostCacheSize.toLong())
+        .removalListener(
+            RemovalListener<String, Node> { _, node, _ ->
+                if (node != null) {
+                    Platform.runLater { detachFromParent(node) }
+                }
+            },
+        )
+        .build<String, Node>()
 
-            detachFromParent(eldest.value)
-            return true
-        }
-    }
     val host = StackPane().apply(init)
     val transitionHost = ContentTransitionHost()
     val activeTransition = AtomicReference<RouteTransition>(RouteTransition.None)
@@ -72,7 +75,7 @@ fun <R : Route> routeHost(
                     PageInstancePolicy.RECREATE -> content(route)
                     PageInstancePolicy.KEEP_ALIVE,
                     PageInstancePolicy.SINGLETON_IN_WINDOW,
-                    -> cache.getOrPut(route.id) { content(route) }
+                    -> cache.get(route.id) { content(route) }
                 }
 
             transitionHost.render(

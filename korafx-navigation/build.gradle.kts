@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":korafx-components"))
     api(libs.ikonli.javafx)
     api(libs.kotlinx.coroutines.core)
+    implementation(libs.caffeine)
     testImplementation(project(":korafx-test"))
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.kotlinx.coroutines.test)

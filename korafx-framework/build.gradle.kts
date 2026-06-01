@@ -19,6 +19,7 @@ dependencies {
     api(libs.koin.core)
     api(libs.kotlinx.coroutines.core)
     api(libs.kotlinx.coroutines.javafx)
+    implementation(libs.caffeine)
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.kotlinx.coroutines.test)
 }

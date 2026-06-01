@@ -1,5 +1,8 @@
 package dev.korafx.framework.theme
 
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.RemovalCause
 import javafx.scene.Scene
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +16,7 @@ import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import java.nio.file.Path
 import java.nio.file.Files
-import java.util.LinkedHashMap
+import java.time.Duration
 
 object BuiltInThemes {
     private val desktopTypography = TypographyTokens(
@@ -256,20 +259,21 @@ class SceneThemeController(
     private val themeManager: ThemeManager,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.JavaFx)
-    private val stylesheetCache = object : LinkedHashMap<String, Path>(
-        SceneThemeCacheSize,
-        0.75f,
-        true,
-    ) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Path>): Boolean {
-            if (size <= SceneThemeCacheSize) {
-                return false
+    private val stylesheetCache: Cache<String, Path> = Caffeine.newBuilder()
+        .maximumSize(SceneThemeCacheSize.toLong())
+        .expireAfterAccess(Duration.ofMinutes(SceneThemeExpireMinutes))
+        .removalListener<String, Path> { _, path, cause ->
+            if (cause != RemovalCause.SIZE && cause != RemovalCause.EXPLICIT) {
+                runCatching {
+                    Files.deleteIfExists(path)
+                }
             }
+        }
+        .build()
 
-            runCatching {
-                Files.deleteIfExists(eldest.value)
-            }
-            return true
+    init {
+        if (SceneThemeCacheSize < 1) {
+            throw IllegalArgumentException("SceneThemeCacheSize must be positive.")
         }
     }
 
@@ -280,7 +284,7 @@ class SceneThemeController(
 
         scope.launch {
             themeManager.theme.collectLatest { theme ->
-                val stylesheetUri = stylesheetCache.getOrPut(theme.cacheKey()) { writeStylesheet(theme) }
+                val stylesheetUri = stylesheetCache.get(theme.cacheKey()) { writeStylesheet(theme) }
                 stylesheetUri.toFile().deleteOnExit()
                 scene.stylesheets.setAll(stylesheetUri.toUri().toString())
             }
@@ -295,12 +299,12 @@ class SceneThemeController(
 
     fun dispose() {
         scope.cancel()
-        stylesheetCache.values.forEach { path ->
+        stylesheetCache.asMap().values.forEach { path ->
             runCatching {
                 Files.deleteIfExists(path)
             }
         }
-        stylesheetCache.clear()
+        stylesheetCache.invalidateAll()
     }
 }
 
@@ -308,3 +312,4 @@ private fun KoraTheme.cacheKey(): String =
     "${id}:${tokens.hashCode()}"
 
 private const val SceneThemeCacheSize = 16
+private const val SceneThemeExpireMinutes = 10L
