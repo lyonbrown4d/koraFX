@@ -1,23 +1,32 @@
 package dev.korafx.devtools
 
+import dev.korafx.components.setKoraIcon
 import dev.korafx.dsl.borderPane
 import dev.korafx.dsl.checkBox
+import dev.korafx.dsl.intSpinner
+import dev.korafx.dsl.label
 import dev.korafx.dsl.onAction
 import dev.korafx.dsl.textArea
 import dev.korafx.framework.KoraApplication
 import dev.korafx.navigation.RouteRenderMetricsSnapshot
+import dev.korafx.navigation.RouteRenderHistorySample
 import dev.korafx.navigation.routeRenderMetricsBus
-import dev.korafx.components.setKoraIcon
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javafx.scene.Node
+import javafx.scene.input.Clipboard
+import javafx.scene.input.ClipboardContent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
-import dev.korafx.dsl.intSpinner
-import dev.korafx.dsl.label
-import java.util.Locale
 import kotlin.math.max
+import org.kordamp.ikonli.bootstrapicons.BootstrapIcons
+
+private val timeFormatter =
+    DateTimeFormatter.ofPattern("HH:mm:ss.SSS")
 
 internal fun createDevtoolsPerformancePanel(
     app: KoraApplication,
@@ -27,6 +36,7 @@ internal fun createDevtoolsPerformancePanel(
     val autoRefreshState = booleanArrayOf(true)
     val refreshIntervalMs = intArrayOf(500)
     val topRoutesLimit = intArrayOf(12)
+    val recentSamplesLimit = intArrayOf(20)
     val details = textArea {
         isEditable = false
         isWrapText = false
@@ -39,11 +49,29 @@ internal fun createDevtoolsPerformancePanel(
             return
         }
 
-        details.text = snapshot.renderReport(topRoutesLimit[0], messages.topRoutes)
+        details.text =
+            snapshot.renderReport(
+                topRoutes = topRoutesLimit[0],
+                topRoutesLabel = messages.topRoutes,
+                recentSamplesLimit = recentSamplesLimit[0],
+                recentSamplesLabel = messages.recentSamples,
+            )
     }
 
     fun refresh() {
         render(routeRenderMetricsBus.snapshot())
+    }
+
+    fun copyReport() {
+        val text = details.text
+        if (text.isBlank()) {
+            return
+        }
+        val clipboard = Clipboard.getSystemClipboard()
+        val content = ClipboardContent().apply {
+            putString(text)
+        }
+        clipboard.setContent(content)
     }
 
     val autoRefresh = checkBox(messages.autoRefresh) {
@@ -86,6 +114,21 @@ internal fun createDevtoolsPerformancePanel(
         }
     }
 
+    val recentSamples = intSpinner(
+        min = 5,
+        max = 120,
+        initialValue = recentSamplesLimit[0],
+        amountToStepBy = 1,
+    ) {
+        isEditable = true
+        prefWidth = 56.0
+        valueProperty().addListener { _, _, value ->
+            val nextValue = value?.coerceIn(5, 120) ?: recentSamplesLimit[0]
+            recentSamplesLimit[0] = nextValue
+            refresh()
+        }
+    }
+
     jobSink(
         app.uiScope.launch {
             while (isActive) {
@@ -106,11 +149,18 @@ internal fun createDevtoolsPerformancePanel(
                 add(refreshInterval)
                 add(label(messages.topRoutes))
                 add(topRoutes)
+                add(label(messages.historyLimit))
+                add(recentSamples)
                 spacer()
                 button(messages.refresh) {
                     setKoraIcon(BootstrapIcons.ARROW_CLOCKWISE)
                     onAction {
                         refresh()
+                    }
+                }
+                button(messages.copy) {
+                    onAction {
+                        copyReport()
                     }
                 }
                 button(messages.clear) {
@@ -126,11 +176,17 @@ internal fun createDevtoolsPerformancePanel(
     }
 }
 
-private fun RouteRenderMetricsSnapshot.renderReport(topRoutes: Int, topRoutesLabel: String): String =
+private fun RouteRenderMetricsSnapshot.renderReport(
+    topRoutes: Int,
+    topRoutesLabel: String,
+    recentSamplesLimit: Int,
+    recentSamplesLabel: String,
+): String =
     buildString {
         appendLine("Total render count = $totalRenderCount")
         appendLine("Cache hits = $cacheHitCount")
         appendLine("Cache misses = $cacheMissCount")
+        appendLine("Cache hit ratio = ${(if (totalRenderCount == 0L) 0.0 else cacheHitCount.toDouble() / totalRenderCount.toDouble() * 100).formatPercent()}")
         appendLine("Page created = $totalPageCreated")
         appendLine("Page reused = $totalPageReused")
         appendLine("Layout created = $totalLayoutCreated")
@@ -141,10 +197,7 @@ private fun RouteRenderMetricsSnapshot.renderReport(topRoutes: Int, topRoutesLab
         appendLine("Last route = ${lastRouteTitle ?: "-"}")
         appendLine("Last route id = ${lastRouteId ?: "-"}")
         appendLine()
-        appendLine("$topRoutesLabel (${
-            routeSummaries
-                .size
-        })")
+        appendLine("$topRoutesLabel (${routeSummaries.size})")
         routeSummaries
             .take(topRoutes.coerceAtLeast(1))
             .forEachIndexed { index, summary ->
@@ -157,7 +210,29 @@ private fun RouteRenderMetricsSnapshot.renderReport(topRoutes: Int, topRoutesLab
                 appendLine("    layoutReused = ${summary.layoutReused}")
                 appendLine("    avgRenderMs = ${summary.averageRenderMs.formatMs()}")
             }
+        appendLine()
+        appendLine("$recentSamplesLabel (${recentSamplesLimit})")
+        recentSamples
+            .takeLast(recentSamplesLimit.coerceAtLeast(1))
+            .asReversed()
+            .forEachIndexed { index, sample ->
+                appendLine("${index + 1}. ${sample.formattedTime()}: ${sample.renderMs.formatMs()} ms")
+                appendLine("    route = ${sample.routeTitle} (${sample.routePath})")
+                appendLine("    id = ${sample.routeId}")
+                appendLine("    host = ${sample.hostType}, policy = ${sample.pageInstancePolicy}")
+                appendLine("    pageCreated = ${sample.pageCreated}, pageReused = ${sample.pageReused}, layoutCreated = ${sample.layoutCreated}, layoutReused = ${sample.layoutReused}")
+            }
     }
 
 private fun Double.formatMs(): String =
     String.format(Locale.US, "%.2f", this)
+
+private fun Double.formatPercent(): String =
+    String.format(Locale.US, "%.2f%%", this)
+
+private fun RouteRenderHistorySample.formattedTime(): String =
+    timeFormatter.format(
+        Instant
+            .ofEpochMilli(timestampEpochMillis)
+            .atZone(ZoneId.systemDefault())
+    )

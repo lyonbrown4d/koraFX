@@ -1,5 +1,6 @@
 package dev.korafx.navigation
 
+import java.util.ArrayDeque
 import java.util.LinkedHashMap
 import kotlin.math.max
 
@@ -30,6 +31,20 @@ data class RouteRenderRouteSummary(
     val averageRenderMs: Double,
 )
 
+data class RouteRenderHistorySample(
+    val routeId: String,
+    val routeTitle: String,
+    val routePath: String,
+    val hostType: RouteHostType,
+    val pageInstancePolicy: PageInstancePolicy,
+    val renderMs: Double,
+    val pageCreated: Long,
+    val pageReused: Long,
+    val layoutCreated: Long,
+    val layoutReused: Long,
+    val timestampEpochMillis: Long,
+)
+
 data class RouteRenderMetricsSnapshot(
     val totalRenderCount: Long,
     val cacheHitCount: Long,
@@ -43,6 +58,7 @@ data class RouteRenderMetricsSnapshot(
     val lastRenderMs: Double,
     val lastRouteId: String?,
     val lastRouteTitle: String?,
+    val recentSamples: List<RouteRenderHistorySample>,
     val routeSummaries: List<RouteRenderRouteSummary>,
 ) {
     val hasData: Boolean
@@ -74,6 +90,7 @@ class RouteRenderMetricsCollector : RouteRenderMetrics {
     private var lastRouteId: String? = null
     private var lastRouteTitle: String? = null
     private val perRoute = LinkedHashMap<String, RouteRenderRouteAccumulator>()
+    private val recentSamples = ArrayDeque<RouteRenderHistorySample>(RecentSamplesCapacity)
 
     override fun record(event: RouteRenderEvent) {
         synchronized(this) {
@@ -98,6 +115,24 @@ class RouteRenderMetricsCollector : RouteRenderMetrics {
                 )
             }
             route.record(event)
+            while (recentSamples.size >= RecentSamplesCapacity) {
+                recentSamples.removeFirst()
+            }
+            recentSamples.addLast(
+                RouteRenderHistorySample(
+                    routeId = event.routeId,
+                    routeTitle = event.routeTitle,
+                    routePath = event.routePath,
+                    hostType = event.hostType,
+                    pageInstancePolicy = event.pageInstancePolicy,
+                    renderMs = event.renderDurationNanos.toDouble() / NanosPerMillisecond,
+                    pageCreated = event.pageCreated,
+                    pageReused = event.pageReused,
+                    layoutCreated = event.layoutCreated,
+                    layoutReused = event.layoutReused,
+                    timestampEpochMillis = System.currentTimeMillis(),
+                ),
+            )
         }
     }
 
@@ -121,6 +156,7 @@ class RouteRenderMetricsCollector : RouteRenderMetrics {
                 lastRenderMs = lastRenderNanos.toDouble() / NanosPerMillisecond,
                 lastRouteId = lastRouteId,
                 lastRouteTitle = lastRouteTitle,
+                recentSamples = recentSamples.toList(),
                 routeSummaries = snapshots,
             )
         }
@@ -140,11 +176,13 @@ class RouteRenderMetricsCollector : RouteRenderMetrics {
             lastRouteId = null
             lastRouteTitle = null
             perRoute.clear()
+            recentSamples.clear()
         }
     }
 
     private companion object {
         const val NanosPerMillisecond = 1_000_000.0
+        const val RecentSamplesCapacity = 240
     }
 }
 
